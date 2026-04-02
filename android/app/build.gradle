@@ -79,11 +79,11 @@ android {
 
     namespace "com.aqaryaapp"
     defaultConfig {
-        applicationId "com.aqaryaapp"
-        minSdkVersion rootProject.ext.minSdkVersion
-        targetSdkVersion rootProject.ext.targetSdkVersion
+        applicationId "jo.gov.aqarya"
+        minSdkVersion 24
+        targetSdkVersion 34
         versionCode 1
-        versionName "1.0"
+        versionName "1.0.0"
     }
     signingConfigs {
         debug {
@@ -93,17 +93,25 @@ android {
             keyPassword 'android'
         }
     }
+    signingConfigs {
+    release {
+        storeFile file(AQARYA_RELEASE_STORE_FILE)
+        storePassword AQARYA_RELEASE_STORE_PASSWORD
+        keyAlias AQARYA_RELEASE_KEY_ALIAS
+        keyPassword AQARYA_RELEASE_KEY_PASSWORD
+    }
+}
+
     buildTypes {
         debug {
             signingConfig signingConfigs.debug
         }
         release {
-            // Caution! In production, you need to generate your own keystore file.
-            // see https://reactnative.dev/docs/signed-apk-android.
-            signingConfig signingConfigs.debug
-            minifyEnabled enableProguardInReleaseBuilds
-            proguardFiles getDefaultProguardFile("proguard-android.txt"), "proguard-rules.pro"
-        }
+    signingConfig signingConfigs.release
+    minifyEnabled enableProguardInReleaseBuilds
+    proguardFiles getDefaultProguardFile("proguard-android.txt"), "proguard-rules.pro"
+}
+
     }
 }
 

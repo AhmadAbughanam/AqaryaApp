@@ -1,10 +1,9 @@
-const { getDefaultConfig, mergeConfig } = require('@react-native/metro-config');
+// Metro configuration for React Native.
+const {getDefaultConfig, mergeConfig} = require('@react-native/metro-config');
 
 /**
- * Metro configuration
- * https://reactnative.dev/docs/metro
- *
- * @type {import('@react-native/metro-config').MetroConfig}
+ * Custom Metro configuration.
+ * Add resolver/transformer overrides here when needed.
  */
 const config = {};
 
