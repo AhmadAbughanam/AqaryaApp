@@ -1,0 +1,137 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum UserRole {
+  citizen
+  admin
+}
+
+enum VerificationStatus {
+  pending
+  verified
+  rejected
+}
+
+enum PropertyStatus {
+  pending_verification
+  verified
+  rejected
+  frozen
+  sold
+}
+
+enum BlockchainRecordStatus {
+  pending
+  anchored
+  failed
+}
+
+enum MarketType {
+  sale
+  investment
+}
+
+enum AuditActionType {
+  login
+  listing_submitted
+  listing_verified
+  listing_rejected
+  listing_frozen
+  anchor
+  simulate
+}
+
+model User {
+  id              String       @id @default(cuid())
+  username        String       @unique
+  passwordHash    String
+  role            UserRole
+  createdAt       DateTime     @default(now())
+  updatedAt       DateTime     @updatedAt
+  ownedProperties Property[]
+  simulations     Simulation[]
+  auditLogs       AuditLog[]
+}
+
+model Property {
+  id                         String                @id @default(cuid())
+  ownerId                    String?
+  marketType                 MarketType            @default(sale)
+  title                      String
+  location                   String
+  ownerName                  String
+  ownershipType              String
+  ownershipProofType         String
+  ownershipProofNumber       String
+  description                String
+  imageUrls                  Json?
+  price                      Float
+  propertyValue              Float
+  totalShares                Int
+  availableShares            Int
+  status                     PropertyStatus        @default(pending_verification)
+  propertyVerificationStatus VerificationStatus    @default(pending)
+  identityVerificationStatus VerificationStatus    @default(pending)
+  rejectionReason            String?
+  verificationTimestamp      DateTime?
+  verificationRecordId       String?
+  verificationPayload        Json?
+  blockchainHash             String?
+  blockchainTxId             String?
+  blockchainStatus           BlockchainRecordStatus @default(pending)
+  anchoredAt                 DateTime?
+  createdAt                  DateTime              @default(now())
+  updatedAt                  DateTime              @updatedAt
+  owner                      User?                 @relation(fields: [ownerId], references: [id], onDelete: SetNull)
+  simulations                Simulation[]
+  auditLogs                  AuditLog[]
+
+  @@index([ownerId])
+  @@index([status])
+}
+
+model Simulation {
+  id                  String   @id @default(cuid())
+  userId              String
+  propertyId          String
+  shares              Int
+  pricePerShare       Float
+  subtotal            Float
+  platformFee         Float
+  governmentFee       Float
+  totalAmount         Float
+  ownershipPercentage Float
+  expectedAnnualReturn Float
+  expectedFiveYearReturn Float
+  simulatedValue      Float
+  createdAt           DateTime @default(now())
+
+  user     User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  property Property @relation(fields: [propertyId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([propertyId])
+}
+
+model AuditLog {
+  id         String          @id @default(cuid())
+  actorId    String?
+  actorRole  UserRole
+  actionType AuditActionType
+  propertyId String?
+  metadata   Json
+  timestamp  DateTime        @default(now())
+
+  actor    User?     @relation(fields: [actorId], references: [id], onDelete: SetNull)
+  property Property? @relation(fields: [propertyId], references: [id], onDelete: SetNull)
+
+  @@index([actorId])
+  @@index([propertyId])
+  @@index([timestamp])
+}

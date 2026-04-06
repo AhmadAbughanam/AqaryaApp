@@ -1,0 +1,83 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(bundle install)",
+      "Bash(bundle exec pod install*)",
+      "Bash(git add*)",
+      "Bash(git branch*)",
+      "Bash(git checkout*)",
+      "Bash(git commit*)",
+      "Bash(git diff*)",
+      "Bash(git log*)",
+      "Bash(git status)",
+      "Bash(gh auth*)",
+      "Bash(gh issue*)",
+      "Bash(gh pr*)",
+      "Bash(gh repo*)",
+      "Bash(npm run start)",
+      "Bash(npm run android)",
+      "Bash(npm run ios)",
+      "Bash(npm install)",
+      "Bash(npm test*)",
+      "Bash(npm run test*)",
+      "Bash(npm run lint)",
+      "Bash(npm run typecheck)",
+      "Bash(npm run verify)",
+      "Bash(npm --prefix backend install)",
+      "Bash(npm --prefix backend run build)",
+      "Bash(npm --prefix backend run typecheck)",
+      "Bash(npm --prefix backend run test:e2e*)",
+      "Bash(npm --prefix backend run prisma:generate)",
+      "Bash(npm --prefix backend run verify)",
+      "Bash(npm run build)",
+      "Bash(npm run start:dev)",
+      "Bash(npm run prisma:generate)",
+      "Bash(npm run prisma:migrate*)",
+      "Bash(npm run prisma:deploy)",
+      "Bash(npm run prisma:seed)",
+      "Bash(npx tsc --noEmit)"
+    ],
+    "deny": [
+      "Read(.env)",
+      "Read(.env.*)",
+      "Read(secrets/**)",
+      "Read(./.env)",
+      "Read(./.env.*)",
+      "Read(backend/.env)",
+      "Read(backend/.env.*)",
+      "Read(./backend/.env)",
+      "Read(./backend/.env.*)",
+      "Bash(rm -rf*)",
+      "Bash(curl*)",
+      "Bash(wget*)",
+      "Bash(git push --force*)",
+      "Bash(git push origin main*)"
+    ]
+  },
+  "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "Bash(git commit*)",
+        "hooks": [
+          {
+            "type": "command",
+            "command": ".claude/hooks/pre-commit.sh"
+          }
+        ]
+      }
+    ],
+    "PostToolUse": [
+      {
+        "matcher": "Edit|Write",
+        "hooks": [
+          {
+            "type": "command",
+            "command": ".claude/hooks/lint-on-save.sh"
+          }
+        ]
+      }
+    ]
+  },
+  "model": "claude-sonnet-4-6",
+  "autoMemoryEnabled": true
+}

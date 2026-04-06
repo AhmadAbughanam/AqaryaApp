@@ -1,0 +1,49 @@
+{
+  "name": "aqaryaapp",
+  "version": "0.0.1",
+  "private": true,
+  "main": "index.js",
+  "scripts": {
+    "android": "react-native run-android",
+    "ios": "react-native run-ios",
+    "start": "react-native start",
+    "typecheck": "tsc --noEmit",
+    "lint": "eslint App.tsx index.js __tests__ src .eslintrc.js babel.config.js metro.config.js jest.config.js",
+    "test": "jest --runInBand --watchman=false",
+    "verify": "npm run typecheck && npm run lint && npm test",
+    "backend:install": "npm --prefix backend install",
+    "backend:typecheck": "npm --prefix backend run typecheck",
+    "backend:build": "npm --prefix backend run build",
+    "backend:test:e2e": "npm --prefix backend run test:e2e",
+    "backend:prisma:generate": "npm --prefix backend run prisma:generate",
+    "backend:verify": "npm --prefix backend run verify"
+  },
+  "dependencies": {
+    "@react-native-async-storage/async-storage": "^2.2.0",
+    "@react-native-clipboard/clipboard": "^1.16.3",
+    "@react-navigation/native": "^7.1.28",
+    "@react-navigation/native-stack": "^7.13.0",
+    "axios": "^1.13.5",
+    "react": "19.1.0",
+    "react-native": "0.81.5",
+    "react-native-gesture-handler": "^2.30.0",
+    "react-native-keychain": "^10.0.0",
+    "react-native-safe-area-context": "^5.6.2",
+    "react-native-screens": "^4.23.0"
+  },
+  "devDependencies": {
+    "@react-native-community/cli": "^20.1.1",
+    "@react-native/babel-preset": "0.81.5",
+    "@react-native/eslint-config": "^0.81.5",
+    "@react-native/metro-config": "0.81.5",
+    "@react-native/typescript-config": "0.81.5",
+    "@types/jest": "^30.0.0",
+    "@types/react": "^19.1.8",
+    "@types/react-test-renderer": "^19.1.0",
+    "eslint": "^8.57.1",
+    "jest": "^30.3.0",
+    "prettier": "^3.8.1",
+    "react-test-renderer": "^19.1.0",
+    "typescript": "^5.8.3"
+  }
+}

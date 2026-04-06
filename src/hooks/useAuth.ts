@@ -1,0 +1,1 @@
+// Placeholder: Authentication hook scaffold.
