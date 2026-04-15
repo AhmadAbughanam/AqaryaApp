@@ -155,12 +155,7 @@ All citizen demo accounts use password `123456`.
 | Username | Password | Notes |
 |----------|----------|-------|
 | `admin` | `123456` | Admin account unchanged. |
-| `owner1` | unchanged | Existing owner account unchanged. |
-| `agency1` | unchanged | Existing agency account unchanged. |
-| `dev1` | unchanged | Existing developer account unchanged. |
-| `partner1` | unchanged | Existing partner account unchanged. |
-| `individual1` | unchanged | Existing individual account unchanged. |
-| `suspended1` | unchanged | Existing suspended account unchanged. |
+
 
 ### 4. Start the backend
 
