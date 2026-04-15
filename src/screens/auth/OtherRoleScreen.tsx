@@ -2,20 +2,20 @@
 import React from 'react';
 import {Pressable, StyleSheet, Text, View} from 'react-native';
 import {useAuth} from '../../store/AuthContext';
+import {useStrings} from '../../i18n';
 
 const OtherRoleScreen = () => {
   const {role, signOut} = useAuth();
+  const strings = useStrings();
 
   return (
     <View style={styles.container}>
-      <Text style={styles.title}>Authenticated</Text>
-      <Text style={styles.subtitle}>Role: {role ?? 'unknown'}</Text>
-      <Text style={styles.note}>
-        This account is signed in, but no dedicated app stack is assigned yet.
-      </Text>
+      <Text style={styles.title}>{strings.otherRole.title}</Text>
+      <Text style={styles.subtitle}>{strings.otherRole.roleLabel}: {role ?? strings.otherRole.unknown}</Text>
+      <Text style={styles.note}>{strings.otherRole.note}</Text>
 
       <Pressable onPress={() => void signOut()} style={styles.button}>
-        <Text style={styles.buttonText}>Sign Out</Text>
+        <Text style={styles.buttonText}>{strings.otherRole.signOut}</Text>
       </Pressable>
     </View>
   );

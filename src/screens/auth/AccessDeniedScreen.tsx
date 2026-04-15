@@ -3,7 +3,7 @@
 import React from 'react';
 import {StyleSheet, Text, View} from 'react-native';
 import {Colors} from '../../constants/colors';
-import {Strings} from '../../constants/strings';
+import {useStrings} from '../../i18n';
 import {useAuth} from '../../store/AuthContext';
 import Button from '../../components/Button';
 
@@ -17,6 +17,7 @@ interface AccessDeniedScreenProps {
 
 const AccessDeniedScreen = ({message}: AccessDeniedScreenProps) => {
   const {signOut} = useAuth();
+  const strings = useStrings();
 
   return (
     <View style={styles.screen}>
@@ -36,22 +37,22 @@ const AccessDeniedScreen = ({message}: AccessDeniedScreenProps) => {
 
         {/* Text */}
         <Text style={styles.title}>
-          {Strings.auth.accessDenied.title}
+          {strings.auth.accessDenied.title}
         </Text>
         <Text style={styles.message}>
-          {message ?? Strings.auth.accessDenied.message}
+          {message ?? strings.auth.accessDenied.message}
         </Text>
 
         {/* Dark info pill */}
         <View style={styles.infoPill}>
           <Text style={styles.infoPillText}>
-            Contact your administrator if you think this is a mistake.
+            {strings.auth.accessDenied.adminNote}
           </Text>
         </View>
 
         {/* Action */}
         <Button
-          label={Strings.auth.accessDenied.signOutButton}
+          label={strings.auth.accessDenied.signOutButton}
           onPress={() => void signOut()}
           variant="primary"
           size="lg"

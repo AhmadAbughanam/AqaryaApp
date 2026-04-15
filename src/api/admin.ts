@@ -5,13 +5,75 @@ import {getSecureToken} from '../services/secureStorage';
 const adminApi = createAuthenticatedApiClient();
 
 export type AdminActionType =
+  | 'login'
   | 'listing_submitted'
   | 'listing_verified'
   | 'listing_rejected'
+  | 'listing_changes_requested'
   | 'listing_frozen'
   | 'anchor'
-  | 'login'
-  | 'simulate';
+  | 'simulate'
+  | 'opportunity_submitted'
+  | 'opportunity_approved'
+  | 'opportunity_rejected'
+  | 'opportunity_published'
+  | 'opportunity_unpublished'
+  | 'opportunity_simulate';
+
+export type InvestmentOpportunityStatus =
+  | 'draft'
+  | 'submitted'
+  | 'under_review'
+  | 'approved'
+  | 'published'
+  | 'rejected';
+
+export type InvestmentReviewAction = 'approve' | 'reject' | 'publish' | 'unpublish';
+
+export interface AdminInvestmentOpportunity {
+  id: string;
+  title: string;
+  location: string;
+  sponsorName: string;
+  assetClass: string;
+  stage: string;
+  riskBand: string;
+  status: InvestmentOpportunityStatus;
+  trustScore: number | null;
+  trustBadge: 'verified' | 'premium_verified' | 'aqarya_approved' | null;
+  pricePerShare: number;
+  totalShares: number;
+  availableShares: number;
+  targetIrr: number;
+  targetCashYield: number;
+  targetHoldYears: number;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface AdminInvestmentOpportunityDetail extends AdminInvestmentOpportunity {
+  description: string;
+  imageUrls: string[];
+  ownershipStructure: string;
+  distributionModel: string;
+  exitModel: string;
+  minimumShares: number;
+  fundingGoal: number;
+  fundedAmount: number;
+  appreciationRate: number;
+  occupancyRate: number;
+  managementFeeRate: number;
+  reviewNotes: string | null;
+  rejectionReason: string | null;
+  publishedAt: string | null;
+  reviewedAt: string | null;
+  reviewedBy: string | null;
+  verificationRecordId: string | null;
+  blockchainHash: string | null;
+  blockchainTxId: string | null;
+  blockchainStatus: 'pending' | 'anchored' | 'failed';
+  anchoredAt: string | null;
+}
 
 export interface AdminProperty {
   id: string;
@@ -23,6 +85,7 @@ export interface AdminProperty {
   propertyVerificationStatus: 'pending' | 'verified' | 'rejected';
   identityVerificationStatus: 'pending' | 'verified' | 'rejected';
   rejectionReason?: string | null;
+  reviewerNotes?: string | null;
   verificationRecordId?: string | null;
   blockchainHash?: string | null;
   blockchainTransactionId?: string | null;
@@ -88,15 +151,85 @@ export interface AuditLogsResponse {
 }
 
 export interface AdminAnalytics {
+  // ─ Properties ──────────────────────────────────────────────────────────────
   totalProperties: number;
   verifiedProperties: number;
   pendingVerificationProperties: number;
+  needsChangesProperties: number;
+  rejectedProperties: number;
   frozenProperties: number;
   soldProperties: number;
   totalSimulations: number;
   totalAnchored: number;
   lastAnchoredAt: string | null;
   totalSimulationVolume: number;
+
+  // ─ Investment pipeline ──────────────────────────────────────────────────────
+  investments: {
+    draft: number;
+    submitted: number;
+    underReview: number;
+    approved: number;
+    published: number;
+    rejected: number;
+    totalSimulations: number;
+    totalSimulationVolume: number;
+  };
+
+  // ─ Provider verification ────────────────────────────────────────────────────
+  providers: {
+    total: number;
+    unverified: number;
+    underReview: number;
+    verified: number;
+    rejected: number;
+    suspended: number;
+  };
+
+  // ─ Moderation ──────────────────────────────────────────────────────────────
+  moderation: {
+    reportsOpen: number;
+    reportsUnderReview: number;
+    reportsResolved: number;
+    reportsDismissed: number;
+    unresolvedQualityFlags: number;
+  };
+
+  // ─ Support / messaging ──────────────────────────────────────────────────────
+  support: {
+    totalThreads: number;
+    totalMessages: number;
+    recentMessages: number;
+  };
+
+  // ─ CMS ─────────────────────────────────────────────────────────────────────
+  cms: {
+    activeAnnouncements: number;
+    archivedAnnouncements: number;
+    activeContentBlocks: number;
+  };
+
+  // ─ Platform ─────────────────────────────────────────────────────────────────
+  totalCitizenUsers: number;
+}
+
+export interface AdminDashboardSummary {
+  pendingListings: number;
+  pendingOpportunities: number;
+  pendingProviders: number;
+  openThreads: number;
+  totalCitizenUsers: number;
+  openReports: number;
+  flaggedItems: number;
+  activeAnnouncements: number;
+  recentAuditHighlights: {
+    id: string;
+    actionType: string;
+    actorName: string;
+    actorRole: string;
+    timestamp: string;
+    metadata: Record<string, unknown>;
+  }[];
 }
 
 interface Envelope<T> {
@@ -179,6 +312,7 @@ const toAdminProperty = (property: AdminPropertyDetail): AdminProperty => ({
   propertyVerificationStatus: property.propertyVerificationStatus,
   identityVerificationStatus: property.identityVerificationStatus,
   rejectionReason: property.rejectionReason,
+  reviewerNotes: property.reviewerNotes,
   verificationRecordId: property.verificationRecordId,
   blockchainHash: property.blockchainHash,
   blockchainTransactionId: property.blockchainTransactionId,
@@ -362,29 +496,39 @@ export const getAuditLogs = async (
   return unwrap<AuditLogsResponse>(response.data);
 };
 
+export const getDashboardSummary = async (): Promise<AdminDashboardSummary> => {
+  const response = await adminApi.get<AdminDashboardSummary | Envelope<AdminDashboardSummary>>(
+    '/admin/dashboard/summary',
+  );
+  return unwrap<AdminDashboardSummary>(response.data);
+};
+
 export const getAnalytics = async (): Promise<AdminAnalytics> => {
   const token = await getSecureToken();
   if (__DEV__ && isDevSessionToken(token)) {
+    const verified = devAdminProperties.filter(p => p.verificationStatus === 'verified').length;
+    const pending = devAdminProperties.filter(p => p.verificationStatus === 'pending_verification').length;
+    const frozen = devAdminProperties.filter(p => p.verificationStatus === 'frozen').length;
+    const sold = devAdminProperties.filter(p => p.verificationStatus === 'sold').length;
+    const anchored = devAdminProperties.filter(p => p.blockchainStatus === 'anchored').length;
     return {
       totalProperties: devAdminProperties.length,
-      verifiedProperties: devAdminProperties.filter(
-        property => property.verificationStatus === 'verified',
-      ).length,
-      pendingVerificationProperties: devAdminProperties.filter(
-        property => property.verificationStatus === 'pending_verification',
-      ).length,
-      frozenProperties: devAdminProperties.filter(
-        property => property.verificationStatus === 'frozen',
-      ).length,
-      soldProperties: devAdminProperties.filter(
-        property => property.verificationStatus === 'sold',
-      ).length,
+      verifiedProperties: verified,
+      pendingVerificationProperties: pending,
+      needsChangesProperties: 0,
+      rejectedProperties: 0,
+      frozenProperties: frozen,
+      soldProperties: sold,
       totalSimulations: 0,
-      totalAnchored: devAdminProperties.filter(
-        property => property.blockchainStatus === 'anchored',
-      ).length,
+      totalAnchored: anchored,
       lastAnchoredAt: null,
       totalSimulationVolume: 0,
+      investments: {draft: 0, submitted: 1, underReview: 0, approved: 0, published: 0, rejected: 0, totalSimulations: 0, totalSimulationVolume: 0},
+      providers: {total: 0, unverified: 0, underReview: 0, verified: 0, rejected: 0, suspended: 0},
+      moderation: {reportsOpen: 0, reportsUnderReview: 0, reportsResolved: 0, reportsDismissed: 0, unresolvedQualityFlags: 0},
+      support: {totalThreads: 0, totalMessages: 0, recentMessages: 0},
+      cms: {activeAnnouncements: 0, archivedAnnouncements: 0, activeContentBlocks: 0},
+      totalCitizenUsers: 0,
     };
   }
 
@@ -392,4 +536,160 @@ export const getAnalytics = async (): Promise<AdminAnalytics> => {
     '/admin/analytics',
   );
   return unwrap<AdminAnalytics>(response.data);
+};
+
+export const rejectProperty = async (
+  propertyId: string,
+  reason: string,
+): Promise<AdminProperty> => {
+  const response = await adminApi.post<AdminProperty | Envelope<AdminProperty>>(
+    `/admin/properties/${propertyId}/reject`,
+    {reason},
+  );
+  return unwrap<AdminProperty>(response.data);
+};
+
+export const requestPropertyChanges = async (
+  propertyId: string,
+  notes: string,
+): Promise<AdminProperty> => {
+  const response = await adminApi.post<AdminProperty | Envelope<AdminProperty>>(
+    `/admin/properties/${propertyId}/request-changes`,
+    {notes},
+  );
+  return unwrap<AdminProperty>(response.data);
+};
+
+// ─── User / Provider Management ──────────────────────────────────────────────
+
+export type AccountType = 'individual' | 'owner' | 'agency' | 'developer' | 'partner';
+export type ProviderVerificationStatus =
+  | 'unverified'
+  | 'under_review'
+  | 'verified'
+  | 'rejected'
+  | 'suspended';
+export type ProviderReviewAction =
+  | 'under_review'
+  | 'verify'
+  | 'reject'
+  | 'suspend'
+  | 'update_notes';
+
+export interface AdminUser {
+  id: string;
+  username: string;
+  role: string;
+  createdAt: string;
+  providerProfile: {
+    accountType: AccountType;
+    providerVerificationStatus: ProviderVerificationStatus;
+    businessName: string | null;
+    contactPerson: string | null;
+  } | null;
+  counts: {
+    properties: number;
+    simulations: number;
+    threads: number;
+  };
+}
+
+export interface AdminUserDetail {
+  id: string;
+  username: string;
+  role: string;
+  createdAt: string;
+  counts: {
+    properties: number;
+    simulations: number;
+    threads: number;
+    notifications: number;
+  };
+  providerProfile: {
+    accountType: AccountType;
+    providerVerificationStatus: ProviderVerificationStatus;
+    businessName: string | null;
+    contactPerson: string | null;
+    phone: string | null;
+    email: string | null;
+    registrationNumber: string | null;
+    licenseNumber: string | null;
+    providerType: string | null;
+    documentUrls: string[];
+    adminNotes: string | null;
+    rejectionReason: string | null;
+    submittedAt: string | null;
+    reviewedAt: string | null;
+    reviewedBy: string | null;
+    createdAt: string;
+    updatedAt: string;
+  } | null;
+}
+
+export const getAdminUsers = async (
+  accountType?: string,
+  providerStatus?: string,
+): Promise<AdminUser[]> => {
+  const params: Record<string, string> = {};
+  if (accountType) {
+    params.accountType = accountType;
+  }
+  if (providerStatus) {
+    params.providerStatus = providerStatus;
+  }
+  const response = await adminApi.get<AdminUser[] | Envelope<AdminUser[]>>(
+    '/admin/users',
+    {params},
+  );
+  return unwrap<AdminUser[]>(response.data);
+};
+
+export const getAdminUserDetail = async (userId: string): Promise<AdminUserDetail> => {
+  const response = await adminApi.get<AdminUserDetail | Envelope<AdminUserDetail>>(
+    `/admin/users/${userId}`,
+  );
+  return unwrap<AdminUserDetail>(response.data);
+};
+
+export const reviewProviderAccount = async (
+  userId: string,
+  action: ProviderReviewAction,
+  notes?: string,
+): Promise<AdminUserDetail> => {
+  const response = await adminApi.post<AdminUserDetail | Envelope<AdminUserDetail>>(
+    `/admin/users/${userId}/provider-review`,
+    {action, notes},
+  );
+  return unwrap<AdminUserDetail>(response.data);
+};
+
+export const getAdminInvestmentOpportunities = async (
+  status?: InvestmentOpportunityStatus | 'all',
+): Promise<AdminInvestmentOpportunity[]> => {
+  const response = await adminApi.get<
+    AdminInvestmentOpportunity[] | Envelope<AdminInvestmentOpportunity[]>
+  >('/admin/investment-opportunities', {
+    params: status && status !== 'all' ? {status} : undefined,
+  });
+  return unwrap<AdminInvestmentOpportunity[]>(response.data);
+};
+
+export const getAdminInvestmentOpportunityDetails = async (
+  opportunityId: string,
+): Promise<AdminInvestmentOpportunityDetail> => {
+  const response = await adminApi.get<
+    AdminInvestmentOpportunityDetail | Envelope<AdminInvestmentOpportunityDetail>
+  >(`/admin/investment-opportunities/${opportunityId}`);
+  return unwrap<AdminInvestmentOpportunityDetail>(response.data);
+};
+
+export const reviewInvestmentOpportunity = async (
+  opportunityId: string,
+  action: InvestmentReviewAction,
+  notes?: string,
+): Promise<AdminInvestmentOpportunity> => {
+  const response = await adminApi.post<
+    AdminInvestmentOpportunity | Envelope<AdminInvestmentOpportunity>
+  >(`/admin/investment-opportunities/${opportunityId}/review`, {action, notes});
+  return unwrap<AdminInvestmentOpportunity>(response.data);
 };

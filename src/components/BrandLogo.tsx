@@ -1,6 +1,7 @@
 import React from 'react';
 import {Image, ImageResizeMode, StyleSheet, View} from 'react-native';
 import {Colors} from '../constants/colors';
+import {AppImages} from '../assets/images';
 
 interface BrandLogoProps {
   size?: number;
@@ -26,7 +27,7 @@ const BrandLogo = ({
         {height: size, width: size, borderRadius: frameRadius},
       ]}>
       <Image
-        source={require('../../logo.jpeg')}
+        source={AppImages.logos.aqarya}
         style={{
           height: innerSize,
           width: innerSize,

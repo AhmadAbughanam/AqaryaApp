@@ -12,9 +12,17 @@ export type PropertyStatus =
   | 'verified'
   | 'pending'
   | 'pending_verification'
+  | 'needs_changes'
   | 'frozen'
   | 'rejected'
-  | 'sold';
+  | 'sold'
+  | 'draft'
+  | 'submitted'
+  | 'under_review'
+  | 'approved'
+  | 'published'
+  | 'unverified'
+  | 'suspended';
 
 interface StatusBadgeProps {
   status: PropertyStatus;
@@ -45,6 +53,12 @@ const STATUS_CONFIG: Record<
     textColor: Colors.warning,
     dotColor: Colors.warning,
   },
+  needs_changes: {
+    label: 'Needs Changes',
+    background: Colors.warningLight,
+    textColor: Colors.warning,
+    dotColor: Colors.warning,
+  },
   frozen: {
     label: 'Frozen',
     background: Colors.infoLight,
@@ -62,6 +76,48 @@ const STATUS_CONFIG: Record<
     background: Colors.backgroundMuted,
     textColor: Colors.textPrimary,
     dotColor: Colors.textPrimary,
+  },
+  draft: {
+    label: 'Draft',
+    background: Colors.backgroundMuted,
+    textColor: Colors.textSecondary,
+    dotColor: Colors.textSecondary,
+  },
+  submitted: {
+    label: 'Submitted',
+    background: Colors.warningLight,
+    textColor: Colors.warning,
+    dotColor: Colors.warning,
+  },
+  under_review: {
+    label: 'Under Review',
+    background: Colors.infoLight,
+    textColor: Colors.info,
+    dotColor: Colors.info,
+  },
+  approved: {
+    label: 'Approved',
+    background: Colors.successLight,
+    textColor: Colors.success,
+    dotColor: Colors.success,
+  },
+  published: {
+    label: 'Published',
+    background: Colors.successLight,
+    textColor: Colors.success,
+    dotColor: Colors.success,
+  },
+  unverified: {
+    label: 'Unverified',
+    background: Colors.backgroundMuted,
+    textColor: Colors.textSecondary,
+    dotColor: Colors.textSecondary,
+  },
+  suspended: {
+    label: 'Suspended',
+    background: Colors.warningLight,
+    textColor: Colors.warning,
+    dotColor: Colors.warning,
   },
 };
 

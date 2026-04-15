@@ -3,9 +3,11 @@ import {
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
-import {Prisma} from '@prisma/client';
+import {InvestmentOpportunity, Prisma, WalletTxType} from '@prisma/client';
 import {AuditService} from '../audit/audit.service';
 import {PrismaService} from '../common/prisma.service';
+import {WalletService} from '../wallet/wallet.service';
+import {GetOpportunitiesDto} from './dto/get-opportunities.dto';
 
 const PLATFORM_FEE_RATE = 0.015;
 const GOVERNMENT_FEE_RATE = 0.0075;
@@ -44,6 +46,7 @@ export class InvestmentsService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly auditService: AuditService,
+    private readonly walletService: WalletService,
   ) {}
 
   async getPilotProperties(search?: string) {
@@ -306,6 +309,534 @@ export class InvestmentsService {
       createdAt: item.createdAt.toISOString(),
     }));
   }
+
+  // ─── Investment Opportunity methods ────────────────────────────────────────
+
+  async getOpportunities(dto: GetOpportunitiesDto) {
+    const where: Prisma.InvestmentOpportunityWhereInput = {
+      status: 'published',
+      ...(dto.assetClass ? {assetClass: {equals: dto.assetClass, mode: 'insensitive'}} : {}),
+      ...(dto.riskBand ? {riskBand: {equals: dto.riskBand, mode: 'insensitive'}} : {}),
+      ...(dto.search?.trim()
+        ? {
+            OR: [
+              {title: {contains: dto.search.trim(), mode: 'insensitive'}},
+              {location: {contains: dto.search.trim(), mode: 'insensitive'}},
+              {sponsorName: {contains: dto.search.trim(), mode: 'insensitive'}},
+            ],
+          }
+        : {}),
+    };
+
+    const page = dto.page ?? 1;
+    const limit = dto.limit ?? 20;
+
+    const [items, total] = await Promise.all([
+      this.prisma.investmentOpportunity.findMany({
+        where,
+        orderBy: [{publishedAt: 'desc'}, {trustScore: 'desc'}],
+        skip: (page - 1) * limit,
+        take: limit,
+      }),
+      this.prisma.investmentOpportunity.count({where}),
+    ]);
+
+    return {
+      items: items.map(opp => this.mapOpportunityListItem(opp)),
+      total,
+      page,
+      limit,
+    };
+  }
+
+  async getOpportunityDetail(id: string) {
+    const opp = await this.prisma.investmentOpportunity.findUnique({where: {id}});
+    if (!opp) {
+      throw new NotFoundException('Investment opportunity not found.');
+    }
+    if (opp.status !== 'published') {
+      throw new NotFoundException('Investment opportunity not found.');
+    }
+
+    const fundingGoal = opp.totalShares * opp.pricePerShare;
+    const fundedAmount = (opp.totalShares - opp.availableShares) * opp.pricePerShare;
+
+    return {
+      ...this.mapOpportunityListItem(opp),
+      description: opp.description,
+      imageUrls: this.parseJsonStringArray(opp.imageUrls),
+      ownershipStructure: opp.ownershipStructure,
+      distributionModel: opp.distributionModel,
+      exitModel: opp.exitModel,
+      totalShares: opp.totalShares,
+      availableShares: opp.availableShares,
+      pricePerShare: opp.pricePerShare,
+      minimumShares: opp.minimumShares,
+      minimumInvestmentAmount: Number((opp.pricePerShare * opp.minimumShares).toFixed(2)),
+      fundingGoal: Number(fundingGoal.toFixed(2)),
+      fundedAmount: Number(fundedAmount.toFixed(2)),
+      appreciationRate: opp.appreciationRate,
+      occupancyRate: opp.occupancyRate,
+      managementFeeRate: opp.managementFeeRate,
+      publishedAt: opp.publishedAt?.toISOString() ?? null,
+      verificationRecordId: opp.verificationRecordId,
+      blockchainHash: opp.blockchainHash,
+      blockchainTxId: opp.blockchainTxId,
+      blockchainStatus: opp.blockchainStatus,
+      anchoredAt: opp.anchoredAt?.toISOString() ?? null,
+    };
+  }
+
+  async simulateOpportunityInvestment(
+    userId: string,
+    opportunityId: string,
+    shares: number,
+    holdingPeriodYears = DEFAULT_TARGET_HOLD_YEARS,
+    exitScenario: ExitScenario = 'base',
+    reinvestDistributions = false,
+  ) {
+    const opp = await this.prisma.investmentOpportunity.findUnique({where: {id: opportunityId}});
+    if (!opp) {
+      throw new NotFoundException('Investment opportunity not found.');
+    }
+    if (opp.status !== 'published') {
+      throw new BadRequestException('Only published opportunities are open for investment simulation.');
+    }
+    if (shares < opp.minimumShares) {
+      throw new BadRequestException(`Minimum investment is ${opp.minimumShares} shares for this opportunity.`);
+    }
+    if (shares > opp.availableShares) {
+      throw new BadRequestException('Shares exceed currently available shares.');
+    }
+
+    const profile: InvestmentProjectProfile = {
+      assetClass: opp.assetClass,
+      stage: opp.stage,
+      sponsorName: opp.sponsorName,
+      riskBand: opp.riskBand,
+      targetHoldYears: opp.targetHoldYears,
+      targetIrr: opp.targetIrr,
+      targetCashYield: opp.targetCashYield,
+      appreciationRate: opp.appreciationRate,
+      occupancyRate: opp.occupancyRate,
+      managementFeeRate: opp.managementFeeRate,
+      minimumShares: opp.minimumShares,
+      fundingProgress: opp.totalShares > 0
+        ? (opp.totalShares - opp.availableShares) / opp.totalShares
+        : 0,
+      distributionFrequency: opp.distributionModel,
+    };
+
+    const pricePerShare = opp.pricePerShare;
+    const subtotal = Number((pricePerShare * shares).toFixed(2));
+    const platformFee = Number((subtotal * PLATFORM_FEE_RATE).toFixed(2));
+    const governmentFee = Number((subtotal * GOVERNMENT_FEE_RATE).toFixed(2));
+    const totalAmount = Number((subtotal + platformFee + governmentFee).toFixed(2));
+    const adjustedCashYield = this.getAdjustedCashYield(profile, exitScenario);
+    const annualGrossIncome = Number((subtotal * adjustedCashYield).toFixed(2));
+    const annualManagementFee = Number((subtotal * profile.managementFeeRate).toFixed(2));
+    const annualNetCashFlow = Number((annualGrossIncome - annualManagementFee).toFixed(2));
+    const appreciationRate = this.getAppreciationRate(profile, exitScenario);
+    const projectedExitValue = Number(
+      (subtotal * Math.pow(1 + appreciationRate, holdingPeriodYears)).toFixed(2),
+    );
+    const exitFee = Number((projectedExitValue * EXIT_FEE_RATE).toFixed(2));
+    const projectedNetExitProceeds = Number((projectedExitValue - exitFee).toFixed(2));
+    const compoundedDistributions = reinvestDistributions
+      ? Number(
+          (
+            annualNetCashFlow *
+            ((Math.pow(1 + adjustedCashYield / 2, holdingPeriodYears * 2) - 1) /
+              (adjustedCashYield / 2 || 1))
+          ).toFixed(2),
+        )
+      : Number((annualNetCashFlow * holdingPeriodYears).toFixed(2));
+    const projectedProfit = Number(
+      (projectedNetExitProceeds + compoundedDistributions - totalAmount).toFixed(2),
+    );
+    const equityMultiple = Number(
+      ((projectedNetExitProceeds + compoundedDistributions) / totalAmount).toFixed(2),
+    );
+    const expectedAnnualReturn = annualNetCashFlow;
+    const expectedFiveYearReturn = Number(
+      (
+        annualNetCashFlow * 5 +
+        (subtotal * Math.pow(1 + appreciationRate, 5) - subtotal)
+      ).toFixed(2),
+    );
+    const ownershipPercentage = Number(
+      ((shares / opp.totalShares) * 100).toFixed(4),
+    );
+
+    const remainingShares = opp.availableShares - shares;
+
+    const simulation = await this.prisma.$transaction(async tx => {
+      await tx.investmentOpportunity.update({
+        where: {id: opp.id},
+        data: {availableShares: remainingShares},
+      });
+
+      return tx.investmentSimulation.create({
+        data: {
+          userId,
+          opportunityId,
+          shares,
+          pricePerShare,
+          subtotal,
+          platformFee,
+          governmentFee,
+          totalAmount,
+          ownershipPercentage,
+          expectedAnnualReturn,
+          expectedFiveYearReturn,
+          simulatedValue: subtotal,
+          holdingPeriodYears,
+          exitScenario,
+          reinvestDistributions,
+          annualGrossIncome,
+          annualManagementFee,
+          annualNetCashFlow,
+          exitFee,
+          projectedExitValue,
+          projectedNetExitProceeds,
+          projectedProfit,
+          equityMultiple,
+        },
+      });
+    });
+
+    const user = await this.prisma.user.findUnique({where: {id: userId}, select: {role: true}});
+    if (user) {
+      await this.auditService.log({
+        actorId: userId,
+        actorRole: user.role,
+        actionType: 'opportunity_simulate',
+        metadata: {
+          opportunityId,
+          simulationId: simulation.id,
+          shares,
+          subtotal,
+          totalAmount,
+          holdingPeriodYears,
+          exitScenario,
+          reinvestDistributions,
+        },
+      });
+    }
+
+    return {
+      simulationId: simulation.id,
+      opportunityId: simulation.opportunityId,
+      sharesOwned: simulation.shares,
+      pricePerShare: simulation.pricePerShare,
+      subtotal: simulation.subtotal,
+      platformFee: simulation.platformFee,
+      governmentFee: simulation.governmentFee,
+      totalAmount: simulation.totalAmount,
+      simulatedValue: simulation.simulatedValue,
+      expectedAnnualReturn: simulation.expectedAnnualReturn,
+      expectedFiveYearReturn: simulation.expectedFiveYearReturn,
+      ownershipPercentage: simulation.ownershipPercentage,
+      annualGrossIncome,
+      annualManagementFee,
+      annualNetCashFlow,
+      exitFee,
+      projectedExitValue,
+      projectedNetExitProceeds,
+      projectedProfit,
+      equityMultiple,
+      holdingPeriodYears,
+      exitScenario,
+      reinvestDistributions,
+      targetIrr: profile.targetIrr,
+      targetCashYield: profile.targetCashYield,
+      distributionFrequency: profile.distributionFrequency,
+      sponsorName: profile.sponsorName,
+      riskBand: profile.riskBand,
+      opportunityTitle: opp.title,
+      assetClass: opp.assetClass,
+      trustScore: opp.trustScore,
+      trustBadge: opp.trustBadge,
+      createdAt: simulation.createdAt.toISOString(),
+    };
+  }
+
+  async investOpportunityWithWallet(
+    userId: string,
+    opportunityId: string,
+    shares: number,
+    holdingPeriodYears = DEFAULT_TARGET_HOLD_YEARS,
+    exitScenario: ExitScenario = 'base',
+    reinvestDistributions = false,
+  ) {
+    const opp = await this.prisma.investmentOpportunity.findUnique({where: {id: opportunityId}});
+    if (!opp) throw new NotFoundException('Investment opportunity not found.');
+    if (opp.status !== 'published') {
+      throw new BadRequestException('Only published opportunities are open for investment.');
+    }
+    if (shares < opp.minimumShares) {
+      throw new BadRequestException(`Minimum investment is ${opp.minimumShares} shares.`);
+    }
+    if (shares > opp.availableShares) {
+      throw new BadRequestException('Shares exceed currently available shares.');
+    }
+
+    const pricePerShare = opp.pricePerShare;
+    const subtotal = Number((pricePerShare * shares).toFixed(2));
+    const platformFee = Number((subtotal * PLATFORM_FEE_RATE).toFixed(2));
+    const governmentFee = Number((subtotal * GOVERNMENT_FEE_RATE).toFixed(2));
+    const totalAmount = Number((subtotal + platformFee + governmentFee).toFixed(2));
+
+    const profile: InvestmentProjectProfile = {
+      assetClass: opp.assetClass,
+      stage: opp.stage,
+      sponsorName: opp.sponsorName,
+      riskBand: opp.riskBand,
+      targetHoldYears: opp.targetHoldYears,
+      targetIrr: opp.targetIrr,
+      targetCashYield: opp.targetCashYield,
+      appreciationRate: opp.appreciationRate,
+      occupancyRate: opp.occupancyRate,
+      managementFeeRate: opp.managementFeeRate,
+      minimumShares: opp.minimumShares,
+      fundingProgress: opp.totalShares > 0
+        ? (opp.totalShares - opp.availableShares) / opp.totalShares
+        : 0,
+      distributionFrequency: opp.distributionModel,
+    };
+
+    const adjustedCashYield = this.getAdjustedCashYield(profile, exitScenario);
+    const annualGrossIncome = Number((subtotal * adjustedCashYield).toFixed(2));
+    const annualManagementFee = Number((subtotal * profile.managementFeeRate).toFixed(2));
+    const annualNetCashFlow = Number((annualGrossIncome - annualManagementFee).toFixed(2));
+    const appreciationRate = this.getAppreciationRate(profile, exitScenario);
+    const projectedExitValue = Number(
+      (subtotal * Math.pow(1 + appreciationRate, holdingPeriodYears)).toFixed(2),
+    );
+    const exitFee = Number((projectedExitValue * EXIT_FEE_RATE).toFixed(2));
+    const projectedNetExitProceeds = Number((projectedExitValue - exitFee).toFixed(2));
+    const compoundedDistributions = reinvestDistributions
+      ? Number(
+          (annualNetCashFlow * ((Math.pow(1 + adjustedCashYield / 2, holdingPeriodYears * 2) - 1) / (adjustedCashYield / 2 || 1))).toFixed(2),
+        )
+      : Number((annualNetCashFlow * holdingPeriodYears).toFixed(2));
+    const projectedProfit = Number((projectedNetExitProceeds + compoundedDistributions - totalAmount).toFixed(2));
+    const equityMultiple = Number(((projectedNetExitProceeds + compoundedDistributions) / totalAmount).toFixed(2));
+    const expectedAnnualReturn = annualNetCashFlow;
+    const expectedFiveYearReturn = Number(
+      (annualNetCashFlow * 5 + (subtotal * Math.pow(1 + appreciationRate, 5) - subtotal)).toFixed(2),
+    );
+    const ownershipPercentage = Number(((shares / opp.totalShares) * 100).toFixed(4));
+    const remainingShares = opp.availableShares - shares;
+
+    const simulation = await this.prisma.$transaction(async tx => {
+      await this.walletService.debitInTransaction(
+        tx,
+        userId,
+        totalAmount,
+        WalletTxType.investment,
+        `Investment: ${opp.title} (${shares} shares)`,
+        opp.title,
+      );
+
+      await tx.investmentOpportunity.update({
+        where: {id: opp.id},
+        data: {availableShares: remainingShares},
+      });
+
+      return tx.investmentSimulation.create({
+        data: {
+          userId,
+          opportunityId,
+          shares,
+          pricePerShare,
+          subtotal,
+          platformFee,
+          governmentFee,
+          totalAmount,
+          ownershipPercentage,
+          expectedAnnualReturn,
+          expectedFiveYearReturn,
+          simulatedValue: subtotal,
+          holdingPeriodYears,
+          exitScenario,
+          reinvestDistributions,
+          annualGrossIncome,
+          annualManagementFee,
+          annualNetCashFlow,
+          exitFee,
+          projectedExitValue,
+          projectedNetExitProceeds,
+          projectedProfit,
+          equityMultiple,
+        },
+      });
+    });
+
+    const user = await this.prisma.user.findUnique({where: {id: userId}, select: {role: true}});
+    if (user) {
+      await this.auditService.log({
+        actorId: userId,
+        actorRole: user.role,
+        actionType: 'opportunity_simulate',
+        metadata: {
+          opportunityId,
+          simulationId: simulation.id,
+          shares,
+          totalAmount,
+          paymentMethod: 'ejod_wallet',
+        },
+      });
+    }
+
+    return {
+      simulationId: simulation.id,
+      opportunityId: simulation.opportunityId,
+      sharesOwned: simulation.shares,
+      pricePerShare: simulation.pricePerShare,
+      subtotal: simulation.subtotal,
+      platformFee: simulation.platformFee,
+      governmentFee: simulation.governmentFee,
+      totalAmount: simulation.totalAmount,
+      simulatedValue: simulation.simulatedValue,
+      expectedAnnualReturn: simulation.expectedAnnualReturn,
+      expectedFiveYearReturn: simulation.expectedFiveYearReturn,
+      ownershipPercentage: simulation.ownershipPercentage,
+      annualGrossIncome,
+      annualManagementFee,
+      annualNetCashFlow,
+      exitFee,
+      projectedExitValue,
+      projectedNetExitProceeds,
+      projectedProfit,
+      equityMultiple,
+      holdingPeriodYears,
+      exitScenario,
+      reinvestDistributions,
+      targetIrr: profile.targetIrr,
+      targetCashYield: profile.targetCashYield,
+      distributionFrequency: profile.distributionFrequency,
+      sponsorName: profile.sponsorName,
+      riskBand: profile.riskBand,
+      opportunityTitle: opp.title,
+      assetClass: opp.assetClass,
+      trustScore: opp.trustScore,
+      trustBadge: opp.trustBadge,
+      createdAt: simulation.createdAt.toISOString(),
+      message: 'Investment placed successfully with Ejod Wallet.',
+    };
+  }
+
+  async getOpportunityPortfolio(userId: string) {
+    const items = await this.prisma.investmentSimulation.findMany({
+      where: {userId},
+      include: {
+        opportunity: {
+          select: {
+            title: true,
+            location: true,
+            status: true,
+            assetClass: true,
+            stage: true,
+            sponsorName: true,
+            riskBand: true,
+            targetHoldYears: true,
+            targetIrr: true,
+            targetCashYield: true,
+            appreciationRate: true,
+            occupancyRate: true,
+            managementFeeRate: true,
+            totalShares: true,
+            availableShares: true,
+            distributionModel: true,
+            trustScore: true,
+            trustBadge: true,
+          },
+        },
+      },
+      orderBy: {createdAt: 'desc'},
+    });
+
+    return items.map(item => ({
+      simulationId: item.id,
+      opportunityId: item.opportunityId,
+      opportunityTitle: item.opportunity.title,
+      location: item.opportunity.location,
+      opportunityStatus: item.opportunity.status,
+      assetClass: item.opportunity.assetClass,
+      stage: item.opportunity.stage,
+      sponsorName: item.opportunity.sponsorName,
+      riskBand: item.opportunity.riskBand,
+      targetHoldYears: item.opportunity.targetHoldYears,
+      targetIrr: item.opportunity.targetIrr,
+      targetCashYield: item.opportunity.targetCashYield,
+      distributionFrequency: item.opportunity.distributionModel,
+      trustScore: item.opportunity.trustScore,
+      trustBadge: item.opportunity.trustBadge,
+      sharesOwned: item.shares,
+      pricePerShare: item.pricePerShare,
+      subtotal: item.subtotal,
+      platformFee: item.platformFee,
+      governmentFee: item.governmentFee,
+      totalAmount: item.totalAmount,
+      simulatedValue: item.simulatedValue,
+      expectedAnnualReturn: item.expectedAnnualReturn,
+      expectedFiveYearReturn: item.expectedFiveYearReturn,
+      ownershipPercentage: item.ownershipPercentage,
+      annualGrossIncome: item.annualGrossIncome,
+      annualNetCashFlow: item.annualNetCashFlow,
+      projectedProfit: item.projectedProfit,
+      equityMultiple: item.equityMultiple,
+      holdingPeriodYears: item.holdingPeriodYears,
+      exitScenario: item.exitScenario,
+      annualIncomeEstimate: item.expectedAnnualReturn,
+      projectedEquityMultiple: Number(
+        ((item.expectedFiveYearReturn + item.subtotal) / item.totalAmount).toFixed(2),
+      ),
+      createdAt: item.createdAt.toISOString(),
+    }));
+  }
+
+  // ─── Map helpers ────────────────────────────────────────────────────────────
+
+  private mapOpportunityListItem(opp: InvestmentOpportunity) {
+    const fundingGoal = opp.totalShares * opp.pricePerShare;
+    const fundedAmount = (opp.totalShares - opp.availableShares) * opp.pricePerShare;
+    const fundingProgress = opp.totalShares > 0
+      ? (opp.totalShares - opp.availableShares) / opp.totalShares
+      : 0;
+
+    return {
+      id: opp.id,
+      title: opp.title,
+      location: opp.location,
+      assetClass: opp.assetClass,
+      stage: opp.stage,
+      sponsorName: opp.sponsorName,
+      riskBand: opp.riskBand,
+      targetIrr: opp.targetIrr,
+      targetCashYield: opp.targetCashYield,
+      targetHoldYears: opp.targetHoldYears,
+      pricePerShare: opp.pricePerShare,
+      minimumShares: opp.minimumShares,
+      minimumInvestmentAmount: Number((opp.pricePerShare * opp.minimumShares).toFixed(2)),
+      fundingGoal: Number(fundingGoal.toFixed(2)),
+      fundedAmount: Number(fundedAmount.toFixed(2)),
+      fundingProgress: Number(fundingProgress.toFixed(4)),
+      trustScore: opp.trustScore,
+      trustBadge: opp.trustBadge,
+      status: opp.status,
+      publishedAt: opp.publishedAt?.toISOString() ?? null,
+      createdAt: opp.createdAt.toISOString(),
+    };
+  }
+
+  private parseJsonStringArray(value: Prisma.JsonValue | null): string[] {
+    if (!Array.isArray(value)) return [];
+    return value.filter((v): v is string => typeof v === 'string');
+  }
+
+  // ─── Legacy Property-based helpers ─────────────────────────────────────────
 
   private getProjectProfile(payload: Prisma.JsonValue | null): InvestmentProjectProfile {
     const projectProfile = isObject(payload) && isObject(payload.investmentProfile)

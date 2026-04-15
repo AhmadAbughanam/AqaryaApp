@@ -11,6 +11,7 @@ import {getPortfolio, PortfolioItem} from '../../api/investments';
 import Card from '../../components/Card';
 import StatusBadge from '../../components/StatusBadge';
 import {Colors} from '../../constants/colors';
+import {useStrings} from '../../i18n';
 
 const formatCurrency = (value: number): string =>
   new Intl.NumberFormat('en-US', {
@@ -20,6 +21,7 @@ const formatCurrency = (value: number): string =>
   }).format(value);
 
 const PortfolioScreen = () => {
+  const strings = useStrings();
   const [items, setItems] = useState<PortfolioItem[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isRefreshing, setIsRefreshing] = useState(false);
@@ -59,7 +61,7 @@ const PortfolioScreen = () => {
     return (
       <View style={styles.centeredState}>
         <ActivityIndicator size="large" color={Colors.primary} />
-        <Text style={styles.loadingText}>Loading simulation history…</Text>
+        <Text style={styles.loadingText}>{strings.portfolio.loadingText}</Text>
       </View>
     );
   }
@@ -83,26 +85,26 @@ const PortfolioScreen = () => {
         }
         ListHeaderComponent={
           <View style={styles.header}>
-            <Text style={styles.title}>Simulation History</Text>
+            <Text style={styles.title}>{strings.portfolio.screenTitle}</Text>
             <Text style={styles.subtitle}>
-              Review your recorded investment commitments, cash yield, and exit assumptions.
+              {strings.portfolio.screenSubtitle}
             </Text>
 
             <View style={styles.summaryRow}>
               <Card variant="dark" padding="md" style={styles.summaryCard}>
                 <Text style={styles.darkStatValue}>{summary.totalSimulations}</Text>
-                <Text style={styles.darkStatLabel}>Records</Text>
+                <Text style={styles.darkStatLabel}>{strings.portfolio.recordsLabel}</Text>
               </Card>
               <Card variant="default" padding="md" style={styles.summaryCard}>
                 <Text style={styles.lightStatValue}>
                   {formatCurrency(summary.totalOutlay)}
                 </Text>
-                <Text style={styles.lightStatLabel}>Total Outlay</Text>
+                <Text style={styles.lightStatLabel}>{strings.portfolio.totalOutlayLabel}</Text>
               </Card>
             </View>
 
             <Card variant="default" padding="md" style={styles.expectedCard}>
-              <Text style={styles.expectedLabel}>Expected annual return</Text>
+              <Text style={styles.expectedLabel}>{strings.portfolio.expectedAnnualReturn}</Text>
               <Text style={styles.expectedValue}>
                 {formatCurrency(summary.expectedAnnualReturn)}
               </Text>
@@ -124,36 +126,40 @@ const PortfolioScreen = () => {
               </View>
               <StatusBadge status={item.propertyStatus} />
             </View>
-            <Text style={styles.itemMeta}>Shares owned {item.sharesOwned}</Text>
             {item.projectProfile ? (
-              <Text style={styles.itemMeta}>
-                {item.projectProfile.assetClass} | {item.projectProfile.riskBand} |{' '}
-                {item.projectProfile.distributionFrequency}
-              </Text>
+              <View style={styles.itemTagRow}>
+                <Text style={styles.itemTag}>{item.projectProfile.assetClass}</Text>
+                <Text style={styles.itemTag}>{item.projectProfile.riskBand}</Text>
+                <Text style={styles.itemTag}>{item.projectProfile.distributionFrequency}</Text>
+              </View>
             ) : null}
-            <Text style={styles.itemMeta}>
-              Fees {formatCurrency(item.platformFee + item.governmentFee)}
-            </Text>
-            <Text style={styles.itemMeta}>
-              Total amount {formatCurrency(item.totalAmount)}
-            </Text>
-            <Text style={styles.itemMeta}>
-              Annual cash flow{' '}
-              {formatCurrency(item.annualIncomeEstimate ?? item.expectedAnnualReturn)}
-            </Text>
-            <Text style={styles.itemMeta}>
-              5Y upside {formatCurrency(item.expectedFiveYearReturn)}
-            </Text>
-            <Text style={styles.itemMeta}>
-              Equity multiple {(item.projectedEquityMultiple ?? 1).toFixed(2)}x
-            </Text>
+            <View style={styles.itemMetricsGrid}>
+              <View style={styles.itemMetric}>
+                <Text style={styles.itemMetricValue}>{item.sharesOwned}</Text>
+                <Text style={styles.itemMetricLabel}>{strings.portfolio.sharesOwnedLabel}</Text>
+              </View>
+              <View style={styles.itemMetric}>
+                <Text style={styles.itemMetricValue}>{formatCurrency(item.totalAmount)}</Text>
+                <Text style={styles.itemMetricLabel}>{strings.portfolio.totalAmountLabel}</Text>
+              </View>
+              <View style={styles.itemMetric}>
+                <Text style={styles.itemMetricValue}>
+                  {formatCurrency(item.annualIncomeEstimate ?? item.expectedAnnualReturn)}
+                </Text>
+                <Text style={styles.itemMetricLabel}>{strings.portfolio.annualCashFlowLabel}</Text>
+              </View>
+              <View style={styles.itemMetric}>
+                <Text style={styles.itemMetricValue}>{(item.projectedEquityMultiple ?? 1).toFixed(2)}x</Text>
+                <Text style={styles.itemMetricLabel}>{strings.portfolio.equityMultipleLabel}</Text>
+              </View>
+            </View>
           </Card>
         )}
         ListEmptyComponent={
           <View style={styles.emptyState}>
-            <Text style={styles.emptyTitle}>No simulations yet</Text>
+            <Text style={styles.emptyTitle}>{strings.portfolio.emptyTitle}</Text>
             <Text style={styles.emptyText}>
-              Run a buy simulation from the marketplace to build history.
+              {strings.portfolio.emptyText}
             </Text>
           </View>
         }
@@ -169,7 +175,7 @@ const styles = StyleSheet.create({
   },
   listContent: {
     padding: 16,
-    paddingBottom: 32,
+    paddingBottom: 16,
   },
   centeredState: {
     alignItems: 'center',
@@ -264,6 +270,48 @@ const styles = StyleSheet.create({
   itemMeta: {
     color: Colors.textSecondary,
     marginTop: 10,
+  },
+  itemTagRow: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 6,
+    marginTop: 10,
+  },
+  itemTag: {
+    backgroundColor: Colors.backgroundMuted,
+    borderRadius: 100,
+    color: Colors.textSecondary,
+    fontSize: 11,
+    fontWeight: '600',
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+  },
+  itemMetricsGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 0,
+    marginTop: 12,
+    borderTopColor: Colors.border,
+    borderTopWidth: 1,
+  },
+  itemMetric: {
+    paddingTop: 10,
+    paddingRight: 12,
+    width: '50%',
+    marginBottom: 8,
+  },
+  itemMetricValue: {
+    color: Colors.textPrimary,
+    fontSize: 15,
+    fontWeight: '700',
+  },
+  itemMetricLabel: {
+    color: Colors.textMuted,
+    fontSize: 11,
+    fontWeight: '500',
+    marginTop: 2,
+    textTransform: 'uppercase',
+    letterSpacing: 0.3,
   },
   emptyState: {
     alignItems: 'center',

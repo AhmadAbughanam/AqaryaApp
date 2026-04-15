@@ -3,6 +3,7 @@ import {
   Controller,
   Get,
   Param,
+  ParseFloatPipe,
   ParseIntPipe,
   Post,
   Query,
@@ -27,8 +28,24 @@ export class PropertiesController {
     @Query('page', new ParseIntPipe({optional: true})) page = 1,
     @Query('limit', new ParseIntPipe({optional: true})) limit = 20,
     @Query('search') search?: string,
+    @Query('marketType') marketType?: string,
+    @Query('city') city?: string,
+    @Query('propertyType') propertyType?: string,
+    @Query('minPrice', new ParseFloatPipe({optional: true})) minPrice?: number,
+    @Query('maxPrice', new ParseFloatPipe({optional: true})) maxPrice?: number,
+    @Query('sort') sort?: string,
   ) {
-    return this.propertiesService.getSaleListings({page, limit, search});
+    return this.propertiesService.getSaleListings({
+      page,
+      limit,
+      search,
+      marketType,
+      city,
+      propertyType,
+      minPrice,
+      maxPrice,
+      sort,
+    });
   }
 
   @Post('sell-listings')
@@ -50,5 +67,11 @@ export class PropertiesController {
   @Roles('citizen')
   buyProperty(@Param('id') id: string, @CurrentUser() user: AuthUser) {
     return this.propertiesService.buySaleProperty(id, user.sub, user.role);
+  }
+
+  @Post(':id/buy-with-wallet')
+  @Roles('citizen')
+  buyPropertyWithWallet(@Param('id') id: string, @CurrentUser() user: AuthUser) {
+    return this.propertiesService.buySalePropertyWithWallet(id, user.sub, user.role);
   }
 }

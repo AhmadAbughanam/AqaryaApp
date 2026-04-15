@@ -2,6 +2,7 @@ import React, {useCallback, useEffect, useMemo, useState} from 'react';
 import {
   ActivityIndicator,
   FlatList,
+  Pressable,
   RefreshControl,
   ScrollView,
   StyleSheet,
@@ -9,18 +10,25 @@ import {
   View,
 } from 'react-native';
 import {NativeStackScreenProps} from '@react-navigation/native-stack';
+import {BottomTabNavigationProp} from '@react-navigation/bottom-tabs';
 import {
   getPilotProperties,
   PilotProperty,
   SimulationResult,
   simulateInvestment,
 } from '../../api/investments';
+import {
+  getOpportunities,
+  InvestmentOpportunityListItem,
+} from '../../api/investmentOpportunities';
 import Card from '../../components/Card';
 import Button from '../../components/Button';
 import Input from '../../components/Input';
 import Modal from '../../components/Modal';
 import {CitizenStackParamList} from '../../navigation/CitizenStack';
+import {CitizenTabParamList} from '../../navigation/CitizenTabNavigator';
 import {Colors} from '../../constants/colors';
+import {useStrings} from '../../i18n';
 
 type Props = NativeStackScreenProps<CitizenStackParamList, 'InvestmentSimulation'>;
 type ExitScenario = 'conservative' | 'base' | 'optimistic';
@@ -33,9 +41,14 @@ const formatCurrency = (value: number): string =>
   }).format(value);
 
 const InvestmentSimulationScreen = ({navigation, route}: Props) => {
+  const strings = useStrings();
   const preferredPropertyId = route.params?.propertyId;
+  const tabNav = navigation.getParent<BottomTabNavigationProp<CitizenTabParamList>>();
 
   const [properties, setProperties] = useState<PilotProperty[]>([]);
+  const [featuredOpportunities, setFeaturedOpportunities] = useState<
+    InvestmentOpportunityListItem[]
+  >([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
@@ -50,8 +63,12 @@ const InvestmentSimulationScreen = ({navigation, route}: Props) => {
 
   const fetchPilotProperties = useCallback(async () => {
     try {
-      const response = await getPilotProperties();
+      const [response, oppsResponse] = await Promise.all([
+        getPilotProperties(),
+        getOpportunities({limit: 3}),
+      ]);
       setProperties(response);
+      setFeaturedOpportunities(oppsResponse.items);
       setErrorMessage(null);
 
       if (preferredPropertyId) {
@@ -193,7 +210,7 @@ const InvestmentSimulationScreen = ({navigation, route}: Props) => {
     return (
       <View style={styles.centeredState}>
         <ActivityIndicator size="large" color={Colors.primary} />
-        <Text style={styles.loadingText}>Loading opportunities…</Text>
+        <Text style={styles.loadingText}>{strings.investmentSimulation.loadingText}</Text>
       </View>
     );
   }
@@ -218,9 +235,43 @@ const InvestmentSimulationScreen = ({navigation, route}: Props) => {
           }
           ListHeaderComponent={
             <View style={styles.header}>
+              {featuredOpportunities.length > 0 ? (
+                <View style={styles.featuredSection}>
+                  <Text style={styles.featuredLabel}>{strings.investmentSimulation.featuredLabel}</Text>
+                  {featuredOpportunities.map(opp => (
+                    <Pressable
+                      key={opp.id}
+                      onPress={() =>
+                        tabNav?.navigate('HomeTab', {
+                          screen: 'InvestmentOpportunityDetail',
+                          params: {id: opp.id},
+                        })
+                      }
+                      style={({pressed}) => [
+                        styles.featuredCard,
+                        pressed && styles.featuredCardPressed,
+                      ]}
+                      accessibilityRole="button"
+                      accessibilityLabel={opp.title}>
+                      <View style={styles.featuredCardRow}>
+                        <View style={styles.featuredCardBody}>
+                          <Text style={styles.featuredCardTitle} numberOfLines={1}>
+                            {opp.title}
+                          </Text>
+                          <Text style={styles.featuredCardMeta}>
+                            {opp.assetClass} · {(opp.targetIrr * 100).toFixed(1)}% IRR ·{' '}
+                            {(opp.fundingProgress * 100).toFixed(0)}% funded
+                          </Text>
+                        </View>
+                        <Text style={styles.featuredCardArrow}>›</Text>
+                      </View>
+                    </Pressable>
+                  ))}
+                </View>
+              ) : null}
               <Text style={styles.screenTitle}>Investment Projects</Text>
               <Text style={styles.screenSubtitle}>
-                Review sponsor quality, target yield, funding progress, and your underwriting assumptions before you invest.
+                {strings.investmentSimulation.screenSubtitle}
               </Text>
               {errorMessage ? (
                 <View style={styles.errorBanner}>
@@ -244,9 +295,9 @@ const InvestmentSimulationScreen = ({navigation, route}: Props) => {
               </View>
 
               <View style={styles.selectionStats}>
-                <Text style={styles.selectionStat}>Sponsor {item.sponsorName}</Text>
+                <Text style={styles.selectionStat}>{strings.investmentSimulation.sponsorLabel} {item.sponsorName}</Text>
                 <Text style={styles.selectionStat}>
-                  {formatCurrency(item.pricePerShare)} / share
+                  {formatCurrency(item.pricePerShare)} {strings.investmentSimulation.perShare}
                 </Text>
                 <Text style={styles.selectionStat}>
                   Minimum ticket {formatCurrency(item.minimumInvestmentAmount)}
@@ -261,8 +312,7 @@ const InvestmentSimulationScreen = ({navigation, route}: Props) => {
                 </Text>
               </View>
 
-              <Button
-                label="Underwrite"
+              <Pressable
                 onPress={() => {
                   setSelectedProperty(item);
                   setSharesInput('');
@@ -270,9 +320,10 @@ const InvestmentSimulationScreen = ({navigation, route}: Props) => {
                   setExitScenario('base');
                   setReinvestDistributions(false);
                 }}
-                variant="primary"
-                size="sm"
-              />
+                style={({pressed}) => [styles.selectBtn, pressed && {opacity: 0.80}]}
+                accessibilityRole="button">
+                <Text style={styles.selectBtnText}>{strings.investmentSimulation.underwriteButton}</Text>
+              </Pressable>
             </Card>
           )}
         />
@@ -294,7 +345,7 @@ const InvestmentSimulationScreen = ({navigation, route}: Props) => {
               </Text>
             </View>
 
-            <Text style={styles.selectionStat}>Sponsor {selectedProperty.sponsorName}</Text>
+            <Text style={styles.selectionStat}>{strings.investmentSimulation.sponsorLabel} {selectedProperty.sponsorName}</Text>
             <Text style={styles.selectionStat}>
               Target IRR {(selectedProperty.targetIrr * 100).toFixed(1)}% | Occupancy{' '}
               {(selectedProperty.occupancyRate * 100).toFixed(0)}%
@@ -304,25 +355,24 @@ const InvestmentSimulationScreen = ({navigation, route}: Props) => {
               {selectedProperty.minimumShares}
             </Text>
 
-            <Button
-              label="Change Project"
+            <Pressable
               onPress={() => setSelectedProperty(null)}
-              variant="secondary"
-              size="sm"
-              style={styles.changeButton}
-            />
+              style={({pressed}) => [styles.changeBtn, pressed && {opacity: 0.80}]}
+              accessibilityRole="button">
+              <Text style={styles.changeBtnText}>{strings.investmentSimulation.changeProjectButton}</Text>
+            </Pressable>
           </Card>
 
           <Card variant="default" padding="md" style={styles.formCard}>
             <Input
-              label="Shares to invest"
+              label={strings.investmentSimulation.sharesToInvestLabel}
               value={sharesInput}
               keyboardType="numeric"
               onChangeText={value => setSharesInput(value.replace(/[^0-9]/g, ''))}
-              helperText={`Minimum ${selectedProperty.minimumShares} shares • Maximum available ${selectedProperty.availableShares}`}
+              helperText={`${strings.investmentSimulation.minimumSharesLabel} ${selectedProperty.minimumShares} • Maximum available ${selectedProperty.availableShares}`}
             />
             <Input
-              label="Planned hold period"
+              label={strings.investmentSimulation.holdingPeriodLabel}
               value={holdingPeriodInput}
               keyboardType="numeric"
               onChangeText={value =>
@@ -333,36 +383,44 @@ const InvestmentSimulationScreen = ({navigation, route}: Props) => {
           </Card>
 
           <Card variant="default" padding="md" style={styles.formCard}>
-            <Text style={styles.sectionHeading}>Exit Scenario</Text>
+            <Text style={styles.sectionHeading}>{strings.investmentSimulation.exitScenarioLabel}</Text>
             <View style={styles.optionRow}>
-              {(['conservative', 'base', 'optimistic'] as const).map(option => (
-                <Button
-                  key={option}
-                  label={option.charAt(0).toUpperCase() + option.slice(1)}
-                  onPress={() => setExitScenario(option)}
-                  variant={exitScenario === option ? 'primary' : 'secondary'}
-                  size="sm"
-                  style={styles.optionButton}
-                />
-              ))}
+              {(['conservative', 'base', 'optimistic'] as const).map(option => {
+                const scenarioLabel =
+                  option === 'conservative'
+                    ? strings.investmentSimulation.conservative
+                    : option === 'base'
+                    ? strings.investmentSimulation.base
+                    : strings.investmentSimulation.optimistic;
+                return (
+                  <Button
+                    key={option}
+                    label={scenarioLabel}
+                    onPress={() => setExitScenario(option)}
+                    variant={exitScenario === option ? 'primary' : 'secondary'}
+                    size="sm"
+                    style={styles.optionButton}
+                  />
+                );
+              })}
             </View>
             <Text style={styles.helperLine}>
-              Conservative reduces rent and exit growth assumptions. Optimistic assumes stronger lease-up and pricing.
+              {strings.investmentSimulation.exitScenarioHelper}
             </Text>
           </Card>
 
           <Card variant="default" padding="md" style={styles.formCard}>
-            <Text style={styles.sectionHeading}>Distribution Plan</Text>
+            <Text style={styles.sectionHeading}>{strings.investmentSimulation.distributionPlanLabel}</Text>
             <View style={styles.optionRow}>
               <Button
-                label="Cash Payout"
+                label={strings.investmentSimulation.cashPayout}
                 onPress={() => setReinvestDistributions(false)}
                 variant={!reinvestDistributions ? 'primary' : 'secondary'}
                 size="sm"
                 style={styles.optionButton}
               />
               <Button
-                label="Reinvest"
+                label={strings.investmentSimulation.reinvestLabel}
                 onPress={() => setReinvestDistributions(true)}
                 variant={reinvestDistributions ? 'primary' : 'secondary'}
                 size="sm"
@@ -370,49 +428,53 @@ const InvestmentSimulationScreen = ({navigation, route}: Props) => {
               />
             </View>
             <Text style={styles.helperLine}>
-              Reinvestment compounds distributions instead of paying them out as cash.
+              {strings.investmentSimulation.distributionHelper}
             </Text>
           </Card>
 
-          <Card variant="dark" padding="md" style={styles.previewCard}>
-            <Text style={styles.previewTitle}>Investment Underwriting</Text>
-            <Text style={styles.previewLine}>
-              Equity commitment {formatCurrency(computed.subtotal)}
+          <View style={styles.previewCard}>
+            <Text style={styles.previewTitle}>Projected Return</Text>
+
+            <View style={styles.previewMetric}>
+              <Text style={styles.previewMetricValue}>{formatCurrency(computed.projectedExitValue)}</Text>
+              <Text style={styles.previewMetricLabel}>Projected Value</Text>
+            </View>
+            <View style={styles.previewMetric}>
+              <Text style={[styles.previewMetricValue, styles.previewMetricAccent]}>
+                +{formatCurrency(Math.max(0, computed.projectedProfit))}
+              </Text>
+              <Text style={styles.previewMetricLabel}>Net Profit</Text>
+            </View>
+            {selectedProperty ? (
+              <View style={styles.previewMetric}>
+                <Text style={[styles.previewMetricValue, styles.previewMetricAccent]}>
+                  +{(selectedProperty.targetIrr * 100).toFixed(1)}%
+                </Text>
+                <Text style={styles.previewMetricLabel}>Target ROI</Text>
+              </View>
+            ) : null}
+            <View style={styles.previewMetric}>
+              <Text style={[styles.previewMetricValue, styles.previewMetricAccent]}>
+                +{formatCurrency(computed.annualNetCashFlow)}
+              </Text>
+              <Text style={styles.previewMetricLabel}>Annual Yield</Text>
+            </View>
+
+            <View style={styles.previewDivider} />
+
+            <View style={styles.previewRoiRow}>
+              <Text style={styles.previewRoiLabel}>Expected ROI</Text>
+              {selectedProperty ? (
+                <Text style={styles.previewRoiValue}>+{(selectedProperty.targetIrr * 100).toFixed(1)}%</Text>
+              ) : null}
+            </View>
+            <Text style={styles.previewRoiSub}>
+              Invest {formatCurrency(computed.totalAmount)}  →  Earn {formatCurrency(computed.projectedExitValue)}
             </Text>
-            <Text style={styles.previewLine}>
-              Origination fee {formatCurrency(computed.platformFee)}
+            <Text style={styles.previewDisclaimer}>
+              This is a projection based on the selected scenario and holding period. Actual returns may vary.
             </Text>
-            <Text style={styles.previewLine}>
-              Legal and registry {formatCurrency(computed.governmentFee)}
-            </Text>
-            <Text style={styles.previewLine}>
-              Day-one cash outlay {formatCurrency(computed.totalAmount)}
-            </Text>
-            <Text style={styles.previewLine}>
-              Gross annual income {formatCurrency(computed.annualGrossIncome)}
-            </Text>
-            <Text style={styles.previewLine}>
-              Asset management drag {formatCurrency(computed.annualManagementFee)}
-            </Text>
-            <Text style={styles.previewLine}>
-              Net annual cash flow {formatCurrency(computed.annualNetCashFlow)}
-            </Text>
-            <Text style={styles.previewLine}>
-              Projected exit value {formatCurrency(computed.projectedExitValue)}
-            </Text>
-            <Text style={styles.previewLine}>
-              Net exit proceeds {formatCurrency(computed.projectedNetExitProceeds)}
-            </Text>
-            <Text style={styles.previewLine}>
-              Projected profit {formatCurrency(computed.projectedProfit)}
-            </Text>
-            <Text style={styles.previewLine}>
-              Equity multiple {computed.equityMultiple.toFixed(2)}x
-            </Text>
-            <Text style={styles.previewLine}>
-              Ownership {computed.ownershipPercentage.toFixed(2)}%
-            </Text>
-          </Card>
+          </View>
 
           {errorMessage ? (
             <View style={styles.errorBanner}>
@@ -420,36 +482,36 @@ const InvestmentSimulationScreen = ({navigation, route}: Props) => {
             </View>
           ) : null}
 
-          <Button
-            label="Commit Simulation"
+          <Pressable
             onPress={() => void onSubmitSimulation()}
-            variant="primary"
-            size="lg"
-            fullWidth
-            loading={isSubmitting}
-            disabled={!selectedProperty}
-          />
+            disabled={isSubmitting || !selectedProperty}
+            style={({pressed}) => [styles.submitBtn, (isSubmitting || !selectedProperty) && styles.submitBtnDisabled, pressed && styles.submitBtnPressed]}
+            accessibilityRole="button">
+            {isSubmitting
+              ? <ActivityIndicator color="#000000" size="small" />
+              : <Text style={styles.submitBtnText}>Start Investment</Text>}
+          </Pressable>
         </ScrollView>
       )}
 
       <Modal
         visible={showSuccessModal}
         onClose={() => setShowSuccessModal(false)}
-        title="Investment Recorded"
+        title={strings.investmentSimulation.investmentRecordedTitle}
         subtitle={
           lastResult
             ? `${formatCurrency(lastResult.projectedProfit)} projected profit at ${lastResult.equityMultiple.toFixed(2)}x equity multiple.`
             : 'The simulated investment has been saved to your history.'
         }
         primaryAction={{
-          label: 'View History',
+          label: strings.investmentSimulation.viewHistoryButton,
           onPress: () => {
             setShowSuccessModal(false);
             navigation.navigate('Portfolio');
           },
         }}
         secondaryAction={{
-          label: 'Underwrite Again',
+          label: strings.investmentSimulation.underwriteAgainButton,
           onPress: () => {
             setShowSuccessModal(false);
             setSelectedProperty(null);
@@ -462,12 +524,12 @@ const InvestmentSimulationScreen = ({navigation, route}: Props) => {
 
 const styles = StyleSheet.create({
   container: {
-    backgroundColor: Colors.backgroundPrimary,
+    backgroundColor: '#0D0D0C',
     flex: 1,
   },
   centeredState: {
     alignItems: 'center',
-    backgroundColor: Colors.backgroundPrimary,
+    backgroundColor: '#0D0D0C',
     flex: 1,
     justifyContent: 'center',
   },
@@ -483,30 +545,36 @@ const styles = StyleSheet.create({
     marginBottom: 16,
   },
   screenTitle: {
-    color: Colors.textPrimary,
+    color: '#E8E8E4',
     fontSize: 24,
     fontWeight: '800',
+    letterSpacing: 0.1,
     marginBottom: 4,
   },
   screenSubtitle: {
-    color: Colors.textSecondary,
+    color: '#6B6B68',
     fontSize: 14,
     lineHeight: 20,
   },
   selectionCard: {
+    backgroundColor: '#1A1A18',
+    borderColor: 'rgba(255,255,255,0.08)',
+    borderRadius: 16,
+    borderWidth: 1,
     marginBottom: 14,
+    padding: 16,
   },
   selectionTitle: {
-    color: Colors.textPrimary,
+    color: '#E8E8E4',
     fontSize: 17,
     fontWeight: '700',
   },
   selectionSubtitle: {
-    color: Colors.textSecondary,
+    color: '#6B6B68',
     marginTop: 4,
   },
   selectionDescription: {
-    color: Colors.textSecondary,
+    color: '#6B6B68',
     lineHeight: 20,
     marginTop: 10,
     marginBottom: 12,
@@ -516,7 +584,7 @@ const styles = StyleSheet.create({
     marginBottom: 12,
   },
   selectionStat: {
-    color: Colors.textMuted,
+    color: '#ADADAA',
     fontSize: 12,
   },
   projectMetaRow: {
@@ -526,9 +594,9 @@ const styles = StyleSheet.create({
     marginBottom: 12,
   },
   projectMetaPill: {
-    backgroundColor: Colors.backgroundMuted,
+    backgroundColor: 'rgba(255,255,255,0.07)',
     borderRadius: 999,
-    color: Colors.textSecondary,
+    color: '#ADADAA',
     fontSize: 11,
     fontWeight: '600',
     overflow: 'hidden',
@@ -536,6 +604,7 @@ const styles = StyleSheet.create({
     paddingVertical: 6,
   },
   formScreen: {
+    backgroundColor: '#0D0D0C',
     flex: 1,
   },
   formContent: {
@@ -543,23 +612,88 @@ const styles = StyleSheet.create({
     paddingBottom: 32,
   },
   formCard: {
+    backgroundColor: '#1A1A18',
+    borderColor: 'rgba(255,255,255,0.08)',
+    borderRadius: 16,
+    borderWidth: 1,
     marginBottom: 14,
+    padding: 16,
   },
   previewCard: {
+    backgroundColor: '#1A1A18',
+    borderColor: 'rgba(212,168,83,0.20)',
+    borderRadius: 16,
+    borderWidth: 1,
     marginBottom: 14,
+    padding: 20,
   },
   previewTitle: {
-    color: Colors.textOnDark,
+    color: '#E8E8E4',
     fontSize: 16,
     fontWeight: '700',
-    marginBottom: 10,
+    letterSpacing: 0.1,
+    marginBottom: 16,
   },
   previewLine: {
-    color: Colors.textOnDark,
+    color: '#ADADAA',
+    fontSize: 13,
+    marginBottom: 6,
+  },
+  previewMetric: {
+    alignItems: 'baseline',
+    flexDirection: 'row',
+    gap: 8,
+    marginBottom: 12,
+  },
+  previewMetricValue: {
+    color: '#E8E8E4',
+    fontSize: 22,
+    fontWeight: '800',
+    letterSpacing: 0.1,
+  },
+  previewMetricLabel: {
+    color: '#6B6B68',
+    fontSize: 13,
+    fontWeight: '500',
+  },
+  previewMetricAccent: {
+    color: '#D4A853',
+  },
+  previewDivider: {
+    backgroundColor: 'rgba(255,255,255,0.06)',
+    height: 1,
+    marginBottom: 14,
+    marginTop: 4,
+  },
+  previewRoiRow: {
+    alignItems: 'center',
+    flexDirection: 'row',
+    justifyContent: 'space-between',
     marginBottom: 8,
   },
+  previewRoiLabel: {
+    color: '#E8E8E4',
+    fontSize: 14,
+    fontWeight: '700',
+  },
+  previewRoiValue: {
+    color: '#D4A853',
+    fontSize: 16,
+    fontWeight: '800',
+  },
+  previewRoiSub: {
+    color: '#6B6B68',
+    fontSize: 12,
+    marginBottom: 8,
+  },
+  previewDisclaimer: {
+    color: '#666663',
+    fontSize: 11,
+    lineHeight: 16,
+    marginTop: 4,
+  },
   sectionHeading: {
-    color: Colors.textPrimary,
+    color: '#E8E8E4',
     fontSize: 15,
     fontWeight: '700',
     marginBottom: 10,
@@ -574,13 +708,9 @@ const styles = StyleSheet.create({
     minWidth: 0,
   },
   helperLine: {
-    color: Colors.textSecondary,
+    color: '#6B6B68',
     fontSize: 12,
     lineHeight: 18,
-  },
-  changeButton: {
-    alignSelf: 'flex-start',
-    marginTop: 12,
   },
   errorBanner: {
     backgroundColor: Colors.errorLight,
@@ -593,6 +723,96 @@ const styles = StyleSheet.create({
     color: Colors.error,
     fontSize: 13,
     fontWeight: '500',
+  },
+  featuredSection: {
+    marginBottom: 20,
+  },
+  featuredLabel: {
+    color: Colors.textPrimary,
+    fontSize: 15,
+    fontWeight: '700',
+    marginBottom: 10,
+  },
+  featuredCard: {
+    backgroundColor: '#1A1A18',
+    borderColor: 'rgba(212,168,83,0.20)',
+    borderRadius: 14,
+    borderWidth: 1,
+    marginBottom: 8,
+    padding: 14,
+  },
+  featuredCardPressed: {
+    opacity: 0.80,
+  },
+  featuredCardRow: {
+    alignItems: 'center',
+    flexDirection: 'row',
+    gap: 10,
+  },
+  featuredCardBody: {
+    flex: 1,
+  },
+  featuredCardTitle: {
+    color: '#E8E8E4',
+    fontSize: 14,
+    fontWeight: '700',
+  },
+  featuredCardMeta: {
+    color: '#6B6B68',
+    fontSize: 12,
+    marginTop: 3,
+  },
+  featuredCardArrow: {
+    color: '#D4A853',
+    fontSize: 20,
+    fontWeight: '700',
+  },
+  submitBtn: {
+    alignItems: 'center',
+    backgroundColor: '#1A1A1A',
+    borderRadius: 100,
+    marginBottom: 14,
+    paddingVertical: 16,
+  },
+  submitBtnDisabled: {
+    opacity: 0.35,
+  },
+  submitBtnPressed: {
+    opacity: 0.80,
+  },
+  submitBtnText: {
+    color: '#FFFFFF',
+    fontSize: 15,
+    fontWeight: '800',
+    letterSpacing: 0.3,
+  },
+  selectBtn: {
+    alignItems: 'center',
+    alignSelf: 'flex-start',
+    backgroundColor: '#1A1A1A',
+    borderRadius: 100,
+    marginTop: 12,
+    paddingHorizontal: 18,
+    paddingVertical: 9,
+  },
+  selectBtnText: {
+    color: '#FFFFFF',
+    fontSize: 13,
+    fontWeight: '700',
+  },
+  changeBtn: {
+    alignItems: 'center',
+    alignSelf: 'flex-start',
+    backgroundColor: 'rgba(255,255,255,0.07)',
+    borderRadius: 100,
+    marginTop: 12,
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+  },
+  changeBtnText: {
+    color: '#ADADAA',
+    fontSize: 13,
+    fontWeight: '600',
   },
 });
 

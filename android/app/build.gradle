@@ -72,6 +72,15 @@ def enableProguardInReleaseBuilds = false
  */
 def jscFlavor = 'io.github.react-native-community:jsc-android:2026004.+'
 
+def aqaryaReleaseStoreFile = project.findProperty("AQARYA_RELEASE_STORE_FILE")
+def aqaryaReleaseStorePassword = project.findProperty("AQARYA_RELEASE_STORE_PASSWORD")
+def aqaryaReleaseKeyAlias = project.findProperty("AQARYA_RELEASE_KEY_ALIAS")
+def aqaryaReleaseKeyPassword = project.findProperty("AQARYA_RELEASE_KEY_PASSWORD")
+def hasAqaryaReleaseSigning = aqaryaReleaseStoreFile &&
+        aqaryaReleaseStorePassword &&
+        aqaryaReleaseKeyAlias &&
+        aqaryaReleaseKeyPassword
+
 android {
     ndkVersion rootProject.ext.ndkVersion
     buildToolsVersion rootProject.ext.buildToolsVersion
@@ -92,26 +101,27 @@ android {
             keyAlias 'androiddebugkey'
             keyPassword 'android'
         }
+        if (hasAqaryaReleaseSigning) {
+            release {
+                storeFile file(aqaryaReleaseStoreFile)
+                storePassword aqaryaReleaseStorePassword
+                keyAlias aqaryaReleaseKeyAlias
+                keyPassword aqaryaReleaseKeyPassword
+            }
+        }
     }
-    signingConfigs {
-    release {
-        storeFile file(AQARYA_RELEASE_STORE_FILE)
-        storePassword AQARYA_RELEASE_STORE_PASSWORD
-        keyAlias AQARYA_RELEASE_KEY_ALIAS
-        keyPassword AQARYA_RELEASE_KEY_PASSWORD
-    }
-}
 
     buildTypes {
         debug {
             signingConfig signingConfigs.debug
         }
         release {
-    signingConfig signingConfigs.release
-    minifyEnabled enableProguardInReleaseBuilds
-    proguardFiles getDefaultProguardFile("proguard-android.txt"), "proguard-rules.pro"
-}
-
+            if (hasAqaryaReleaseSigning) {
+                signingConfig signingConfigs.release
+            }
+            minifyEnabled enableProguardInReleaseBuilds
+            proguardFiles getDefaultProguardFile("proguard-android.txt"), "proguard-rules.pro"
+        }
     }
 }
 

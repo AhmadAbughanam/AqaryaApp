@@ -1,20 +1,19 @@
 import React from 'react';
-import {Pressable, StyleSheet, Text, View} from 'react-native';
 import {createNativeStackNavigator} from '@react-navigation/native-stack';
-import {useAuth} from '../store/AuthContext';
-import PropertyListScreen from '../screens/citizen/PropertyListScreen';
+import MyPropertiesScreen from '../screens/citizen/MyPropertiesScreen';
 import PropertyDetailScreen from '../screens/citizen/PropertyDetailScreen';
 import InvestmentSimulationScreen from '../screens/citizen/InvestmentSimulationScreen';
 import PortfolioScreen from '../screens/citizen/PortfolioScreen';
 import SellPropertyScreen from '../screens/citizen/SellPropertyScreen';
-import CitizenProfileScreen from '../screens/citizen/CitizenProfileScreen';
+import HelpScreen from '../screens/citizen/HelpScreen';
 import {Colors} from '../constants/colors';
 
 export type CitizenStackParamList = {
-  SellingMarketplace: undefined;
+  MyProperties: undefined;
   PropertyDetail: {id: string};
   InvestmentSimulation: {propertyId?: string} | undefined;
   Portfolio: undefined;
+  Help: undefined;
   SellProperty:
     | {
         propertyId?: string;
@@ -29,7 +28,6 @@ export type CitizenStackParamList = {
         price?: number;
       }
     | undefined;
-  Profile: undefined;
 };
 
 const sharedHeaderOptions = {
@@ -50,36 +48,17 @@ const sharedHeaderOptions = {
   },
 };
 
-const SignOutButton = ({onPress}: {onPress: () => void}) => (
-  <Pressable
-    onPress={onPress}
-    style={({pressed}) => [styles.signOutBtn, pressed && styles.signOutBtnPressed]}
-    hitSlop={8}
-    accessibilityLabel="Sign out"
-    accessibilityRole="button">
-    <View style={styles.signOutPill}>
-      <Text style={styles.signOutText}>Sign Out</Text>
-    </View>
-  </Pressable>
-);
-
 const Stack = createNativeStackNavigator<CitizenStackParamList>();
 
 const CitizenStack = () => {
-  const {signOut} = useAuth();
-  const signOutButton = <SignOutButton onPress={() => void signOut()} />;
-
   return (
     <Stack.Navigator
-      initialRouteName="SellingMarketplace"
-      screenOptions={{
-        ...sharedHeaderOptions,
-        headerRight: () => signOutButton,
-      }}>
+      initialRouteName="MyProperties"
+      screenOptions={sharedHeaderOptions}>
       <Stack.Screen
-        name="SellingMarketplace"
-        component={PropertyListScreen}
-        options={{title: 'Selling Marketplace'}}
+        name="MyProperties"
+        component={MyPropertiesScreen}
+        options={{headerShown: false}}
       />
 
       <Stack.Screen
@@ -107,35 +86,13 @@ const CitizenStack = () => {
       />
 
       <Stack.Screen
-        name="Profile"
-        component={CitizenProfileScreen}
-        options={{title: 'My Profile'}}
+        name="Help"
+        component={HelpScreen}
+        options={{title: 'Help & Support'}}
       />
     </Stack.Navigator>
   );
 };
 
-const styles = StyleSheet.create({
-  signOutBtn: {
-    marginRight: 4,
-  },
-  signOutBtnPressed: {
-    opacity: 0.7,
-  },
-  signOutPill: {
-    backgroundColor: Colors.backgroundMuted,
-    borderColor: Colors.border,
-    borderRadius: 100,
-    borderWidth: 1,
-    paddingHorizontal: 12,
-    paddingVertical: 5,
-  },
-  signOutText: {
-    color: Colors.textSecondary,
-    fontSize: 12,
-    fontWeight: '600',
-    letterSpacing: 0.1,
-  },
-});
 
 export default CitizenStack;

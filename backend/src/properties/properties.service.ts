@@ -4,10 +4,11 @@ import {
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
-import {Property, Prisma, UserRole} from '@prisma/client';
+import {Property, Prisma, UserRole, WalletTxType} from '@prisma/client';
 import {AuditService} from '../audit/audit.service';
 import {PrismaService} from '../common/prisma.service';
 import {VerificationService} from '../verification/verification.service';
+import {WalletService} from '../wallet/wallet.service';
 import {CreateSaleListingDto} from './dto/create-sale-listing.dto';
 
 interface ListingFilters {
@@ -15,6 +16,12 @@ interface ListingFilters {
   limit?: number;
   search?: string;
   includeAllStatuses?: boolean;
+  marketType?: string;
+  city?: string;
+  propertyType?: string;
+  minPrice?: number;
+  maxPrice?: number;
+  sort?: string;
 }
 
 @Injectable()
@@ -23,6 +30,7 @@ export class PropertiesService {
     private readonly prisma: PrismaService,
     private readonly auditService: AuditService,
     private readonly verificationService: VerificationService,
+    private readonly walletService: WalletService,
   ) {}
 
   async createSaleListing(userId: string, userRole: UserRole, dto: CreateSaleListingDto) {
@@ -85,6 +93,14 @@ export class PropertiesService {
           propertyValue: dto.propertyValue,
           totalShares,
           availableShares: totalShares,
+          ...(dto.city !== undefined ? {city: dto.city} : {}),
+          ...(dto.propertyType !== undefined ? {propertyType: dto.propertyType} : {}),
+          ...(dto.bedrooms !== undefined ? {bedrooms: dto.bedrooms} : {}),
+          ...(dto.bathrooms !== undefined ? {bathrooms: dto.bathrooms} : {}),
+          ...(dto.areaSqm !== undefined ? {areaSqm: dto.areaSqm} : {}),
+          ...(dto.amenities !== undefined ? {amenities: dto.amenities} : {}),
+          ...(dto.latitude !== undefined ? {latitude: dto.latitude} : {}),
+          ...(dto.longitude !== undefined ? {longitude: dto.longitude} : {}),
           status:
             verification.listingConsistent && verification.ownershipProofMatches
               ? 'pending_verification'
@@ -139,6 +155,14 @@ export class PropertiesService {
         propertyValue: dto.propertyValue,
         totalShares,
         availableShares: totalShares,
+        ...(dto.city !== undefined ? {city: dto.city} : {}),
+        ...(dto.propertyType !== undefined ? {propertyType: dto.propertyType} : {}),
+        ...(dto.bedrooms !== undefined ? {bedrooms: dto.bedrooms} : {}),
+        ...(dto.bathrooms !== undefined ? {bathrooms: dto.bathrooms} : {}),
+        ...(dto.areaSqm !== undefined ? {areaSqm: dto.areaSqm} : {}),
+        ...(dto.amenities !== undefined ? {amenities: dto.amenities} : {}),
+        ...(dto.latitude !== undefined ? {latitude: dto.latitude} : {}),
+        ...(dto.longitude !== undefined ? {longitude: dto.longitude} : {}),
         status:
           verification.listingConsistent && verification.ownershipProofMatches
             ? 'pending_verification'
@@ -178,8 +202,17 @@ export class PropertiesService {
     const limit = filters.limit ?? 20;
     const search = filters.search?.trim();
 
+    const resolvedMarketType = (filters.marketType as 'sale' | 'investment' | 'rent') ?? 'sale';
+    const priceFilter: Prisma.FloatFilter | undefined =
+      filters.minPrice !== undefined || filters.maxPrice !== undefined
+        ? {
+            ...(filters.minPrice !== undefined ? {gte: filters.minPrice} : {}),
+            ...(filters.maxPrice !== undefined ? {lte: filters.maxPrice} : {}),
+          }
+        : undefined;
+
     const where: Prisma.PropertyWhereInput = {
-      marketType: 'sale',
+      marketType: resolvedMarketType,
       ...(filters.includeAllStatuses ? {} : {status: 'verified'}),
       ...(search
         ? {
@@ -190,12 +223,24 @@ export class PropertiesService {
             ],
           }
         : {}),
+      ...(filters.city ? {city: {contains: filters.city, mode: 'insensitive'}} : {}),
+      ...(filters.propertyType
+        ? {propertyType: {contains: filters.propertyType, mode: 'insensitive'}}
+        : {}),
+      ...(priceFilter ? {price: priceFilter} : {}),
     };
+
+    const orderBy: Prisma.PropertyOrderByWithRelationInput[] =
+      filters.sort === 'price_asc'
+        ? [{price: 'asc'}]
+        : filters.sort === 'price_desc'
+          ? [{price: 'desc'}]
+          : [{updatedAt: 'desc'}];
 
     const [items, total] = await this.prisma.$transaction([
       this.prisma.property.findMany({
         where,
-        orderBy: [{updatedAt: 'desc'}],
+        orderBy,
         skip: (page - 1) * limit,
         take: limit,
       }),
@@ -344,6 +389,67 @@ export class PropertiesService {
     };
   }
 
+  async buySalePropertyWithWallet(id: string, buyerId: string, buyerRole: UserRole) {
+    const [buyer, property] = await Promise.all([
+      this.prisma.user.findUnique({where: {id: buyerId}, select: {id: true, username: true}}),
+      this.prisma.property.findUnique({where: {id}}),
+    ]);
+
+    if (!buyer) throw new NotFoundException('Buyer account not found.');
+    if (!property) throw new NotFoundException('Property not found.');
+    if (property.marketType !== 'sale') {
+      throw new BadRequestException('Only sale listings can be purchased directly.');
+    }
+    if (property.status !== 'verified' || property.availableShares < 1) {
+      throw new BadRequestException('Property is not available for purchase.');
+    }
+    if (property.ownerId === buyerId) {
+      throw new BadRequestException('You already own this property.');
+    }
+
+    const purchasedProperty = await this.prisma.$transaction(async tx => {
+      await this.walletService.debitInTransaction(
+        tx,
+        buyerId,
+        property.price,
+        WalletTxType.purchase,
+        `Property purchase: ${property.title}`,
+        property.title,
+      );
+
+      return tx.property.update({
+        where: {id: property.id},
+        data: {
+          ownerId: buyer.id,
+          ownerName: buyer.username,
+          status: 'sold',
+          availableShares: 0,
+          updatedAt: new Date(),
+        },
+      });
+    });
+
+    await this.auditService.log({
+      actorId: buyerId,
+      actorRole: buyerRole,
+      actionType: 'listing_submitted',
+      propertyId: purchasedProperty.id,
+      metadata: {
+        event: 'property_purchased_with_wallet',
+        previousOwnerId: property.ownerId,
+        buyerId: buyer.id,
+        buyerUsername: buyer.username,
+        price: purchasedProperty.price,
+        paymentMethod: 'ejod_wallet',
+      },
+    });
+
+    return {
+      ...this.mapPropertySummary(purchasedProperty),
+      message: 'Property purchased successfully with Ejod Wallet.',
+    };
+  }
+
   private mapPropertySummary(property: Property) {
     return {
       id: property.id,
@@ -360,7 +466,23 @@ export class PropertiesService {
       verificationTimestamp:
         property.verificationTimestamp?.toISOString() ??
         property.updatedAt.toISOString(),
+      city: property.city ?? null,
+      propertyType: property.propertyType ?? null,
+      bedrooms: property.bedrooms ?? null,
+      bathrooms: property.bathrooms ?? null,
+      areaSqm: property.areaSqm ?? null,
+      amenities: this.parseAmenities(property.amenities),
+      latitude: property.latitude ?? null,
+      longitude: property.longitude ?? null,
+      imageUrls: this.parseImageUrls(property.imageUrls),
     };
+  }
+
+  private parseAmenities(amenities: Prisma.JsonValue | null): string[] {
+    if (!Array.isArray(amenities)) {
+      return [];
+    }
+    return amenities.filter((value): value is string => typeof value === 'string');
   }
 
   private parseImageUrls(imageUrls: Prisma.JsonValue | null): string[] {

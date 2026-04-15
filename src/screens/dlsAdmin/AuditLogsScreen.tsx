@@ -1,5 +1,3 @@
-// Audit logs screen with filters, pagination, and expandable metadata.
-
 import React, {useCallback, useEffect, useMemo, useState} from 'react';
 import {
   ActivityIndicator,
@@ -11,16 +9,15 @@ import {
   View,
 } from 'react-native';
 import {AdminActionType, AuditLogItem, getAuditLogs} from '../../api/admin';
-import Card from '../../components/Card';
 import Button from '../../components/Button';
 import Input from '../../components/Input';
 import {formatDateTime} from '../../utils/formatters';
-import {Colors} from '../../constants/colors';
-import {Strings} from '../../constants/strings';
-
-// ─── Constants ────────────────────────────────────────────────────────────────
+import {AC} from '../../constants/adminColors';
+import {CalendarIcon, WarningCircleIcon} from '../../components/AdminIcon';
+import {useStrings} from '../../i18n';
 
 const PAGE_SIZE = 20;
+
 const ACTION_FILTERS: Array<'all' | AdminActionType> = [
   'all',
   'listing_verified',
@@ -28,36 +25,27 @@ const ACTION_FILTERS: Array<'all' | AdminActionType> = [
   'anchor',
 ];
 
-// Action type visual config
-const ACTION_CONFIG: Record<
-  string,
-  {color: string; bg: string; icon: string}
-> = {
-  listing_verified:  {color: Colors.success, bg: Colors.successLight, icon: '✓'},
-  listing_frozen:  {color: Colors.error,   bg: Colors.errorLight,   icon: '⏸'},
-  anchor:  {color: Colors.info,    bg: Colors.infoLight,    icon: '🔗'},
-  default: {color: Colors.textSecondary, bg: Colors.backgroundMuted, icon: '•'},
+const ACTION_CONFIG: Record<string, {color: string; bg: string; label: string}> = {
+  listing_verified: {color: AC.success, bg: AC.successDim, label: 'VERIFIED'},
+  listing_frozen: {color: AC.danger, bg: AC.dangerDim, label: 'FROZEN'},
+  anchor: {color: AC.cyan, bg: AC.cyanDim, label: 'ANCHOR'},
+  default: {color: AC.textSecondary, bg: AC.surfaceMid, label: 'EVENT'},
 };
 
-// ─── Sub-components ───────────────────────────────────────────────────────────
-
-const ActionTypeBadge = ({actionType}: {actionType: string}) => {
+const ActionBadge = ({actionType}: {actionType: string}) => {
   const config = ACTION_CONFIG[actionType.toLowerCase()] ?? ACTION_CONFIG.default;
   return (
     <View style={[styles.actionBadge, {backgroundColor: config.bg}]}>
-      <Text style={[styles.actionBadgeIcon, {color: config.color}]}>
-        {config.icon}
-      </Text>
       <Text style={[styles.actionBadgeText, {color: config.color}]}>
-        {actionType.toUpperCase()}
+        {config.label}
       </Text>
     </View>
   );
 };
 
-// ─── Main component ───────────────────────────────────────────────────────────
-
 const AuditLogsScreen = () => {
+  const strings = useStrings();
+  const al = strings.admin.auditLogs;
   const [logs, setLogs] = useState<AuditLogItem[]>([]);
   const [page, setPage] = useState(1);
   const [hasNextPage, setHasNextPage] = useState(false);
@@ -102,13 +90,11 @@ const AuditLogsScreen = () => {
     try {
       await fetchPage(1, 'replace');
     } catch (error) {
-      setErrorMessage(
-        error instanceof Error ? error.message : 'Unable to load audit logs.',
-      );
+      setErrorMessage(error instanceof Error ? error.message : al.errorLoad);
     } finally {
       setIsInitialLoading(false);
     }
-  }, [fetchPage]);
+  }, [al, fetchPage]);
 
   useEffect(() => {
     void loadInitial();
@@ -120,71 +106,59 @@ const AuditLogsScreen = () => {
     try {
       await fetchPage(1, 'replace');
     } catch (error) {
-      setErrorMessage(
-        error instanceof Error ? error.message : 'Unable to refresh.',
-      );
+      setErrorMessage(error instanceof Error ? error.message : al.errorLoad);
     } finally {
       setIsRefreshing(false);
     }
-  }, [fetchPage]);
+  }, [al, fetchPage]);
 
   const onLoadMore = useCallback(async () => {
-    if (!hasNextPage || isLoadingMore || isInitialLoading) {return;}
+    if (!hasNextPage || isLoadingMore || isInitialLoading) return;
     setIsLoadingMore(true);
     try {
       await fetchPage(page + 1, 'append');
     } catch (error) {
-      setErrorMessage(
-        error instanceof Error ? error.message : 'Unable to load more.',
-      );
+      setErrorMessage(error instanceof Error ? error.message : al.errorLoad);
     } finally {
       setIsLoadingMore(false);
     }
-  }, [fetchPage, hasNextPage, isInitialLoading, isLoadingMore, page]);
+  }, [al, fetchPage, hasNextPage, isInitialLoading, isLoadingMore, page]);
 
-  // ── Render log item ────────────────────────────────────────────────────────
   const renderLog = ({item}: {item: AuditLogItem}) => {
     const isExpanded = Boolean(expandedLogIds[item.id]);
     const toggleExpanded = () =>
       setExpandedLogIds(prev => ({...prev, [item.id]: !prev[item.id]}));
 
     return (
-      <Card variant="default" padding="none" style={styles.logCard}>
-        {/* Header row */}
+      <View style={styles.logCard}>
+        {/* Header */}
         <View style={styles.logHeader}>
-          <ActionTypeBadge actionType={item.actionType} />
-          <Text style={styles.logTimestamp}>
-            {formatDateTime(item.timestamp)}
-          </Text>
+          <ActionBadge actionType={item.actionType} />
+          <Text style={styles.logTimestamp}>{formatDateTime(item.timestamp)}</Text>
         </View>
 
-        {/* Meta rows */}
+        {/* Meta */}
         <View style={styles.logMeta}>
-          <View style={styles.logMetaRow}>
-            <Text style={styles.logMetaLabel}>Actor</Text>
-            <Text style={styles.logMetaValue}>{item.actorName}</Text>
+          <View style={styles.metaRow}>
+            <Text style={styles.metaLabel}>{al.labelActor}</Text>
+            <Text style={styles.metaValue}>{item.actorName}</Text>
           </View>
-          <View style={styles.logMetaRow}>
-            <Text style={styles.logMetaLabel}>Role</Text>
-            <Text style={styles.logMetaValue}>{item.actorRole}</Text>
+          <View style={styles.metaRow}>
+            <Text style={styles.metaLabel}>{al.labelRole}</Text>
+            <Text style={styles.metaValue}>{item.actorRole}</Text>
           </View>
-          <View style={[styles.logMetaRow, styles.logMetaRowLast]}>
-            <Text style={styles.logMetaLabel}>Property ID</Text>
-            <Text
-              style={[styles.logMetaValue, styles.logMetaValueMono]}
-              numberOfLines={1}>
+          <View style={styles.metaRow}>
+            <Text style={styles.metaLabel}>{al.labelProperty}</Text>
+            <Text style={[styles.metaValue, styles.metaValueMono]} numberOfLines={1}>
               {item.propertyId}
             </Text>
           </View>
         </View>
 
-        {/* Expand metadata toggle */}
-        <Pressable
-          onPress={toggleExpanded}
-          style={styles.expandToggle}
-          hitSlop={8}>
+        {/* Expand toggle */}
+        <Pressable onPress={toggleExpanded} style={styles.expandToggle} hitSlop={8}>
           <Text style={styles.expandToggleText}>
-            {isExpanded ? '▲  Hide metadata' : '▼  View metadata'}
+            {isExpanded ? al.collapseMetadata : al.expandMetadata}
           </Text>
         </Pressable>
 
@@ -196,61 +170,65 @@ const AuditLogsScreen = () => {
             </Text>
           </View>
         )}
-      </Card>
+      </View>
     );
   };
 
   return (
     <View style={styles.container}>
-
-      {/* ── Filter panel ── */}
+      {/* Filter panel */}
       <View style={styles.filterPanel}>
-        {/* Action type chips */}
-        <Text style={styles.filterSectionLabel}>Action Type</Text>
+        <Text style={styles.filterLabel}>{al.filterActionType}</Text>
         <View style={styles.filterChipsRow}>
           {ACTION_FILTERS.map(filter => {
             const isActive = filter === actionTypeFilter;
+            const config = filter !== 'all' ? (ACTION_CONFIG[filter] ?? ACTION_CONFIG.default) : null;
             return (
               <Pressable
                 key={filter}
                 onPress={() => setActionTypeFilter(filter)}
                 style={[
                   styles.filterChip,
-                  isActive && styles.filterChipActive,
+                  isActive && config && {
+                    backgroundColor: config.bg,
+                    borderColor: config.color + '50',
+                  },
+                  isActive && !config && styles.filterChipActiveDefault,
                 ]}>
                 <Text
                   style={[
                     styles.filterChipText,
-                    isActive && styles.filterChipTextActive,
+                    isActive && config && {color: config.color},
+                    isActive && !config && {color: AC.accent},
                   ]}>
-                  {filter === 'all' ? 'All' : filter.charAt(0).toUpperCase() + filter.slice(1)}
+                  {filter === 'all'
+                    ? al.filterAll
+                    : filter.charAt(0).toUpperCase() + filter.slice(1).replace(/_/g, ' ')}
                 </Text>
               </Pressable>
             );
           })}
         </View>
 
-        {/* Date range inputs */}
         <View style={styles.dateRow}>
           <Input
             placeholder="From (YYYY-MM-DD)"
             value={dateFromFilter}
             onChangeText={setDateFromFilter}
             containerStyle={styles.dateInput}
-            leftIcon={<Text style={styles.inputIcon}>📅</Text>}
+            leftIcon={<CalendarIcon size={16} color={AC.textSecondary} />}
           />
           <Input
             placeholder="To (YYYY-MM-DD)"
             value={dateToFilter}
             onChangeText={setDateToFilter}
             containerStyle={styles.dateInput}
-            leftIcon={<Text style={styles.inputIcon}>📅</Text>}
+            leftIcon={<CalendarIcon size={16} color={AC.textSecondary} />}
           />
         </View>
 
-        {/* Apply button */}
         <Button
-          label="Apply Filters"
+          label={al.applyFilters}
           onPress={() => void loadInitial()}
           variant="primary"
           size="sm"
@@ -258,11 +236,11 @@ const AuditLogsScreen = () => {
         />
       </View>
 
-      {/* ── List ── */}
+      {/* List */}
       {isInitialLoading ? (
         <View style={styles.centeredState}>
-          <ActivityIndicator size="large" color={Colors.primary} />
-          <Text style={styles.loadingText}>{Strings.common.loading}</Text>
+          <ActivityIndicator size="large" color={AC.accent} />
+          <Text style={styles.loadingText}>{al.loadingText}</Text>
         </View>
       ) : (
         <FlatList
@@ -275,8 +253,8 @@ const AuditLogsScreen = () => {
             <RefreshControl
               refreshing={isRefreshing}
               onRefresh={onRefresh}
-              tintColor={Colors.primary}
-              colors={[Colors.primary]}
+              tintColor={AC.accent}
+              colors={[AC.accent]}
             />
           }
           contentContainerStyle={styles.listContent}
@@ -284,26 +262,24 @@ const AuditLogsScreen = () => {
           ListHeaderComponent={
             errorMessage ? (
               <View style={styles.errorBanner}>
-                <Text style={styles.errorBannerText}>⚠  {errorMessage}</Text>
+                <View style={styles.errorBannerRow}>
+                  <WarningCircleIcon size={14} color={AC.danger} />
+                  <Text style={styles.errorBannerText}>{errorMessage}</Text>
+                </View>
               </View>
             ) : null
           }
           ListEmptyComponent={
             <View style={styles.emptyState}>
-              <Text style={styles.emptyEmoji}>📋</Text>
-              <Text style={styles.emptyTitle}>
-                {Strings.auditLogs.emptyTitle}
-              </Text>
-              <Text style={styles.emptyMessage}>
-                {Strings.auditLogs.emptyMessage}
-              </Text>
+              <Text style={styles.emptyTitle}>{al.noLogsTitle}</Text>
+              <Text style={styles.emptyMessage}>{al.noLogsText}</Text>
             </View>
           }
           ListFooterComponent={
             isLoadingMore ? (
               <View style={styles.footerLoader}>
-                <ActivityIndicator color={Colors.primary} size="small" />
-                <Text style={styles.loadingMoreText}>Loading more…</Text>
+                <ActivityIndicator color={AC.accent} size="small" />
+                <Text style={styles.loadingMoreText}>{al.loadingMore}</Text>
               </View>
             ) : null
           }
@@ -313,27 +289,25 @@ const AuditLogsScreen = () => {
   );
 };
 
-// ─── Styles ───────────────────────────────────────────────────────────────────
-
 const styles = StyleSheet.create({
   container: {
-    backgroundColor: Colors.backgroundPrimary,
+    backgroundColor: AC.bg,
     flex: 1,
   },
 
-  // ── Filter panel ──────────────────────────────────────────────────────────
+  // Filter panel
   filterPanel: {
-    backgroundColor: Colors.backgroundSecondary,
-    borderBottomColor: Colors.border,
+    backgroundColor: AC.surface,
+    borderBottomColor: AC.border,
     borderBottomWidth: 1,
     gap: 10,
     padding: 14,
   },
-  filterSectionLabel: {
-    color: Colors.textSecondary,
-    fontSize: 11,
-    fontWeight: '600',
-    letterSpacing: 0.4,
+  filterLabel: {
+    color: AC.textMuted,
+    fontSize: 10,
+    fontWeight: '700',
+    letterSpacing: 1.1,
     textTransform: 'uppercase',
   },
   filterChipsRow: {
@@ -342,24 +316,21 @@ const styles = StyleSheet.create({
     gap: 8,
   },
   filterChip: {
-    backgroundColor: Colors.backgroundMuted,
-    borderColor: Colors.border,
+    backgroundColor: AC.surfaceMid,
+    borderColor: AC.border,
     borderRadius: 100,
     borderWidth: 1,
     paddingHorizontal: 14,
     paddingVertical: 7,
   },
-  filterChipActive: {
-    backgroundColor: Colors.primaryDark,
-    borderColor: Colors.primaryDark,
+  filterChipActiveDefault: {
+    backgroundColor: AC.accentDim,
+    borderColor: AC.borderAccent,
   },
   filterChipText: {
-    color: Colors.textSecondary,
+    color: AC.textSecondary,
     fontSize: 12,
     fontWeight: '600',
-  },
-  filterChipTextActive: {
-    color: Colors.textOnDark,
   },
   dateRow: {
     flexDirection: 'row',
@@ -368,20 +339,20 @@ const styles = StyleSheet.create({
   dateInput: {
     flex: 1,
   },
-  inputIcon: {
-    fontSize: 14,
-  },
-
-  // ── List ──────────────────────────────────────────────────────────────────
+  // List
   listContent: {
     flexGrow: 1,
     padding: 16,
     paddingBottom: 32,
   },
 
-  // ── Log card ──────────────────────────────────────────────────────────────
+  // Log card
   logCard: {
-    marginBottom: 12,
+    backgroundColor: AC.surface,
+    borderColor: AC.border,
+    borderRadius: 14,
+    borderWidth: 1,
+    marginBottom: 10,
     overflow: 'hidden',
   },
   logHeader: {
@@ -392,93 +363,79 @@ const styles = StyleSheet.create({
     paddingBottom: 10,
   },
   logTimestamp: {
-    color: Colors.textMuted,
+    color: AC.textMuted,
     fontSize: 11,
-    fontWeight: '400',
   },
-
-  // Action badge
   actionBadge: {
-    alignItems: 'center',
     borderRadius: 100,
-    flexDirection: 'row',
-    gap: 5,
     paddingHorizontal: 10,
     paddingVertical: 5,
-  },
-  actionBadgeIcon: {
-    fontSize: 11,
-    fontWeight: '700',
   },
   actionBadgeText: {
     fontSize: 11,
     fontWeight: '700',
-    letterSpacing: 0.5,
+    letterSpacing: 0.7,
   },
 
   // Meta rows
   logMeta: {
-    borderTopColor: Colors.border,
+    borderTopColor: AC.border,
     borderTopWidth: 1,
+    gap: 6,
     paddingHorizontal: 12,
     paddingVertical: 10,
-    gap: 6,
   },
-  logMetaRow: {
+  metaRow: {
     alignItems: 'center',
     flexDirection: 'row',
     gap: 8,
   },
-  logMetaRowLast: {
-    // no border needed, just spacing
-  },
-  logMetaLabel: {
-    color: Colors.textMuted,
+  metaLabel: {
+    color: AC.textMuted,
     fontSize: 12,
     fontWeight: '500',
-    width: 80,
+    width: 72,
   },
-  logMetaValue: {
-    color: Colors.textPrimary,
+  metaValue: {
+    color: AC.textPrimary,
     flex: 1,
     fontSize: 13,
     fontWeight: '500',
   },
-  logMetaValueMono: {
+  metaValueMono: {
     fontFamily: 'monospace',
     fontSize: 12,
   },
 
   // Expand toggle
   expandToggle: {
-    borderTopColor: Colors.border,
+    borderTopColor: AC.border,
     borderTopWidth: 1,
     paddingHorizontal: 12,
     paddingVertical: 10,
   },
   expandToggleText: {
-    color: Colors.primary,
+    color: AC.accent,
     fontSize: 12,
     fontWeight: '600',
   },
 
   // Metadata block
   metadataBlock: {
-    backgroundColor: Colors.cardDark,
-    margin: 12,
-    marginTop: 0,
-    borderRadius: 12,
+    backgroundColor: AC.codeBg,
+    borderTopColor: AC.border,
+    borderTopWidth: 1,
     padding: 12,
   },
   metadataText: {
-    color: Colors.chatOnlineIndicator,
+    color: AC.codeText,
     fontFamily: 'monospace',
     fontSize: 11,
-    letterSpacing: 0.3,
+    letterSpacing: 0.2,
     lineHeight: 18,
   },
 
-  // ── Centered states ───────────────────────────────────────────────────────
+  // States
   centeredState: {
     alignItems: 'center',
     flex: 1,
@@ -486,51 +443,46 @@ const styles = StyleSheet.create({
     padding: 32,
   },
   loadingText: {
-    color: Colors.textSecondary,
+    color: AC.textSecondary,
     fontSize: 14,
     marginTop: 12,
   },
-
-  // Error banner
   errorBanner: {
-    backgroundColor: Colors.errorLight,
-    borderRadius: 12,
+    backgroundColor: AC.dangerDim,
+    borderColor: AC.borderDanger,
+    borderRadius: 10,
+    borderWidth: 1,
     marginBottom: 12,
     paddingHorizontal: 14,
     paddingVertical: 10,
   },
-  errorBannerText: {
-    color: Colors.error,
-    fontSize: 13,
-    fontWeight: '500',
-    textAlign: 'center',
+  errorBannerRow: {
+    alignItems: 'center',
+    flexDirection: 'row',
+    gap: 8,
   },
-
-  // Empty state
+  errorBannerText: {
+    color: AC.danger,
+    flex: 1,
+    fontSize: 13,
+  },
   emptyState: {
     alignItems: 'center',
     paddingHorizontal: 32,
     paddingTop: 60,
   },
-  emptyEmoji: {
-    fontSize: 48,
-    marginBottom: 16,
-    opacity: 0.4,
-  },
   emptyTitle: {
-    color: Colors.textPrimary,
-    fontSize: 18,
+    color: AC.textSecondary,
+    fontSize: 16,
     fontWeight: '700',
     marginBottom: 8,
   },
   emptyMessage: {
-    color: Colors.textSecondary,
-    fontSize: 14,
+    color: AC.textMuted,
+    fontSize: 13,
     lineHeight: 20,
     textAlign: 'center',
   },
-
-  // Footer loader
   footerLoader: {
     alignItems: 'center',
     flexDirection: 'row',
@@ -539,7 +491,7 @@ const styles = StyleSheet.create({
     paddingVertical: 20,
   },
   loadingMoreText: {
-    color: Colors.textSecondary,
+    color: AC.textSecondary,
     fontSize: 13,
   },
 });

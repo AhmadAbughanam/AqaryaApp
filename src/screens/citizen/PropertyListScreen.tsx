@@ -17,8 +17,9 @@ import {formatDateTime} from '../../utils/formatters';
 import {buyProperty, getProperties, PropertyListItem} from '../../api/properties';
 import {CitizenStackParamList} from '../../navigation/CitizenStack';
 import {Colors} from '../../constants/colors';
+import {useStrings} from '../../i18n';
 
-type Props = NativeStackScreenProps<CitizenStackParamList, 'SellingMarketplace'>;
+type Props = NativeStackScreenProps<CitizenStackParamList, 'MyProperties'>;
 
 const PAGE_SIZE = 20;
 
@@ -30,6 +31,7 @@ const formatCurrency = (value: number): string =>
   }).format(value);
 
 const PropertyListScreen = ({navigation}: Props) => {
+  const strings = useStrings();
   const [items, setItems] = useState<PropertyListItem[]>([]);
   const [search, setSearch] = useState('');
   const [isInitialLoading, setIsInitialLoading] = useState(true);
@@ -43,6 +45,7 @@ const PropertyListScreen = ({navigation}: Props) => {
         page: 1,
         limit: PAGE_SIZE,
         search: search.trim() || undefined,
+        marketType: 'sale',
       });
       setItems(response.items);
       setErrorMessage(null);
@@ -62,22 +65,22 @@ const PropertyListScreen = ({navigation}: Props) => {
 
   const onBuyProperty = (property: PropertyListItem) => {
     Alert.alert(
-      'Buy Property',
+      strings.propertyDetail.confirmBuyTitle,
       `Buy ${property.title} for ${formatCurrency(property.price)}?`,
       [
-        {text: 'Cancel', style: 'cancel'},
+        {text: strings.propertyDetail.confirmBuyCancel, style: 'cancel'},
         {
-          text: 'Buy',
+          text: strings.propertyDetail.confirmBuyConfirm,
           onPress: () => {
             void (async () => {
               try {
                 setBuyingPropertyId(property.id);
                 await buyProperty(property.id);
-                Alert.alert('Purchase complete', 'The property has been added to your ownership profile.');
+                Alert.alert(strings.propertyList.purchaseComplete, strings.propertyList.purchaseCompleteMsg);
                 await loadListings();
               } catch (error) {
                 Alert.alert(
-                  'Purchase failed',
+                  strings.propertyList.purchaseFailed,
                   error instanceof Error ? error.message : 'Unable to complete the purchase.',
                 );
               } finally {
@@ -107,35 +110,35 @@ const PropertyListScreen = ({navigation}: Props) => {
       <View style={styles.metricsRow}>
         <View style={styles.metricPill}>
           <Text style={styles.metricValue}>{formatCurrency(item.price)}</Text>
-          <Text style={styles.metricLabel}>Asking Price</Text>
+          <Text style={styles.metricLabel}>{strings.propertyList.askingPrice}</Text>
         </View>
         <View style={styles.metricPill}>
           <Text style={styles.metricValue}>{formatCurrency(item.propertyValue)}</Text>
-          <Text style={styles.metricLabel}>Valuation</Text>
+          <Text style={styles.metricLabel}>{strings.propertyList.valuation}</Text>
         </View>
         <View style={styles.metricPill}>
-          <Text style={styles.metricValue}>Direct Sale</Text>
-          <Text style={styles.metricLabel}>Listing Type</Text>
+          <Text style={styles.metricValue}>{strings.propertyList.directSale}</Text>
+          <Text style={styles.metricLabel}>{strings.propertyList.listingType}</Text>
         </View>
       </View>
 
       <View style={styles.metaRow}>
-        <Text style={styles.metaText}>Owner: {item.ownerName}</Text>
+        <Text style={styles.metaText}>{`${strings.propertyList.ownerLabel}: ${item.ownerName}`}</Text>
         <Text style={styles.metaText}>
-          Verified {formatDateTime(item.verificationTimestamp)}
+          {`${strings.propertyList.verifiedAtLabel} ${formatDateTime(item.verificationTimestamp)}`}
         </Text>
       </View>
 
       <View style={styles.actionsRow}>
         <Button
-          label="Details"
+          label={strings.propertyList.detailsButton}
           onPress={() => navigation.navigate('PropertyDetail', {id: item.id})}
           variant="secondary"
           size="sm"
           style={styles.actionButton}
         />
         <Button
-          label="Buy Property"
+          label={strings.propertyList.buyButton}
           onPress={() => onBuyProperty(item)}
           variant="primary"
           size="sm"
@@ -150,7 +153,7 @@ const PropertyListScreen = ({navigation}: Props) => {
     return (
       <View style={styles.centeredState}>
         <ActivityIndicator size="large" color={Colors.primary} />
-        <Text style={styles.loadingText}>Loading marketplace…</Text>
+        <Text style={styles.loadingText}>{strings.propertyList.loadingText}</Text>
       </View>
     );
   }
@@ -174,29 +177,22 @@ const PropertyListScreen = ({navigation}: Props) => {
         }
         ListHeaderComponent={
           <View style={styles.header}>
-            <Text style={styles.screenTitle}>Homes For Sale</Text>
+            <Text style={styles.screenTitle}>{strings.propertyList.homesForSale}</Text>
             <Text style={styles.screenSubtitle}>
-              Browse verified direct-sale property listings. Investment projects are shown separately.
+              {strings.propertyList.listingSubtitle}
             </Text>
 
             <View style={styles.topActionRow}>
               <Button
-                label="Sell Property"
+                label={strings.propertyList.sellButton}
                 onPress={() => navigation.navigate('SellProperty')}
                 variant="primary"
                 size="sm"
                 style={styles.topActionButton}
               />
               <Button
-                label="Invest"
+                label={strings.propertyList.investButton}
                 onPress={() => navigation.navigate('InvestmentSimulation')}
-                variant="secondary"
-                size="sm"
-                style={styles.topActionButton}
-              />
-              <Button
-                label="My Profile"
-                onPress={() => navigation.navigate('Profile')}
                 variant="secondary"
                 size="sm"
                 style={styles.topActionButton}
@@ -204,15 +200,15 @@ const PropertyListScreen = ({navigation}: Props) => {
             </View>
 
             <Input
-              label="Search listings"
-              placeholder="Search by title or location"
+              label={strings.propertyList.searchLabel}
+              placeholder={strings.propertyList.searchInputPlaceholder}
               value={search}
               onChangeText={setSearch}
               autoCapitalize="none"
               containerStyle={styles.searchInput}
             />
             <Button
-              label="Apply Search"
+              label={strings.propertyList.applySearch}
               onPress={() => {
                 setIsInitialLoading(true);
                 void loadListings();
@@ -231,9 +227,9 @@ const PropertyListScreen = ({navigation}: Props) => {
         renderItem={renderItem}
         ListEmptyComponent={
           <View style={styles.emptyState}>
-            <Text style={styles.emptyTitle}>No verified listings found</Text>
+            <Text style={styles.emptyTitle}>{strings.propertyList.verifiedEmpty}</Text>
             <Text style={styles.emptyText}>
-              Adjust the search or list one of your owned homes for sale.
+              {strings.propertyList.adjustSearch}
             </Text>
           </View>
         }
@@ -249,7 +245,7 @@ const styles = StyleSheet.create({
   },
   listContent: {
     padding: 16,
-    paddingBottom: 32,
+    paddingBottom: 16,
   },
   header: {
     marginBottom: 16,

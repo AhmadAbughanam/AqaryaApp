@@ -42,6 +42,13 @@ const STATUS_CONFIG: Record<
     dotColor: Colors.warning,
     icon: '⏳',
   },
+  needs_changes: {
+    label: 'Needs Changes',
+    background: Colors.warningLight,
+    textColor: Colors.warning,
+    dotColor: Colors.warning,
+    icon: '↩',
+  },
   rejected: {
     label: 'Rejected',
     background: Colors.errorLight,

@@ -4,12 +4,13 @@ import {ApiError, createAuthenticatedApiClient} from './client';
 export type VerificationStatus =
   | 'pending'
   | 'pending_verification'
+  | 'needs_changes'
   | 'verified'
   | 'rejected'
   | 'frozen'
   | 'sold';
 
-export type MarketType = 'sale' | 'investment';
+export type MarketType = 'sale' | 'investment' | 'rent';
 
 export interface PropertyListItem {
   id: string;
@@ -24,6 +25,15 @@ export interface PropertyListItem {
   marketType: MarketType;
   verificationStatus: VerificationStatus;
   verificationTimestamp: string;
+  city?: string | null;
+  propertyType?: string | null;
+  bedrooms?: number | null;
+  bathrooms?: number | null;
+  areaSqm?: number | null;
+  amenities?: string[];
+  latitude?: number | null;
+  longitude?: number | null;
+  imageUrls?: string[];
 }
 
 export interface PropertyAuditItem {
@@ -72,6 +82,14 @@ export interface CreateSaleListingRequest {
   price: number;
   propertyValue: number;
   totalShares?: number;
+  city?: string;
+  propertyType?: string;
+  bedrooms?: number;
+  bathrooms?: number;
+  areaSqm?: number;
+  amenities?: string[];
+  latitude?: number;
+  longitude?: number;
 }
 
 interface PaginatedPropertiesResponse {
@@ -94,6 +112,18 @@ export interface GetPropertiesParams {
   page?: number;
   limit?: number;
   search?: string;
+  marketType?: MarketType;
+  city?: string;
+  propertyType?: string;
+  minPrice?: number;
+  maxPrice?: number;
+  sort?: 'price_asc' | 'price_desc' | 'newest';
+  bedrooms?: number;
+  bathrooms?: number;
+  minAreaSqm?: number;
+  maxAreaSqm?: number;
+  amenities?: string[];
+  verifiedOnly?: boolean;
 }
 
 export interface PropertiesPage {
@@ -114,6 +144,14 @@ const devPropertyRecords: PropertyDetails[] = [
     id: 'prop-001',
     title: 'Jabal Amman Courtyard House',
     location: 'Amman, Jabal Amman',
+    city: 'Amman',
+    propertyType: 'Villa',
+    bedrooms: 4,
+    bathrooms: 3,
+    areaSqm: 280,
+    amenities: ['Private garden', 'Garage', 'City views'],
+    latitude: 31.9539,
+    longitude: 35.9106,
     ownerName: 'Mahmoud Al-Khatib',
     description: 'Verified family home listed for direct sale in a prime residential quarter.',
     price: 1550000,
@@ -124,10 +162,7 @@ const devPropertyRecords: PropertyDetails[] = [
     verificationStatus: 'verified',
     verificationTimestamp: '2026-02-12T09:20:00.000Z',
     ownerId: 'citizen',
-    seller: {
-      id: 'citizen',
-      username: 'citizen',
-    },
+    seller: {id: 'citizen', username: 'citizen'},
     ownershipType: 'Freehold',
     ownershipProofType: 'title_deed',
     ownershipProofNumber: 'TD-2026-1001',
@@ -135,25 +170,28 @@ const devPropertyRecords: PropertyDetails[] = [
     propertyVerificationStatus: 'verified',
     identityVerificationStatus: 'verified',
     rejectionReason: null,
-    blockchainHash:
-      '0x7f8dd31fa6f4214f9cc441ea77c9a3f2126e4a2ac69d8f39f8a6e6230a1d4d79',
-    blockchainTransactionId:
-      '0x3abf1dd923e9e7f55a89c4db03b8ad4f73f8fbcf6a9e1476c2d7d0cb4ce11f28',
+    blockchainHash: '0x7f8dd31fa6f4214f9cc441ea77c9a3f2126e4a2ac69d8f39f8a6e6230a1d4d79',
+    blockchainTransactionId: '0x3abf1dd923e9e7f55a89c4db03b8ad4f73f8fbcf6a9e1476c2d7d0cb4ce11f28',
     blockchainStatus: 'anchored',
     imageUrls: [],
     createdAt: '2025-11-03T10:00:00.000Z',
     updatedAt: '2026-02-12T09:20:00.000Z',
     verificationRecordId: 'aqarya-vrf-dev-sale-001',
-    verificationPayload: {
-      provider: 'mock-chain',
-      ownershipSignals: {ownerLinkedToAccount: true},
-    },
+    verificationPayload: {provider: 'mock-chain', ownershipSignals: {ownerLinkedToAccount: true}},
     auditTrail: [],
   },
   {
     id: 'prop-002',
     title: 'Irbid Hillside Villa',
     location: 'Irbid, University Street',
+    city: 'Irbid',
+    propertyType: 'Villa',
+    bedrooms: 5,
+    bathrooms: 4,
+    areaSqm: 390,
+    amenities: ['Swimming pool', 'Garden', 'Garage'],
+    latitude: 32.5556,
+    longitude: 35.8500,
     ownerName: 'Rana Al-Majali',
     description: 'Standalone villa approved for sale and visible in the public sale marketplace.',
     price: 2250000,
@@ -164,10 +202,7 @@ const devPropertyRecords: PropertyDetails[] = [
     verificationStatus: 'verified',
     verificationTimestamp: '2026-01-24T14:45:00.000Z',
     ownerId: 'citizen2',
-    seller: {
-      id: 'citizen2',
-      username: 'citizen2',
-    },
+    seller: {id: 'citizen2', username: 'citizen2'},
     ownershipType: 'Leasehold',
     ownershipProofType: 'municipal_record',
     ownershipProofNumber: 'MR-2026-221',
@@ -175,19 +210,94 @@ const devPropertyRecords: PropertyDetails[] = [
     propertyVerificationStatus: 'verified',
     identityVerificationStatus: 'verified',
     rejectionReason: null,
-    blockchainHash:
-      '0x9bc84f1d53b0d239af0eb6a031fd84a0a2b6bd7f1705f51273f26b2a8a3d9910',
-    blockchainTransactionId:
-      '0xa1727d8a4a20bcf88a98dd2f970d6f7c0de9e4dd8fcb7d56ffec8b19e7f1119b',
+    blockchainHash: '0x9bc84f1d53b0d239af0eb6a031fd84a0a2b6bd7f1705f51273f26b2a8a3d9910',
+    blockchainTransactionId: '0xa1727d8a4a20bcf88a98dd2f970d6f7c0de9e4dd8fcb7d56ffec8b19e7f1119b',
     blockchainStatus: 'anchored',
     imageUrls: [],
     createdAt: '2025-10-11T11:30:00.000Z',
     updatedAt: '2026-01-24T14:45:00.000Z',
     verificationRecordId: 'aqarya-vrf-dev-sale-002',
-    verificationPayload: {
-      provider: 'mock-chain',
-      ownershipSignals: {ownerLinkedToAccount: true},
-    },
+    verificationPayload: {provider: 'mock-chain', ownershipSignals: {ownerLinkedToAccount: true}},
+    auditTrail: [],
+  },
+  {
+    id: 'prop-003',
+    title: 'Sweifieh Modern Apartment',
+    location: 'Amman, Sweifieh',
+    city: 'Amman',
+    propertyType: 'Apartment',
+    bedrooms: 2,
+    bathrooms: 2,
+    areaSqm: 130,
+    amenities: ['Parking', 'Elevator', 'Gym', 'Security'],
+    latitude: 31.9481,
+    longitude: 35.8700,
+    ownerName: 'Khalid Al-Nabulsi',
+    description: 'Bright two-bedroom apartment in a well-maintained building in Sweifieh.',
+    price: 600,
+    propertyValue: 170000,
+    totalShares: 1,
+    availableShares: 1,
+    marketType: 'rent',
+    verificationStatus: 'verified',
+    verificationTimestamp: '2026-03-01T09:00:00.000Z',
+    ownerId: 'citizen2',
+    seller: {id: 'citizen2', username: 'citizen2'},
+    ownershipType: 'Freehold',
+    ownershipProofType: 'title_deed',
+    ownershipProofNumber: 'TD-RENT-DEV-01',
+    pricePerShare: 600,
+    propertyVerificationStatus: 'verified',
+    identityVerificationStatus: 'verified',
+    rejectionReason: null,
+    blockchainHash: '0xdevsweifiehrenthash',
+    blockchainTransactionId: '0xdevsweifiehtx',
+    blockchainStatus: 'anchored',
+    imageUrls: [],
+    createdAt: '2026-02-20T10:00:00.000Z',
+    updatedAt: '2026-03-01T09:00:00.000Z',
+    verificationRecordId: 'aqarya-vrf-dev-rent-001',
+    verificationPayload: {provider: 'mock-chain', ownershipSignals: {ownerLinkedToAccount: true}},
+    auditTrail: [],
+  },
+  {
+    id: 'prop-004',
+    title: 'University District Villa',
+    location: 'Irbid, University District',
+    city: 'Irbid',
+    propertyType: 'Villa',
+    bedrooms: 4,
+    bathrooms: 3,
+    areaSqm: 250,
+    amenities: ['Garden', 'Parking', 'Security'],
+    latitude: 32.4725,
+    longitude: 35.9857,
+    ownerName: 'Sana Al-Habboubi',
+    description: 'Spacious villa near Jordan University of Science and Technology, ideal for families.',
+    price: 480,
+    propertyValue: 280000,
+    totalShares: 1,
+    availableShares: 1,
+    marketType: 'rent',
+    verificationStatus: 'verified',
+    verificationTimestamp: '2026-03-05T09:00:00.000Z',
+    ownerId: 'citizen',
+    seller: {id: 'citizen', username: 'citizen'},
+    ownershipType: 'Freehold',
+    ownershipProofType: 'title_deed',
+    ownershipProofNumber: 'TD-RENT-DEV-02',
+    pricePerShare: 480,
+    propertyVerificationStatus: 'verified',
+    identityVerificationStatus: 'verified',
+    rejectionReason: null,
+    blockchainHash: '0xdevirbidrenvilla',
+    blockchainTransactionId: '0xdevunivdisttx',
+    blockchainStatus: 'anchored',
+    imageUrls: [],
+    createdAt: '2026-02-25T10:00:00.000Z',
+    updatedAt: '2026-03-05T09:00:00.000Z',
+    verificationRecordId: 'aqarya-vrf-dev-rent-002',
+    verificationPayload: {provider: 'mock-chain', ownershipSignals: {ownerLinkedToAccount: true}},
     auditTrail: [],
   },
 ];
@@ -244,14 +354,69 @@ export const getProperties = async (
   }
 
   if (__DEV__ && isDevSessionToken(token)) {
+    const resolvedMarketType = params.marketType ?? 'sale';
     const query = params.search?.trim().toLowerCase();
-    const records = query
-      ? devPropertyRecords.filter(
-          property =>
-            property.title.toLowerCase().includes(query) ||
-            property.location.toLowerCase().includes(query),
-        )
-      : devPropertyRecords;
+    let records = devPropertyRecords.filter(
+      property => property.marketType === resolvedMarketType,
+    );
+    if (query) {
+      records = records.filter(
+        property =>
+          property.title.toLowerCase().includes(query) ||
+          property.location.toLowerCase().includes(query),
+      );
+    }
+    if (params.city) {
+      const cityQ = params.city.toLowerCase();
+      records = records.filter(
+        property => property.city?.toLowerCase().includes(cityQ),
+      );
+    }
+    if (params.minPrice !== undefined) {
+      records = records.filter(property => property.price >= params.minPrice!);
+    }
+    if (params.maxPrice !== undefined) {
+      records = records.filter(property => property.price <= params.maxPrice!);
+    }
+    if (params.propertyType) {
+      const pt = params.propertyType.toLowerCase();
+      records = records.filter(
+        property => property.propertyType?.toLowerCase() === pt,
+      );
+    }
+    if (params.bedrooms !== undefined) {
+      records = records.filter(
+        property => (property.bedrooms ?? 0) >= params.bedrooms!,
+      );
+    }
+    if (params.bathrooms !== undefined) {
+      records = records.filter(
+        property => (property.bathrooms ?? 0) >= params.bathrooms!,
+      );
+    }
+    if (params.minAreaSqm !== undefined) {
+      records = records.filter(
+        property => (property.areaSqm ?? 0) >= params.minAreaSqm!,
+      );
+    }
+    if (params.maxAreaSqm !== undefined) {
+      records = records.filter(
+        property => (property.areaSqm ?? Infinity) <= params.maxAreaSqm!,
+      );
+    }
+    if (params.amenities?.length) {
+      const required = params.amenities.map(a => a.toLowerCase());
+      records = records.filter(property =>
+        required.every(req =>
+          property.amenities?.some(a => a.toLowerCase().includes(req)),
+        ),
+      );
+    }
+    if (params.verifiedOnly) {
+      records = records.filter(
+        property => property.verificationStatus === 'verified',
+      );
+    }
     const start = (page - 1) * limit;
     const items = records.slice(start, start + limit).map(property => ({
       id: property.id,
@@ -266,6 +431,15 @@ export const getProperties = async (
       marketType: property.marketType,
       verificationStatus: property.verificationStatus,
       verificationTimestamp: property.verificationTimestamp,
+      city: property.city,
+      propertyType: property.propertyType,
+      bedrooms: property.bedrooms,
+      bathrooms: property.bathrooms,
+      areaSqm: property.areaSqm,
+      amenities: property.amenities,
+      latitude: property.latitude,
+      longitude: property.longitude,
+      imageUrls: property.imageUrls,
     }));
 
     return {
@@ -286,6 +460,18 @@ export const getProperties = async (
       page,
       limit,
       search: params.search,
+      marketType: params.marketType,
+      city: params.city,
+      propertyType: params.propertyType,
+      minPrice: params.minPrice,
+      maxPrice: params.maxPrice,
+      sort: params.sort,
+      bedrooms: params.bedrooms,
+      bathrooms: params.bathrooms,
+      minAreaSqm: params.minAreaSqm,
+      maxAreaSqm: params.maxAreaSqm,
+      amenities: params.amenities?.join(','),
+      verifiedOnly: params.verifiedOnly,
     },
   });
 
@@ -456,6 +642,24 @@ export const buyProperty = async (id: string): Promise<PurchasePropertyResponse>
   const response = await propertiesApi.post<
     PurchasePropertyResponse | Envelope<PurchasePropertyResponse>
   >(`/properties/${id}/buy`);
+
+  if (
+    response.data &&
+    typeof response.data === 'object' &&
+    'data' in (response.data as Envelope<PurchasePropertyResponse>) &&
+    (response.data as Envelope<PurchasePropertyResponse>).data
+  ) {
+    return (response.data as Envelope<PurchasePropertyResponse>)
+      .data as PurchasePropertyResponse;
+  }
+
+  return response.data as PurchasePropertyResponse;
+};
+
+export const buyPropertyWithWallet = async (id: string): Promise<PurchasePropertyResponse> => {
+  const response = await propertiesApi.post<
+    PurchasePropertyResponse | Envelope<PurchasePropertyResponse>
+  >(`/properties/${id}/buy-with-wallet`);
 
   if (
     response.data &&

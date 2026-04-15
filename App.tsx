@@ -4,7 +4,7 @@ import {ActivityIndicator, StyleSheet, View, Text} from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import AppNavigator from './src/navigation/AppNavigator';
 import {AuthContext, AUTH_ROLE_KEY} from './src/store/AuthContext';
-import {normalizeUserRole, RawUserRole, UserRole} from './src/api/auth';
+import {UserRole} from './src/api/auth';
 import {
   clearSecureToken,
   getSecureToken,
@@ -13,7 +13,7 @@ import {
 import {setUnauthorizedHandler} from './src/api/client';
 import {Colors} from './src/constants/colors';
 import {Strings} from './src/constants/strings';
-import BrandLogo from './src/components/BrandLogo';
+import {LanguageProvider} from './src/i18n';
 
 interface AuthState {
   isLoading: boolean;
@@ -32,9 +32,9 @@ const App = () => {
     const bootstrapAuth = async () => {
       try {
         const savedToken = await getSecureToken();
-        const savedRole = normalizeUserRole(
-          (await AsyncStorage.getItem(AUTH_ROLE_KEY)) as RawUserRole | null,
-        );
+        const savedRole = (await AsyncStorage.getItem(
+          AUTH_ROLE_KEY,
+        )) as UserRole | null;
 
         if (savedToken && savedRole) {
           setAuthState({isLoading: false, token: savedToken, role: savedRole});
@@ -78,33 +78,36 @@ const App = () => {
     return () => setUnauthorizedHandler(null);
   }, [authContextValue]);
 
-  if (authState.isLoading) {
-    return (
-      <View style={styles.loadingContainer}>
-        {/* Decorative soft circle background blobs */}
-        <View style={styles.blobTopRight} />
-        <View style={styles.blobBottomLeft} />
-
-        <View style={styles.logoWrapper}>
-          <BrandLogo size={92} cornerRatio={0.3} />
-        </View>
-
-        <Text style={styles.brandName}>{Strings.app.name}</Text>
-        <Text style={styles.tagline}>{Strings.app.tagline}</Text>
-
-        <ActivityIndicator
-          size="small"
-          color={Colors.primary}
-          style={styles.spinner}
-        />
-      </View>
-    );
-  }
-
   return (
-    <AuthContext.Provider value={authContextValue}>
-      <AppNavigator />
-    </AuthContext.Provider>
+    <LanguageProvider>
+      {authState.isLoading ? (
+        <View style={styles.loadingContainer}>
+          {/* Decorative soft circle background blobs */}
+          <View style={styles.blobTopRight} />
+          <View style={styles.blobBottomLeft} />
+
+          {/* Logo mark */}
+          <View style={styles.logoWrapper}>
+            <View style={styles.logoOuter}>
+              <View style={styles.logoInner} />
+            </View>
+          </View>
+
+          <Text style={styles.brandName}>{Strings.app.name}</Text>
+          <Text style={styles.tagline}>{Strings.app.tagline}</Text>
+
+          <ActivityIndicator
+            size="small"
+            color={Colors.primary}
+            style={styles.spinner}
+          />
+        </View>
+      ) : (
+        <AuthContext.Provider value={authContextValue}>
+          <AppNavigator />
+        </AuthContext.Provider>
+      )}
+    </LanguageProvider>
   );
 };
 
@@ -142,8 +145,32 @@ const styles = StyleSheet.create({
   // Logo mark — two nested circles like the UI's icon
   logoWrapper: {
     alignItems: 'center',
+    backgroundColor: Colors.backgroundSecondary,
+    borderRadius: 32,
+    elevation: 6,
+    height: 80,
     justifyContent: 'center',
     marginBottom: 20,
+    shadowColor: Colors.primary,
+    shadowOffset: {width: 0, height: 4},
+    shadowOpacity: 0.15,
+    shadowRadius: 12,
+    width: 80,
+  },
+  logoOuter: {
+    alignItems: 'center',
+    borderColor: Colors.primaryDark,
+    borderRadius: 20,
+    borderWidth: 3,
+    height: 44,
+    justifyContent: 'center',
+    width: 44,
+  },
+  logoInner: {
+    backgroundColor: Colors.primaryDark,
+    borderRadius: 8,
+    height: 18,
+    width: 18,
   },
 
   // Text

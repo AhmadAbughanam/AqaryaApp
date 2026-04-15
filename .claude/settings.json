@@ -35,7 +35,28 @@
       "Bash(npm run prisma:migrate*)",
       "Bash(npm run prisma:deploy)",
       "Bash(npm run prisma:seed)",
-      "Bash(npx tsc --noEmit)"
+      "Bash(npx tsc --noEmit)",
+      "Bash(unzip -q \"/c/Users/support/Desktop/WS/AqaryaApp/aqarya/Invest Experience.docx\" -d invest_exp)",
+      "Bash(unzip -q \"/c/Users/support/Desktop/WS/AqaryaApp/aqarya/Main Browsing + Listing.docx\" -d main_browsing)",
+      "Bash(python3 -c \"import docx; print\\('python-docx available'\\)\")",
+      "Bash(unzip -p \"/c/Users/support/Desktop/WS/AqaryaApp/aqarya/Aqarya Platform Blueprint.docx\" word/document.xml)",
+      "Bash(unzip -p \"/c/Users/support/Desktop/WS/AqaryaApp/aqarya/Invest Experience.docx\" word/document.xml)",
+      "Bash(unzip -p \"/c/Users/support/Desktop/WS/AqaryaApp/aqarya/Main Browsing + Listing.docx\" word/document.xml)",
+      "Bash(taskkill /pid 25476 /f)",
+      "Bash(taskkill /F /PID 25476)",
+      "Bash(npm --prefix backend exec -- prisma generate --no-engine)",
+      "Bash(node_modules/.bin/prisma generate:*)",
+      "Read(//c/Users/support/.claude/projects/c--Users-support-Desktop-WS-AqaryaApp/memory/**)",
+      "Read(//c/Users/support/Desktop/WS/AqaryaApp/backend/src/users/dto/**)",
+      "Read(//c/Users/support/Desktop/WS/AqaryaApp/backend/src/messages/dto/**)",
+      "Read(//c/Users/support/Desktop/WS/AqaryaApp/backend/test/**)",
+      "Bash(taskkill /F /IM node.exe)",
+      "Bash(cmd /c \"taskkill /F /IM node.exe\")",
+      "Bash(node -e \"const p = require\\('./node_modules/@prisma/client'\\); console.log\\(Object.keys\\(p.Prisma.ModelName\\).join\\(', '\\)\\)\")",
+      "Bash(node -e \"const p = require\\('./backend/node_modules/@prisma/client'\\); console.log\\(Object.keys\\(p.Prisma.ModelName\\).join\\(', '\\)\\)\")",
+      "Bash(ls -la /c/Users/support/Desktop/WS/AqaryaApp/.env*)",
+      "Bash(unzip -q -c \"Login screen.docx\" word/document.xml)",
+      "Bash(node -e \"const s = require\\('./src/constants/strings'\\); const keys = Object.keys\\(s.Strings\\); console.log\\('Top-level keys:', keys.join\\(', '\\)\\); console.log\\('profile keys:', Object.keys\\(s.Strings.profile\\).length\\); console.log\\('map keys:', Object.keys\\(s.Strings.map\\).length\\); console.log\\('sell keys:', Object.keys\\(s.Strings.sell\\).length\\); console.log\\('thread keys:', Object.keys\\(s.Strings.thread\\).length\\); console.log\\('publicListing keys:', Object.keys\\(s.Strings.publicListing\\).length\\); console.log\\('opportunityDetail keys:', Object.keys\\(s.Strings.opportunityDetail\\).length\\); console.log\\('otherRole keys:', Object.keys\\(s.Strings.otherRole\\).length\\);\")"
     ],
     "deny": [
       "Read(.env)",
@@ -52,8 +73,12 @@
       "Bash(wget*)",
       "Bash(git push --force*)",
       "Bash(git push origin main*)"
+    ],
+    "additionalDirectories": [
+      "c:\\Users\\support\\.claude\\projects\\c--Users-support-Desktop-WS-AqaryaApp\\memory"
     ]
   },
+  "model": "claude-sonnet-4-6",
   "hooks": {
     "PreToolUse": [
       {
@@ -78,6 +103,5 @@
       }
     ]
   },
-  "model": "claude-sonnet-4-6",
   "autoMemoryEnabled": true
 }

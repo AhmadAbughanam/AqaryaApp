@@ -8,6 +8,10 @@ import {AuditModule} from './audit/audit.module';
 import {AnalyticsModule} from './analytics/analytics.module';
 import {AdminModule} from './admin/admin.module';
 import {InvestmentsModule} from './investments/investments.module';
+import {MessagesModule} from './messages/messages.module';
+import {ModerationModule} from './moderation/moderation.module';
+import {CmsModule} from './cms/cms.module';
+import {WalletModule} from './wallet/wallet.module';
 
 @Module({
   imports: [
@@ -19,6 +23,10 @@ import {InvestmentsModule} from './investments/investments.module';
     AnalyticsModule,
     AdminModule,
     InvestmentsModule,
+    MessagesModule,
+    ModerationModule,
+    CmsModule,
+    WalletModule,
   ],
   controllers: [AppController],
 })

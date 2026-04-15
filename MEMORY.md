@@ -58,10 +58,43 @@ Do not use this file for secrets, tokens, passwords, or `.env` values.
 - Property lifecycle changes usually require both backend logic updates and frontend status/UI updates.
 - API shape changes often require matching updates in `src/api/` and backend DTO/service/controller code.
 
+## Current Architecture Notes — Phase 1 Shell (2026-04-03)
+- Citizen entry point is now `CitizenTabNavigator` (bottom tabs) instead of `CitizenStack` directly.
+- Five citizen tabs: HomeTab, MapTab, PropertiesTab, MessagesTab, ProfileTab.
+- PropertiesTab wraps the existing `CitizenStack` (PropertyList, PropertyDetail, InvestmentSimulation, Portfolio, SellProperty).
+- ProfileTab renders `CitizenProfileScreen` standalone (BottomTabScreenProps, not NativeStackScreenProps).
+- From ProfileTab, "List Property" navigation uses cross-tab: `navigate('PropertiesTab', { screen: 'SellProperty', params })`.
+- `@react-navigation/bottom-tabs@7.x` was added as a dependency.
+- New reusable components: `MarketModeSwitcher`, `FilterChipsRow`.
+- New type: `src/types/market.ts` — `MarketMode`, `PropertyCategory`, `FilterChip`.
+- `CitizenStackParamList` no longer includes a `Profile` route (it is now a tab).
+- Post-purchase in `PropertyDetailScreen` navigates to `SellingMarketplace` (was `Profile`).
+- Login screen now has forgot-password and sign-up affordances + SANAD footer section.
+
+## Current Architecture Notes — Phase 2 Marketplace (2026-04-03)
+- `MarketType` Prisma enum is now `sale | investment | rent`. Migration: `20260403120000_rent_market_type_and_property_details`.
+- New Property columns (all optional): `city`, `propertyType`, `bedrooms`, `bathrooms`, `areaSqm`, `amenities`.
+- `GET /properties` accepts new query params: `marketType`, `city`, `propertyType`, `minPrice`, `maxPrice`, `sort`.
+  - Defaults to `marketType: 'sale'` when param is absent (backward-compat for PropertyListScreen).
+- HomeTab now wraps `CitizenHomeStack` (not `HomeScreen` directly). MapTab wraps `CitizenMapStack`.
+- `CitizenHomeStackParamList`: `HomeMain`, `PublicListingDetail: {id}`.
+- `CitizenMapStackParamList`: `MapMain`, `PublicListingDetail: {id}`.
+- `PublicListingDetailScreen` is a shared component used in both Home and Map stacks. Uses `useRoute` / `useNavigation` hooks (not typed screen props) to avoid duplicate param-list typing.
+- Cross-tab navigation from nested stack screens uses `navigation.getParent<BottomTabNavigationProp<CitizenTabParamList>>()`.
+- `HomeScreen` now uses `NativeStackScreenProps<CitizenHomeStackParamList, 'HomeMain'>` and fetches listings via `getProperties` based on market mode.
+- `MapScreen` upgraded to city-zone browser: city filter chips + listing cards → `PublicListingDetail`.
+- `PropertyListScreen` now passes `marketType: 'sale'` explicitly.
+- After schema change, run: `npm --prefix backend run prisma:migrate && npm --prefix backend run prisma:seed` to apply.
+
 ## Open Follow-Ups
-- None currently.
+- Messages tab is still a placeholder; full messaging is a future phase.
+- Interactive map library (actual map tile rendering) is a future phase.
+- `jest.setup.js` referenced in `jest.config.js` is missing (pre-existing issue).
+- Prisma client must be regenerated after migration: `npm --prefix backend run prisma:generate`.
 
 ## Recent Changes
+- `2026-04-03`: Phase 2 — rent market type, property detail fields, extended filtering, CitizenHomeStack/CitizenMapStack, PublicListingDetailScreen, HomeScreen real data, MapScreen city browser.
+- `2026-04-03`: Phase 1 shell — citizen bottom-tab navigator, HomeScreen, MapScreen (placeholder), MessagesScreen (placeholder), enhanced LoginScreen, MarketModeSwitcher, FilterChipsRow, MarketMode type.
 - `2026-04-02`: Added `CLAUDE.md` as the canonical Claude Code repo instruction file.
 - `2026-04-02`: Added `.claude/settings.json` with shared project permissions and `.gitignore` support for `.claude/settings.local.json`.
 - `2026-04-02`: Added `CONTEXT.md` for product-level decision guidance.

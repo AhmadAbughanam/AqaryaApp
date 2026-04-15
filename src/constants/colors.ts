@@ -1,40 +1,39 @@
-// Placeholder: Centralized color constants scaffold.
-// Design system colors extracted from the Riskify UI.
-// Palette: soft mint backgrounds, dark forest greens, warm whites, dark stat cards.
+// Centralized color constants — warm neutral palette matching the login screen.
+// Primary accent: near-black (#1A1A1A). Background: warm light gray (#EDEDEB).
 
 export const Colors = {
   // ─── Backgrounds ───────────────────────────────────────────────────────────
-  backgroundPrimary: '#EEF5F0',    // Soft mint — main screen background
+  backgroundPrimary: '#EDEDEB',    // Warm light gray — main screen background
   backgroundSecondary: '#FFFFFF',  // Pure white — cards, modals, inputs
-  backgroundMuted: '#D9EBE3',      // Muted sage — subtle section backgrounds
+  backgroundMuted: '#F0F0EE',      // Soft warm gray — subtle section backgrounds
 
   // ─── Brand / Primary ───────────────────────────────────────────────────────
-  primary: '#4A7C6F',              // Sage green — buttons, active icons, accents
-  primaryDark: '#1A2E28',          // Deep forest — headings, dark cards, logo
-  primaryLight: '#C8DDD4',         // Pale sage — tags, badges, decorative blobs
-  primaryMuted: '#6B9E8F',         // Medium sage — subtitles, secondary text
+  primary: '#1A1A1A',              // Near-black — buttons, active icons, accents
+  primaryDark: '#1A1A1A',          // Near-black — headings, dark cards, logo
+  primaryLight: '#E8E8E4',         // Pale warm gray — tags, badges, decorative
+  primaryMuted: '#8A8A8A',         // Medium gray — subtitles, secondary text
 
-  // ─── Dark Stat Cards (the floating black cards in the screenshot) ──────────
-  cardDark: '#1A2E28',             // Dark forest — stat card background
-  cardDarkAlt: '#111E1B',          // Deeper variant — price card background
+  // ─── Dark Stat Cards ───────────────────────────────────────────────────────
+  cardDark: '#1A1A1A',             // Near-black — stat card background
+  cardDarkAlt: '#111111',          // Deeper black — price card background
 
   // ─── Text ──────────────────────────────────────────────────────────────────
-  textPrimary: '#1A2E28',          // Deep forest — primary body text & headings
-  textSecondary: '#6B9E8F',        // Medium sage — subtitles, labels, captions
-  textMuted: '#9DB8AF',            // Soft sage — placeholder text, disabled
+  textPrimary: '#1A1A1A',          // Near-black — primary body text & headings
+  textSecondary: '#8A8A8A',        // Medium gray — subtitles, labels, captions
+  textMuted: '#AEAEAE',            // Light gray — placeholder text, disabled
   textOnDark: '#FFFFFF',           // White — text on dark cards/buttons
-  textOnDarkMuted: '#A8C4BC',      // Muted white-green — secondary text on dark
+  textOnDarkMuted: '#CCCCCC',      // Light gray — secondary text on dark
 
   // ─── UI Elements ───────────────────────────────────────────────────────────
-  border: '#D9EBE3',               // Pale sage — input borders, dividers
-  borderFocus: '#4A7C6F',          // Sage green — focused input border
-  inputBackground: '#F5FAF7',      // Near-white mint — input fill
-  iconDefault: '#9DB8AF',          // Soft sage — inactive icons
-  iconActive: '#1A2E28',           // Deep forest — active/selected icons
+  border: '#E0E0DC',               // Warm light gray — input borders, dividers
+  borderFocus: '#1A1A1A',          // Near-black — focused input border
+  inputBackground: '#FFFFFF',      // White — input fill
+  iconDefault: '#AEAEAE',          // Light gray — inactive icons
+  iconActive: '#1A1A1A',           // Near-black — active/selected icons
 
   // ─── Status & Feedback ─────────────────────────────────────────────────────
-  success: '#4A7C6F',              // Sage green — success states
-  successLight: '#E0F0EA',         // Light mint — success badge background
+  success: '#3A7D44',              // Green — success states
+  successLight: '#E3F2E7',         // Light green — success badge background
   warning: '#D4A853',              // Warm amber — warning states
   warningLight: '#FBF3E0',         // Light amber — warning badge background
   error: '#C0544A',                // Muted red — error states
@@ -44,26 +43,26 @@ export const Colors = {
 
   // ─── Map & Property Pins ───────────────────────────────────────────────────
   mapPinBackground: '#FFFFFF',     // White — avatar pin ring
-  mapPinBorder: '#4A7C6F',         // Sage green — avatar pin border
+  mapPinBorder: '#1A1A1A',         // Near-black — avatar pin border
 
   // ─── Chat Interface ────────────────────────────────────────────────────────
-  chatBubbleUser: '#1A2E28',       // Dark forest — user message bubble
+  chatBubbleUser: '#1A1A1A',       // Near-black — user message bubble
   chatBubbleBot: '#FFFFFF',        // White — bot message bubble
-  chatBubbleBotBorder: '#D9EBE3', // Pale sage — bot bubble border
-  chatInputBackground: '#F5FAF7', // Near-white mint — chat input background
-  chatOnlineIndicator: '#4CAF7D', // Fresh green — online status dot
+  chatBubbleBotBorder: '#E0E0DC',  // Warm gray — bot bubble border
+  chatInputBackground: '#FFFFFF',  // White — chat input background
+  chatOnlineIndicator: '#4CAF7D',  // Fresh green — online status dot
 
   // ─── Overlays & Shadows ────────────────────────────────────────────────────
-  overlay: 'rgba(26, 46, 40, 0.4)',       // Dark forest overlay — modals
-  shadowColor: '#4A7C6F',                  // Sage — card shadows
-  shadowColorDark: '#1A2E28',             // Dark — elevated card shadows
+  overlay: 'rgba(26, 26, 26, 0.4)',       // Near-black overlay — modals
+  shadowColor: '#1A1A1A',                  // Near-black — card shadows
+  shadowColorDark: '#000000',             // Black — elevated card shadows
 
   // ─── Navigation ────────────────────────────────────────────────────────────
   navBackground: '#FFFFFF',        // White — bottom nav bar
-  navBorder: '#EEF5F0',            // Mint — nav top border
-  navActive: '#1A2E28',            // Deep forest — active tab icon/label
-  navInactive: '#9DB8AF',          // Soft sage — inactive tab icon/label
-  navActiveIndicator: '#EEF5F0',  // Mint — active tab background pill
+  navBorder: '#E8E8E4',            // Warm gray — nav top border
+  navActive: '#1A1A1A',            // Near-black — active tab icon/label
+  navInactive: '#AEAEAE',          // Light gray — inactive tab icon/label
+  navActiveIndicator: '#F0F0EE',   // Warm gray — active tab background pill
 
   // ─── Misc ──────────────────────────────────────────────────────────────────
   white: '#FFFFFF',

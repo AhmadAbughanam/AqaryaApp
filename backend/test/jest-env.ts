@@ -10,6 +10,11 @@ const deriveTestDatabaseUrl = (): string => {
   if (forcedSchema) {
     url.searchParams.set('schema', forcedSchema);
   }
+  // Keep each test PrismaClient's pool small so multiple suites don't exhaust
+  // Postgres max_connections even if an app close is delayed.
+  if (!url.searchParams.has('connection_limit')) {
+    url.searchParams.set('connection_limit', '3');
+  }
   return url.toString();
 };
 

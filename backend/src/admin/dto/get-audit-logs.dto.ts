@@ -14,8 +14,17 @@ const allowedActionTypes = [
   'listing_verified',
   'listing_rejected',
   'listing_frozen',
+  'listing_changes_requested',
   'anchor',
   'simulate',
+  'opportunity_submitted',
+  'opportunity_approved',
+  'opportunity_rejected',
+  'opportunity_published',
+  'opportunity_unpublished',
+  'opportunity_simulate',
+  'thread_created',
+  'message_sent',
 ];
 
 export class GetAuditLogsDto {
@@ -40,8 +49,17 @@ export class GetAuditLogsDto {
     | 'listing_verified'
     | 'listing_rejected'
     | 'listing_frozen'
+    | 'listing_changes_requested'
     | 'anchor'
-    | 'simulate';
+    | 'simulate'
+    | 'opportunity_submitted'
+    | 'opportunity_approved'
+    | 'opportunity_rejected'
+    | 'opportunity_published'
+    | 'opportunity_unpublished'
+    | 'opportunity_simulate'
+    | 'thread_created'
+    | 'message_sent';
 
   @IsOptional()
   @IsDateString()

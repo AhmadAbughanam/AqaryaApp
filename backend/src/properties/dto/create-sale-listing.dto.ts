@@ -6,6 +6,7 @@ import {
   IsNumber,
   IsOptional,
   IsString,
+  Max,
   Min,
   MinLength,
 } from 'class-validator';
@@ -62,4 +63,44 @@ export class CreateSaleListingDto {
   @IsInt()
   @Min(1)
   totalShares!: number;
+
+  @IsOptional()
+  @IsString()
+  city?: string;
+
+  @IsOptional()
+  @IsString()
+  propertyType?: string;
+
+  @IsOptional()
+  @IsInt()
+  @Min(0)
+  bedrooms?: number;
+
+  @IsOptional()
+  @IsInt()
+  @Min(0)
+  bathrooms?: number;
+
+  @IsOptional()
+  @IsNumber()
+  @Min(1)
+  areaSqm?: number;
+
+  @IsOptional()
+  @IsArray()
+  @IsString({each: true})
+  amenities?: string[];
+
+  @IsOptional()
+  @IsNumber()
+  @Min(-90)
+  @Max(90)
+  latitude?: number;
+
+  @IsOptional()
+  @IsNumber()
+  @Min(-180)
+  @Max(180)
+  longitude?: number;
 }

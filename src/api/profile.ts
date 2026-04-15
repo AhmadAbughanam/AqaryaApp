@@ -10,8 +10,14 @@ export interface ProfileAggregateStats {
   listedForSaleCount: number;
   soldPropertyCount: number;
   investmentCount: number;
+  savedCount: number;
   totalOwnedValue: number;
   totalInvested: number;
+}
+
+export interface UserPreference {
+  notificationsEnabled: boolean;
+  language: string;
 }
 
 export interface OwnedProfileProperty {
@@ -27,6 +33,7 @@ export interface OwnedProfileProperty {
   verificationStatus: 'pending' | 'verified' | 'rejected';
   identityVerificationStatus: 'pending' | 'verified' | 'rejected';
   canListForSale: boolean;
+  imageUrls?: string[];
   createdAt: string;
   updatedAt: string;
 }
@@ -52,6 +59,7 @@ export interface CitizenProfile {
     role: 'citizen';
   };
   aggregates: ProfileAggregateStats;
+  preference: UserPreference;
   ownedProperties: OwnedProfileProperty[];
   investments: ProfileInvestment[];
 }

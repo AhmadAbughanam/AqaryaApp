@@ -20,6 +20,33 @@ export interface SeededData {
     saleRejectedId: string;
     saleSoldId: string;
     saleOwnedDraftId: string;
+    rentVerifiedId: string;
+    saleNeedsChangesId: string;
+  };
+  opportunities: {
+    publishedAqaryaApprovedId: string;
+    publishedPremiumVerifiedId: string;
+    publishedVerifiedId: string;
+    underReviewId: string;
+    rejectedId: string;
+    submittedId: string;
+  };
+  threads: {
+    listingThreadId: string;
+    opportunityThreadId: string;
+  };
+  savedSearchId: string;
+  notificationId: string;
+  providerProfiles: {
+    citizenProfileId: string;
+    citizen2ProfileId: string;
+  };
+  moderation: {
+    openReportId: string;
+  };
+  cms: {
+    announcementId: string;
+    contentBlockKey: string;
   };
 }
 
@@ -57,9 +84,22 @@ export const createLegacyAdminToken = (
 };
 
 export const resetDatabase = async (): Promise<void> => {
+  await prisma.message.deleteMany();
+  await prisma.thread.deleteMany();
+  await prisma.savedItem.deleteMany();
+  await prisma.userPreference.deleteMany();
+  await prisma.notification.deleteMany();
+  await prisma.savedSearch.deleteMany();
   await prisma.auditLog.deleteMany();
   await prisma.simulation.deleteMany();
+  await prisma.investmentSimulation.deleteMany();
+  await prisma.qualityFlag.deleteMany();
+  await prisma.moderationReport.deleteMany();
+  await prisma.announcement.deleteMany();
+  await prisma.contentBlock.deleteMany();
+  await prisma.investmentOpportunity.deleteMany();
   await prisma.property.deleteMany();
+  await prisma.providerProfile.deleteMany();
   await prisma.user.deleteMany();
 };
 
@@ -86,6 +126,40 @@ export const seedDatabase = async (): Promise<SeededData> => {
         username: 'citizen2',
         passwordHash,
         role: 'citizen',
+      },
+    }),
+  ]);
+
+  const [citizenProfile, citizen2Profile] = await Promise.all([
+    prisma.providerProfile.create({
+      data: {
+        userId: citizen.id,
+        accountType: 'owner',
+        providerVerificationStatus: 'under_review',
+        businessName: 'Citizen Realty',
+        contactPerson: 'Test Citizen',
+        phone: '+962-79-555-0001',
+        email: 'citizen@test.local',
+        registrationNumber: 'REG-TEST-001',
+        providerType: 'Individual Property Owner',
+        submittedAt: new Date('2026-03-01T10:00:00.000Z'),
+      },
+    }),
+    prisma.providerProfile.create({
+      data: {
+        userId: citizen2.id,
+        accountType: 'agency',
+        providerVerificationStatus: 'verified',
+        businessName: 'Citizen2 Agency',
+        contactPerson: 'Test Citizen Two',
+        phone: '+962-79-555-0002',
+        email: 'citizen2@test.local',
+        registrationNumber: 'REG-TEST-002',
+        licenseNumber: 'LIC-AGY-002',
+        providerType: 'Real Estate Agency',
+        adminNotes: 'Verified in March 2026 seeding round.',
+        submittedAt: new Date('2026-02-15T10:00:00.000Z'),
+        reviewedAt: new Date('2026-02-20T10:00:00.000Z'),
       },
     }),
   ]);
@@ -273,6 +347,33 @@ export const seedDatabase = async (): Promise<SeededData> => {
     },
   });
 
+  const needsChanges = await prisma.property.create({
+    data: {
+      ownerId: citizen.id,
+      marketType: 'sale',
+      title: 'Needs Changes Home',
+      location: 'Amman, Marj',
+      ownerName: 'Owner Seven',
+      ownershipType: 'Freehold',
+      ownershipProofType: 'title_deed',
+      ownershipProofNumber: 'TD-333',
+      description: 'A listing that was sent back to the owner for corrections.',
+      imageUrls: ['https://example.com/needs-changes.jpg'],
+      status: 'needs_changes',
+      propertyVerificationStatus: 'pending',
+      identityVerificationStatus: 'pending',
+      reviewerNotes: 'Please upload a clearer copy of the title deed and correct the property value.',
+      price: 500000,
+      propertyValue: 490000,
+      totalShares: 1,
+      availableShares: 1,
+      verificationRecordId: 'aqarya-vrf-seeded-needs-changes',
+      verificationPayload: {provider: 'mock-chain', network: 'testnet'},
+      blockchainHash: '0xneedschangeshash',
+      blockchainStatus: 'pending',
+    },
+  });
+
   const sold = await prisma.property.create({
     data: {
       ownerId: citizen2.id,
@@ -335,6 +436,44 @@ export const seedDatabase = async (): Promise<SeededData> => {
     },
   });
 
+  const rentVerified = await prisma.property.create({
+    data: {
+      ownerId: citizen2.id,
+      marketType: 'rent',
+      title: 'Verified Rental Apartment',
+      location: 'Amman, Sweifieh',
+      city: 'Amman',
+      propertyType: 'Apartment',
+      bedrooms: 2,
+      bathrooms: 1,
+      areaSqm: 110,
+      amenities: ['Parking', 'Elevator', 'Security'],
+      ownerName: 'Owner Rent',
+      ownershipType: 'Freehold',
+      ownershipProofType: 'title_deed',
+      ownershipProofNumber: 'TD-RENT-SEED-01',
+      description: 'A verified rental apartment available for monthly tenancy.',
+      imageUrls: ['https://example.com/rent-verified.jpg'],
+      status: 'verified',
+      propertyVerificationStatus: 'verified',
+      identityVerificationStatus: 'verified',
+      price: 650,
+      propertyValue: 180000,
+      totalShares: 1,
+      availableShares: 1,
+      verificationTimestamp: new Date('2026-03-15T09:00:00.000Z'),
+      verificationRecordId: 'aqarya-vrf-seeded-rent-verified',
+      verificationPayload: {
+        provider: 'mock-chain',
+        network: 'testnet',
+      },
+      blockchainHash: '0xrentverifiedhash',
+      blockchainTxId: '0xrentverifiedtx',
+      blockchainStatus: 'anchored',
+      anchoredAt: new Date('2026-03-15T09:05:00.000Z'),
+    },
+  });
+
   await prisma.simulation.create({
     data: {
       userId: citizen.id,
@@ -352,6 +491,287 @@ export const seedDatabase = async (): Promise<SeededData> => {
     },
   });
 
+  const [
+    oppPublishedAqarya,
+    oppPublishedPremium,
+    oppPublishedVerified,
+    oppUnderReview,
+    oppRejected,
+  ] = await Promise.all([
+    prisma.investmentOpportunity.create({
+      data: {
+        status: 'published',
+        title: 'Abdali Residence Fund',
+        location: 'Amman, Abdali',
+        description: 'Seeded published opportunity — aqarya_approved.',
+        imageUrls: ['https://example.com/opp-abdali.jpg'],
+        assetClass: 'Residential',
+        stage: 'Operational',
+        sponsorName: 'Aqarya Capital',
+        ownershipStructure: 'SPV',
+        distributionModel: 'Quarterly',
+        exitModel: 'Asset Sale',
+        totalShares: 5000,
+        availableShares: 2000,
+        pricePerShare: 200,
+        minimumShares: 25,
+        targetIrr: 0.145,
+        targetCashYield: 0.082,
+        targetHoldYears: 5,
+        appreciationRate: 0.06,
+        occupancyRate: 0.94,
+        managementFeeRate: 0.012,
+        riskBand: 'Balanced',
+        trustScore: 92,
+        trustBadge: 'aqarya_approved',
+        publishedAt: new Date('2026-03-15T10:00:00.000Z'),
+        reviewedAt: new Date('2026-03-14T15:00:00.000Z'),
+        blockchainHash: '0xtest-opp-abdali-hash',
+        blockchainStatus: 'anchored',
+        anchoredAt: new Date('2026-03-15T10:05:00.000Z'),
+      },
+    }),
+    prisma.investmentOpportunity.create({
+      data: {
+        status: 'published',
+        title: 'Northern Gate Commercial',
+        location: 'Irbid, University Street',
+        description: 'Seeded published opportunity — premium_verified.',
+        imageUrls: ['https://example.com/opp-northern.jpg'],
+        assetClass: 'Commercial',
+        stage: 'Lease-up',
+        sponsorName: 'Northern Gate Sponsors',
+        ownershipStructure: 'Co-ownership',
+        distributionModel: 'Quarterly',
+        exitModel: 'Asset Sale',
+        totalShares: 4000,
+        availableShares: 3000,
+        pricePerShare: 250,
+        minimumShares: 20,
+        targetIrr: 0.16,
+        targetCashYield: 0.085,
+        targetHoldYears: 6,
+        appreciationRate: 0.061,
+        occupancyRate: 0.87,
+        managementFeeRate: 0.013,
+        riskBand: 'Growth',
+        trustScore: 74,
+        trustBadge: 'premium_verified',
+        publishedAt: new Date('2026-03-20T09:00:00.000Z'),
+        reviewedAt: new Date('2026-03-19T14:00:00.000Z'),
+        blockchainStatus: 'pending',
+      },
+    }),
+    prisma.investmentOpportunity.create({
+      data: {
+        status: 'published',
+        title: 'Red Sea Marina Hospitality',
+        location: 'Aqaba, Marina Zone',
+        description: 'Seeded published opportunity — verified.',
+        imageUrls: ['https://example.com/opp-redsea.jpg'],
+        assetClass: 'Hospitality',
+        stage: 'Development',
+        sponsorName: 'Red Sea Ventures',
+        ownershipStructure: 'SPV',
+        distributionModel: 'Semi-annual',
+        exitModel: 'Buyback',
+        totalShares: 8000,
+        availableShares: 7500,
+        pricePerShare: 180,
+        minimumShares: 30,
+        targetIrr: 0.18,
+        targetCashYield: 0.075,
+        targetHoldYears: 7,
+        appreciationRate: 0.07,
+        occupancyRate: 0.82,
+        managementFeeRate: 0.014,
+        riskBand: 'Aggressive',
+        trustScore: 58,
+        trustBadge: 'verified',
+        publishedAt: new Date('2026-03-25T11:00:00.000Z'),
+        reviewedAt: new Date('2026-03-24T16:00:00.000Z'),
+        blockchainStatus: 'pending',
+      },
+    }),
+    prisma.investmentOpportunity.create({
+      data: {
+        status: 'under_review',
+        title: 'Salt Heritage Mixed Use',
+        location: 'Al-Salt, Old Town',
+        description: 'Seeded under_review opportunity.',
+        imageUrls: [],
+        assetClass: 'Mixed Use',
+        stage: 'Pre-Development',
+        sponsorName: 'Salt Heritage Partners',
+        ownershipStructure: 'Direct Co-ownership',
+        distributionModel: 'Annual',
+        exitModel: 'Asset Sale',
+        totalShares: 3000,
+        availableShares: 3000,
+        pricePerShare: 300,
+        minimumShares: 10,
+        targetIrr: 0.13,
+        targetCashYield: 0.07,
+        targetHoldYears: 8,
+        appreciationRate: 0.055,
+        occupancyRate: 0.79,
+        managementFeeRate: 0.015,
+        riskBand: 'Balanced',
+        blockchainStatus: 'pending',
+      },
+    }),
+    prisma.investmentOpportunity.create({
+      data: {
+        status: 'rejected',
+        title: 'Zarqa Mall Expansion',
+        location: 'Zarqa, New Downtown',
+        description: 'Seeded rejected opportunity.',
+        imageUrls: [],
+        assetClass: 'Commercial',
+        stage: 'Pre-Development',
+        sponsorName: 'Zarqa Retail Holdings',
+        ownershipStructure: 'SPV',
+        distributionModel: 'Quarterly',
+        exitModel: 'Asset Sale',
+        totalShares: 10000,
+        availableShares: 10000,
+        pricePerShare: 100,
+        minimumShares: 50,
+        targetIrr: 0.12,
+        targetCashYield: 0.065,
+        targetHoldYears: 5,
+        appreciationRate: 0.05,
+        occupancyRate: 0.75,
+        managementFeeRate: 0.015,
+        riskBand: 'Conservative',
+        rejectionReason: 'Incomplete sponsor identity verification.',
+        reviewedAt: new Date('2026-03-28T12:00:00.000Z'),
+        blockchainStatus: 'pending',
+      },
+    }),
+  ]);
+
+  const oppSubmitted = await prisma.investmentOpportunity.create({
+    data: {
+      status: 'submitted',
+      title: 'Petra Valley Resort',
+      location: 'Petra, Jordan',
+      description: 'Seeded submitted opportunity awaiting initial review.',
+      imageUrls: [],
+      assetClass: 'Hospitality',
+      stage: 'Pre-Development',
+      sponsorName: 'Petra Valley Partners',
+      ownershipStructure: 'SPV',
+      distributionModel: 'Annual',
+      exitModel: 'Asset Sale',
+      totalShares: 6000,
+      availableShares: 6000,
+      pricePerShare: 150,
+      minimumShares: 20,
+      targetIrr: 0.155,
+      targetCashYield: 0.08,
+      targetHoldYears: 6,
+      appreciationRate: 0.065,
+      occupancyRate: 0.88,
+      managementFeeRate: 0.013,
+      riskBand: 'Growth',
+      blockchainStatus: 'pending',
+    },
+  });
+
+  // Phase 4: threads for messaging tests
+  const [listingThread, opportunityThread] = await Promise.all([
+    prisma.thread.create({
+      data: {
+        subject: 'Test inquiry about sale listing',
+        citizenId: citizen.id,
+        listingId: verifiedSale.id,
+      },
+    }),
+    prisma.thread.create({
+      data: {
+        subject: 'Test inquiry about investment opportunity',
+        citizenId: citizen.id,
+        opportunityId: oppPublishedAqarya.id,
+      },
+    }),
+  ]);
+
+  await prisma.message.createMany({
+    data: [
+      {
+        threadId: listingThread.id,
+        senderId: citizen.id,
+        senderRole: 'citizen',
+        body: 'Hello, is this property still available?',
+      },
+      {
+        threadId: opportunityThread.id,
+        senderId: citizen.id,
+        senderRole: 'citizen',
+        body: 'I am interested in investing. Can I get more details?',
+      },
+    ],
+  });
+
+  // Phase 5: saved search + notification for citizen
+  const [savedSearch, notification] = await Promise.all([
+    prisma.savedSearch.create({
+      data: {
+        userId: citizen.id,
+        name: 'Test Amman Rentals',
+        searchType: 'rent',
+        filters: {city: 'Amman', maxPrice: 900},
+      },
+    }),
+    prisma.notification.create({
+      data: {
+        userId: citizen.id,
+        type: 'system',
+        title: 'Welcome to Aqarya',
+        body: 'Your account is set up. Start browsing verified listings.',
+        isRead: false,
+      },
+    }),
+  ]);
+
+  // Seed a pre-existing open report for moderation tests
+  const openReport = await prisma.moderationReport.create({
+    data: {
+      targetType: 'listing',
+      targetId: verifiedSale.id,
+      reporterId: citizen2.id,
+      reason: 'misleading_info',
+      notes: 'Description does not match the photos.',
+      status: 'open',
+    },
+  });
+
+  // Seed CMS test data
+  const [seededAnnouncement, seededContentBlock] = await Promise.all([
+    prisma.announcement.create({
+      data: {
+        title: 'Test Announcement',
+        body: 'This is a seeded test announcement for e2e tests.',
+        type: 'system',
+        audience: 'all_citizens',
+        status: 'active',
+        createdBy: admin.id,
+        sentAt: new Date(),
+      },
+    }),
+    prisma.contentBlock.create({
+      data: {
+        key: 'test_help_intro',
+        title: 'How Aqarya Works',
+        body: 'Seeded test content block for e2e tests.',
+        icon: '🏠',
+        order: 0,
+        active: true,
+      },
+    }),
+  ]);
+
   return {
     users: {
       admin: {id: admin.id, username: admin.username},
@@ -366,6 +786,33 @@ export const seedDatabase = async (): Promise<SeededData> => {
       saleRejectedId: rejected.id,
       saleSoldId: sold.id,
       saleOwnedDraftId: ownedDraft.id,
+      rentVerifiedId: rentVerified.id,
+      saleNeedsChangesId: needsChanges.id,
+    },
+    opportunities: {
+      publishedAqaryaApprovedId: oppPublishedAqarya.id,
+      publishedPremiumVerifiedId: oppPublishedPremium.id,
+      publishedVerifiedId: oppPublishedVerified.id,
+      underReviewId: oppUnderReview.id,
+      rejectedId: oppRejected.id,
+      submittedId: oppSubmitted.id,
+    },
+    threads: {
+      listingThreadId: listingThread.id,
+      opportunityThreadId: opportunityThread.id,
+    },
+    savedSearchId: savedSearch.id,
+    notificationId: notification.id,
+    providerProfiles: {
+      citizenProfileId: citizenProfile.id,
+      citizen2ProfileId: citizen2Profile.id,
+    },
+    moderation: {
+      openReportId: openReport.id,
+    },
+    cms: {
+      announcementId: seededAnnouncement.id,
+      contentBlockKey: seededContentBlock.key,
     },
   };
 };

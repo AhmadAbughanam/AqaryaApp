@@ -112,4 +112,250 @@ describe('Investments (e2e)', () => {
       }),
     );
   });
+
+  // ─── Investment Opportunity tests ────────────────────────────────────────────
+
+  it('GET /investments/opportunities should return only published opportunities', async () => {
+    const token = await loginAndGetToken(app, 'citizen');
+
+    const response = await request(app.getHttpServer())
+      .get('/investments/opportunities')
+      .set('Authorization', `Bearer ${token}`);
+
+    expect(response.status).toBe(200);
+    expect(response.body.items).toBeDefined();
+    expect(Array.isArray(response.body.items)).toBe(true);
+    expect(response.body.total).toBeGreaterThanOrEqual(3);
+    expect(
+      response.body.items.every((item: {status: string}) => item.status === 'published'),
+    ).toBe(true);
+    const ids = response.body.items.map((item: {id: string}) => item.id);
+    expect(ids).toContain(seededData.opportunities.publishedAqaryaApprovedId);
+    expect(ids).not.toContain(seededData.opportunities.underReviewId);
+    expect(ids).not.toContain(seededData.opportunities.rejectedId);
+  });
+
+  it('GET /investments/opportunities should filter by assetClass', async () => {
+    const token = await loginAndGetToken(app, 'citizen');
+
+    const response = await request(app.getHttpServer())
+      .get('/investments/opportunities?assetClass=Residential')
+      .set('Authorization', `Bearer ${token}`);
+
+    expect(response.status).toBe(200);
+    expect(
+      response.body.items.every(
+        (item: {assetClass: string}) => item.assetClass.toLowerCase() === 'residential',
+      ),
+    ).toBe(true);
+  });
+
+  it('GET /investments/opportunities/:id should return full detail for a published opportunity', async () => {
+    const token = await loginAndGetToken(app, 'citizen');
+    const id = seededData.opportunities.publishedAqaryaApprovedId;
+
+    const response = await request(app.getHttpServer())
+      .get(`/investments/opportunities/${id}`)
+      .set('Authorization', `Bearer ${token}`);
+
+    expect(response.status).toBe(200);
+    expect(response.body.id).toBe(id);
+    expect(response.body.trustBadge).toBe('aqarya_approved');
+    expect(response.body.trustScore).toBe(92);
+    expect(response.body.fundingGoal).toBeGreaterThan(0);
+    expect(response.body.fundedAmount).toBeGreaterThanOrEqual(0);
+    expect(response.body.ownershipStructure).toBeDefined();
+    expect(response.body.distributionModel).toBeDefined();
+    expect(response.body.exitModel).toBeDefined();
+  });
+
+  it('GET /investments/opportunities/:id should return 404 for under_review opportunity', async () => {
+    const token = await loginAndGetToken(app, 'citizen');
+    const id = seededData.opportunities.underReviewId;
+
+    const response = await request(app.getHttpServer())
+      .get(`/investments/opportunities/${id}`)
+      .set('Authorization', `Bearer ${token}`);
+
+    expect(response.status).toBe(404);
+  });
+
+  it('POST /investments/opportunities/simulate should create simulation and decrement availableShares', async () => {
+    const token = await loginAndGetToken(app, 'citizen');
+    const id = seededData.opportunities.publishedAqaryaApprovedId;
+
+    const response = await request(app.getHttpServer())
+      .post('/investments/opportunities/simulate')
+      .set('Authorization', `Bearer ${token}`)
+      .send({
+        opportunityId: id,
+        shares: 25,
+        holdingPeriodYears: 5,
+        exitScenario: 'base',
+        reinvestDistributions: false,
+      });
+
+    expect(response.status).toBe(201);
+    expect(response.body.simulationId).toEqual(expect.any(String));
+    expect(response.body.opportunityId).toBe(id);
+    expect(response.body.sharesOwned).toBe(25);
+    expect(response.body.trustBadge).toBe('aqarya_approved');
+    expect(response.body.projectedProfit).toBeGreaterThan(0);
+    expect(response.body.equityMultiple).toBeGreaterThan(1);
+
+    const updated = await prisma.investmentOpportunity.findUnique({where: {id}});
+    expect(updated?.availableShares).toBe(2000 - 25);
+  });
+
+  it('POST /investments/opportunities/simulate should reject fewer than minimumShares', async () => {
+    const token = await loginAndGetToken(app, 'citizen');
+    const id = seededData.opportunities.publishedAqaryaApprovedId;
+
+    const response = await request(app.getHttpServer())
+      .post('/investments/opportunities/simulate')
+      .set('Authorization', `Bearer ${token}`)
+      .send({opportunityId: id, shares: 1});
+
+    expect(response.status).toBe(400);
+  });
+
+  it('GET /investments/opportunities-portfolio should return opportunity simulation history', async () => {
+    const token = await loginAndGetToken(app, 'citizen');
+    const id = seededData.opportunities.publishedAqaryaApprovedId;
+
+    // First simulate
+    await request(app.getHttpServer())
+      .post('/investments/opportunities/simulate')
+      .set('Authorization', `Bearer ${token}`)
+      .send({opportunityId: id, shares: 25});
+
+    const response = await request(app.getHttpServer())
+      .get('/investments/opportunities-portfolio')
+      .set('Authorization', `Bearer ${token}`);
+
+    expect(response.status).toBe(200);
+    expect(Array.isArray(response.body)).toBe(true);
+    expect(response.body.length).toBeGreaterThan(0);
+    expect(response.body[0]).toEqual(
+      expect.objectContaining({
+        opportunityId: id,
+        sharesOwned: 25,
+        annualIncomeEstimate: expect.any(Number),
+      }),
+    );
+  });
+
+  // ─── Admin Investment Opportunity review tests ────────────────────────────────
+
+  it('GET /admin/investment-opportunities should list all opportunities for admin', async () => {
+    const token = await loginAndGetToken(app, 'admin');
+
+    const response = await request(app.getHttpServer())
+      .get('/admin/investment-opportunities')
+      .set('Authorization', `Bearer ${token}`);
+
+    expect(response.status).toBe(200);
+    expect(Array.isArray(response.body)).toBe(true);
+    expect(response.body.length).toBeGreaterThanOrEqual(5);
+  });
+
+  it('GET /admin/investment-opportunities?status=under_review should filter by status', async () => {
+    const token = await loginAndGetToken(app, 'admin');
+
+    const response = await request(app.getHttpServer())
+      .get('/admin/investment-opportunities?status=under_review')
+      .set('Authorization', `Bearer ${token}`);
+
+    expect(response.status).toBe(200);
+    expect(
+      response.body.every((item: {status: string}) => item.status === 'under_review'),
+    ).toBe(true);
+  });
+
+  it('POST /admin/investment-opportunities/:id/review should approve an under_review opportunity', async () => {
+    const token = await loginAndGetToken(app, 'admin');
+    const id = seededData.opportunities.underReviewId;
+
+    const response = await request(app.getHttpServer())
+      .post(`/admin/investment-opportunities/${id}/review`)
+      .set('Authorization', `Bearer ${token}`)
+      .send({action: 'approve', notes: 'All checks passed.'});
+
+    expect(response.status).toBe(201);
+    expect(response.body.status).toBe('approved');
+
+    const updated = await prisma.investmentOpportunity.findUnique({where: {id}});
+    expect(updated?.status).toBe('approved');
+    expect(updated?.reviewNotes).toBe('All checks passed.');
+  });
+
+  it('POST /admin/investment-opportunities/:id/review publish should calculate trustScore and badge', async () => {
+    const adminToken = await loginAndGetToken(app, 'admin');
+    const id = seededData.opportunities.underReviewId;
+
+    // First approve
+    await request(app.getHttpServer())
+      .post(`/admin/investment-opportunities/${id}/review`)
+      .set('Authorization', `Bearer ${adminToken}`)
+      .send({action: 'approve'});
+
+    // Then publish
+    const response = await request(app.getHttpServer())
+      .post(`/admin/investment-opportunities/${id}/review`)
+      .set('Authorization', `Bearer ${adminToken}`)
+      .send({action: 'publish'});
+
+    expect(response.status).toBe(201);
+    expect(response.body.status).toBe('published');
+    expect(response.body.trustScore).toBeGreaterThan(0);
+    expect(response.body.trustBadge).toBeTruthy();
+  });
+
+  it('POST /admin/investment-opportunities/:id/review should reject an opportunity', async () => {
+    const token = await loginAndGetToken(app, 'admin');
+    const id = seededData.opportunities.underReviewId;
+
+    const response = await request(app.getHttpServer())
+      .post(`/admin/investment-opportunities/${id}/review`)
+      .set('Authorization', `Bearer ${token}`)
+      .send({action: 'reject', notes: 'Missing financial disclosures.'});
+
+    expect(response.status).toBe(201);
+    expect(response.body.status).toBe('rejected');
+
+    const updated = await prisma.investmentOpportunity.findUnique({where: {id}});
+    expect(updated?.status).toBe('rejected');
+    expect(updated?.rejectionReason).toBe('Missing financial disclosures.');
+  });
+
+  it('POST /admin/investment-opportunities should reject citizen access', async () => {
+    const token = await loginAndGetToken(app, 'citizen');
+
+    const response = await request(app.getHttpServer())
+      .post('/admin/investment-opportunities')
+      .set('Authorization', `Bearer ${token}`)
+      .send({
+        title: 'Unauthorized',
+        location: 'Test',
+        description: 'Test',
+        assetClass: 'Residential',
+        stage: 'Operational',
+        sponsorName: 'Test',
+        ownershipStructure: 'SPV',
+        distributionModel: 'Quarterly',
+        exitModel: 'Asset Sale',
+        totalShares: 1000,
+        pricePerShare: 100,
+        minimumShares: 10,
+        targetIrr: 0.14,
+        targetCashYield: 0.08,
+        targetHoldYears: 5,
+        appreciationRate: 0.06,
+        occupancyRate: 0.9,
+        managementFeeRate: 0.012,
+        riskBand: 'Balanced',
+      });
+
+    expect(response.status).toBe(403);
+  });
 });
