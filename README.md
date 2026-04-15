@@ -136,14 +136,31 @@ npm --prefix backend run prisma:migrate
 npm --prefix backend run prisma:seed
 ```
 
-Seeded credentials:
+Seeded demo accounts:
 
-| Username | Password | Role |
-|----------|----------|------|
-| `admin` | `123456` | admin |
-| `citizen` | `123456` | citizen |
-| `citizen2` | `123456` | citizen |
-| `citizen3` | `123456` | citizen |
+### Citizen accounts
+
+All citizen demo accounts use password `123456`.
+
+| Username | Story | eJOD Balance |
+|----------|-------|--------------|
+| `omar_rashid` | Active owner + investor. Owns investment, sale, and rent properties. Deposited 30,000 JOD and invested 5,000 JOD. | 25,000 JOD |
+| `lina_haddad` | Owner with investments. Irbid-focused properties. Deposited 10,000 JOD and invested 4,000 JOD. | 6,000 JOD |
+| `rania_khouri` | Aqaba-focused owner. Deposited 15,000 JOD and invested 3,000 JOD. | 12,000 JOD |
+| `tariq_nassar` | First-time investor. Has simulated Aqaba Marina Fund with 100 shares. No properties owned. | 5,000 JOD |
+| `yousef_barakat` | Browser/buyer. Has simulated Madaba Growth Project with 80 shares. Saved searches are set up. | 12,000 JOD |
+
+### Admin and other demo accounts
+
+| Username | Password | Notes |
+|----------|----------|-------|
+| `admin` | `123456` | Admin account unchanged. |
+| `owner1` | unchanged | Existing owner account unchanged. |
+| `agency1` | unchanged | Existing agency account unchanged. |
+| `dev1` | unchanged | Existing developer account unchanged. |
+| `partner1` | unchanged | Existing partner account unchanged. |
+| `individual1` | unchanged | Existing individual account unchanged. |
+| `suspended1` | unchanged | Existing suspended account unchanged. |
 
 ### 4. Start the backend
 
