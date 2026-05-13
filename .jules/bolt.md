@@ -1,0 +1,3 @@
+## 2024-05-18 - FlatList useCallback and React.memo Optimization
+**Learning:** Found opportunities to optimize FlatList renderItem in `src/screens/citizen/HomeScreen.tsx` by wrapping the render methods (`renderListingCard` and `renderOpportunityCard`) with `useCallback` to prevent recreation on every re-render. These inline rendering functions were taking full dependencies of component state but not memoized.
+**Action:** Implement useCallback for `renderListingCard` and `renderOpportunityCard` to avoid re-rendering list items when not necessary. Use `memo` on these card components if they were separate components.
