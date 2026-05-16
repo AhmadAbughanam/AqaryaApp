@@ -1,0 +1,3 @@
+## 2024-05-16 - Wrap renderItems in useCallback in FlatList
+**Learning:** Wrapping `renderItem` methods in `useCallback` directly limits the number of times `FlatList` child components need to be re-rendered when state updates in the parent component, particularly states that do not change the props of the items in `FlatList`. React Native `FlatList` heavily relies on memoization internally so doing this greatly increases performance when scrolling or triggering list interactions.
+**Action:** Always wrap `renderItem` definitions or internal callbacks used in FlatLists in `useCallback` to maximize performance on mobile devices.
