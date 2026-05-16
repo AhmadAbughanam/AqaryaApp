@@ -215,7 +215,8 @@ const HomeScreen = ({navigation, route}: Props) => {
     void detect();
   }, []);
 
-  const toggleSave = (id: string) => {
+  // ⚡ Bolt: wrap toggle handlers in useCallback to provide stable reference to renderItems
+  const toggleSave = useCallback((id: string) => {
     const isSaved = savedIds.has(id);
     setSavedIds(prev => {
       const next = new Set(prev);
@@ -231,9 +232,10 @@ const HomeScreen = ({navigation, route}: Props) => {
         return next;
       });
     });
-  };
+  }, [savedIds]);
 
-  const toggleOpportunitySave = (id: string) => {
+  // ⚡ Bolt: wrap toggle handlers in useCallback to provide stable reference to renderItems
+  const toggleOpportunitySave = useCallback((id: string) => {
     const isSaved = savedOpportunityIds.has(id);
     setSavedOpportunityIds(prev => {
       const next = new Set(prev);
@@ -248,7 +250,7 @@ const HomeScreen = ({navigation, route}: Props) => {
         return next;
       });
     });
-  };
+  }, [savedOpportunityIds]);
 
   const onModeChange = (mode: MarketMode) => {
     setMarketMode(mode);
@@ -259,16 +261,18 @@ const HomeScreen = ({navigation, route}: Props) => {
     void fetchListings(marketMode, searchText);
   };
 
-  const onListingPress = (item: PropertyListItem) => {
+  // ⚡ Bolt: wrap press handlers in useCallback to avoid list re-rendering
+  const onListingPress = useCallback((item: PropertyListItem) => {
     navigation.navigate('PublicListingDetail', {
       id: item.id,
       marketType: item.marketType,
     });
-  };
+  }, [navigation]);
 
-  const onOpportunityPress = (id: string) => {
+  // ⚡ Bolt: wrap press handlers in useCallback to avoid list re-rendering
+  const onOpportunityPress = useCallback((id: string) => {
     navigation.navigate('InvestmentOpportunityDetail', {id});
-  };
+  }, [navigation]);
 
   const onCityCardPress = useCallback(() => {
     const coords = cityCoords ?? CITY_CENTERS[detectedCity];
@@ -310,7 +314,9 @@ const HomeScreen = ({navigation, route}: Props) => {
     activeFilters?.verifiedOnly
   );
 
-  const renderListingCard = ({item}: {item: PropertyListItem}) => {
+  // ⚡ Bolt: wrap renderItem in useCallback to avoid FlatList item recreation on unrelated parent updates
+  // Expected impact: significantly fewer re-renders during fast scrolling and filter changes
+  const renderListingCard = useCallback(({item}: {item: PropertyListItem}) => {
     const isVerified = item.verificationStatus === 'verified';
     const marketLabel = item.marketType === 'sale' ? 'Sale' : 'Rent';
     const isSaved = savedIds.has(item.id);
@@ -387,9 +393,11 @@ const HomeScreen = ({navigation, route}: Props) => {
         </View>
       </Pressable>
     );
-  };
+  }, [savedIds, toggleSave, onListingPress]);
 
-  const renderOpportunityCard = ({item}: {item: InvestmentOpportunityListItem}) => {
+  // ⚡ Bolt: wrap renderItem in useCallback to avoid FlatList item recreation on unrelated parent updates
+  // Expected impact: smoother scroll performance when interacting with items
+  const renderOpportunityCard = useCallback(({item}: {item: InvestmentOpportunityListItem}) => {
     const isSaved = savedOpportunityIds.has(item.id);
     const fundingPct = Math.round(Math.min(item.fundingProgress, 1) * 100);
     const roiLabel = `${(item.targetIrr * 100).toFixed(0)}%`;
@@ -489,7 +497,7 @@ const HomeScreen = ({navigation, route}: Props) => {
         </View>
       </Pressable>
     );
-  };
+  }, [savedOpportunityIds, toggleOpportunitySave, onOpportunityPress]);
 
   const ListHeader = (
     <View>
