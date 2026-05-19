@@ -1,0 +1,3 @@
+## 2024-05-19 - Cached Intl Formatters for List Performance
+**Learning:** Instantiating `Intl.NumberFormat` and `Intl.DateTimeFormat` inline within React components (especially those rendered in `FlatList` or `ScrollView`) causes significant performance overhead in JavaScript. In extreme cases, uncached instantiations are 65x slower than calling `.format()` on a cached instance.
+**Action:** Always import and use the pre-cached formatters exported from `src/utils/formatters.ts` (`formatDateTime`, `formatCurrency`, `formatNumber`, `formatCompactCurrency`, `formatNumberTwoDecimals`) rather than creating new `Intl` instances inline.
