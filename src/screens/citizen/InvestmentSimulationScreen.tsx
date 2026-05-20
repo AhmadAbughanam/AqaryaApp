@@ -9,6 +9,7 @@ import {
   Text,
   View,
 } from 'react-native';
+import { formatCurrency } from '../../utils/formatters';
 import {NativeStackScreenProps} from '@react-navigation/native-stack';
 import {BottomTabNavigationProp} from '@react-navigation/bottom-tabs';
 import {
@@ -33,12 +34,7 @@ import {useStrings} from '../../i18n';
 type Props = NativeStackScreenProps<CitizenStackParamList, 'InvestmentSimulation'>;
 type ExitScenario = 'conservative' | 'base' | 'optimistic';
 
-const formatCurrency = (value: number): string =>
-  new Intl.NumberFormat('en-US', {
-    style: 'currency',
-    currency: 'USD',
-    maximumFractionDigits: 0,
-  }).format(value);
+
 
 const InvestmentSimulationScreen = ({navigation, route}: Props) => {
   const strings = useStrings();
