@@ -3,6 +3,7 @@
 
 import React from 'react';
 import {StyleSheet, Text, View} from 'react-native';
+import { formatCurrency, formatNumber } from '../utils/formatters';
 import {PilotProperty} from '../api/investments';
 import Card from './Card';
 import ActionButton from './ActionButton';
@@ -18,15 +19,9 @@ interface InvestmentCardProps {
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
-const formatCurrency = (value: number): string =>
-  new Intl.NumberFormat('en-US', {
-    style: 'currency',
-    currency: 'USD',
-    maximumFractionDigits: 0,
-  }).format(value);
 
-const formatNumber = (value: number): string =>
-  new Intl.NumberFormat('en-US').format(value);
+
+
 
 // ─── Component ────────────────────────────────────────────────────────────────
 
