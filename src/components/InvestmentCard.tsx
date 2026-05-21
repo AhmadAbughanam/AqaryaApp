@@ -8,6 +8,7 @@ import Card from './Card';
 import ActionButton from './ActionButton';
 import {Colors} from '../constants/colors';
 
+import {formatCurrency, formatNumber} from '../utils/formatters';
 // ─── Types ────────────────────────────────────────────────────────────────────
 
 interface InvestmentCardProps {
@@ -18,15 +19,9 @@ interface InvestmentCardProps {
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
-const formatCurrency = (value: number): string =>
-  new Intl.NumberFormat('en-US', {
-    style: 'currency',
-    currency: 'USD',
-    maximumFractionDigits: 0,
-  }).format(value);
 
-const formatNumber = (value: number): string =>
-  new Intl.NumberFormat('en-US').format(value);
+
+
 
 // ─── Component ────────────────────────────────────────────────────────────────
 

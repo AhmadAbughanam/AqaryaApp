@@ -27,6 +27,7 @@ import {useLanguage, useStrings, SupportedLanguage} from '../../i18n';
 import {Colors} from '../../constants/colors';
 import {AppImages} from '../../assets/images';
 
+import {formatDecimal2Min} from '../../utils/formatters';
 type Props = NativeStackScreenProps<CitizenProfileStackParamList, 'Profile'>;
 
 const HERO_BG = AppImages.backgrounds.profileHero;
@@ -474,7 +475,7 @@ const CitizenProfileScreen = ({navigation}: Props) => {
           iconNode={<WalletMenuIcon color={Colors.textPrimary} />}
           label={strings.profile.menuWallet}
           right={walletBalance != null
-            ? `JOD ${new Intl.NumberFormat('en-US', {minimumFractionDigits: 2}).format(walletBalance.availableBalance)}`
+            ? `JOD ${formatDecimal2Min(walletBalance.availableBalance)}`
             : undefined}
           onPress={() => navigation.navigate('Wallet')}
         />

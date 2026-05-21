@@ -21,7 +21,7 @@ import {getPropertyDetails, buyPropertyWithWallet, PropertyDetails} from '../../
 import {checkListingSaved, saveListing, unsaveListing} from '../../api/savedListings';
 import {reportListing, ReportReason, REPORT_REASON_LABELS} from '../../api/moderation';
 import {CitizenTabParamList} from '../../navigation/CitizenTabNavigator';
-import {formatDateTime} from '../../utils/formatters';
+import {formatCurrency, formatDateTime, formatDecimal2Min} from '../../utils/formatters';
 import {Colors} from '../../constants/colors';
 import {useStrings} from '../../i18n';
 import PropertyImage from '../../components/PropertyImage';
@@ -34,12 +34,7 @@ type LocalRoute = RouteProp<
   'PublicListingDetail'
 >;
 
-const formatCurrency = (value: number): string =>
-  new Intl.NumberFormat('en-US', {
-    style: 'currency',
-    currency: 'USD',
-    maximumFractionDigits: 0,
-  }).format(value);
+
 
 const InfoRow = ({label, value, isDark = false}: {label: string; value: string; isDark?: boolean}) => (
   <View style={[styles.infoRow, isDark && styles.darkInfoRow]}>
@@ -147,7 +142,7 @@ const PublicListingDetailScreen = () => {
 
   useLayoutEffect(() => {
     const balanceText = walletBalance != null
-      ? `JOD ${new Intl.NumberFormat('en-US', {minimumFractionDigits: 2}).format(walletBalance.availableBalance)}`
+      ? `JOD ${formatDecimal2Min(walletBalance.availableBalance)}`
       : '—';
     navigation.setOptions({
       headerStyle: {
@@ -204,7 +199,7 @@ const PublicListingDetailScreen = () => {
   const isRent = !isInvestment && property.marketType === 'rent';
 
   const onBuy = () => {
-    const fmtJod = new Intl.NumberFormat('en-US', {minimumFractionDigits: 2}).format;
+    const fmtJod = formatDecimal2Min;
 
     if (!walletBalance || walletBalance.availableBalance < property.price) {
       const needed = fmtJod(property.price);
@@ -477,7 +472,7 @@ const PublicListingDetailScreen = () => {
             Ejod Balance:
           </Text>
           <Text style={[styles.balanceChipValue, isInvestment && styles.balanceChipValueDark]}>
-            {`JOD ${new Intl.NumberFormat('en-US', {minimumFractionDigits: 2}).format(walletBalance.availableBalance)}`}
+            {`JOD ${formatDecimal2Min(walletBalance.availableBalance)}`}
           </Text>
         </View>
       )}
