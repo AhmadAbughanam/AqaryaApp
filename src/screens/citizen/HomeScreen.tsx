@@ -47,6 +47,7 @@ import CitizenBrandBar from '../../components/CitizenBrandBar';
 import {detectJordanCity, DetectedCity, CITY_CENTERS} from '../../utils/jordanCityDetector';
 import {AppImages} from '../../assets/images';
 
+import {formatCurrency} from '../../utils/formatters';
 // React Native provides navigator.geolocation as a deprecated polyfill.
 // This tsconfig omits DOM lib so we declare the minimal shape we need here.
 declare global {
@@ -67,12 +68,7 @@ const {width: SCREEN_W} = Dimensions.get('window');
 const CARD_PAD = 16;
 const CARD_GAP = 10;
 
-const formatCurrency = (value: number): string =>
-  new Intl.NumberFormat('en-US', {
-    style: 'currency',
-    currency: 'USD',
-    maximumFractionDigits: 0,
-  }).format(value);
+
 
 const marketModeToType = (mode: MarketMode): MarketType =>
   mode === 'buy' ? 'sale' : mode === 'rent' ? 'rent' : 'investment';

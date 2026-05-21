@@ -7,6 +7,7 @@ import {StyleSheet, Text, View} from 'react-native';
 import Card from './Card';
 import {Colors} from '../constants/colors';
 
+import {formatNumber, formatCompactCurrency} from '../utils/formatters';
 // ─── Types ────────────────────────────────────────────────────────────────────
 
 interface InvestmentSummaryCardProps {
@@ -17,16 +18,9 @@ interface InvestmentSummaryCardProps {
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
-const formatCurrency = (value: number): string =>
-  new Intl.NumberFormat('en-US', {
-    style: 'currency',
-    currency: 'USD',
-    notation: 'compact',
-    maximumFractionDigits: 1,
-  }).format(value);
+const formatCurrency = (value: number): string => formatCompactCurrency(value);
 
-const formatNumber = (value: number): string =>
-  new Intl.NumberFormat('en-US').format(value);
+
 
 // ─── Sub-component ────────────────────────────────────────────────────────────
 

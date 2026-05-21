@@ -1,4 +1,30 @@
-// Shared date formatting helpers for UI display.
+// Shared date and number formatting helpers for UI display.
+// Cached Intl formatters to prevent performance bottlenecks during React renders.
+
+const dateTimeFormatter = new Intl.DateTimeFormat('en-US', {
+  year: 'numeric',
+  month: 'short',
+  day: '2-digit',
+  hour: '2-digit',
+  minute: '2-digit',
+});
+
+const currencyFormatter = new Intl.NumberFormat('en-US', {
+  style: 'currency',
+  currency: 'USD',
+  maximumFractionDigits: 0,
+});
+
+const decimal2Formatter = new Intl.NumberFormat('en-US', {
+  minimumFractionDigits: 2,
+  maximumFractionDigits: 2,
+});
+
+const decimal2MinFormatter = new Intl.NumberFormat('en-US', {
+  minimumFractionDigits: 2,
+});
+
+const numberFormatter = new Intl.NumberFormat('en-US');
 
 export const formatDateTime = (isoDate: string): string => {
   const date = new Date(isoDate);
@@ -7,11 +33,23 @@ export const formatDateTime = (isoDate: string): string => {
     return 'N/A';
   }
 
-  return new Intl.DateTimeFormat('en-US', {
-    year: 'numeric',
-    month: 'short',
-    day: '2-digit',
-    hour: '2-digit',
-    minute: '2-digit',
-  }).format(date);
+  return dateTimeFormatter.format(date);
 };
+
+
+const compactCurrencyFormatter = new Intl.NumberFormat('en-US', {
+  style: 'currency',
+  currency: 'USD',
+  notation: 'compact',
+  maximumFractionDigits: 1,
+});
+
+export const formatCompactCurrency = (value: number): string => compactCurrencyFormatter.format(value);
+
+export const formatCurrency = (value: number): string => currencyFormatter.format(value);
+
+export const formatDecimal2 = (value: number): string => decimal2Formatter.format(value);
+
+export const formatDecimal2Min = (value: number): string => decimal2MinFormatter.format(value);
+
+export const formatNumber = (value: number): string => numberFormatter.format(value);
