@@ -7,18 +7,14 @@ import {
   Text,
   View,
 } from 'react-native';
+import {formatCurrency} from '../../utils/formatters';
 import {getPortfolio, PortfolioItem} from '../../api/investments';
 import Card from '../../components/Card';
 import StatusBadge from '../../components/StatusBadge';
 import {Colors} from '../../constants/colors';
 import {useStrings} from '../../i18n';
 
-const formatCurrency = (value: number): string =>
-  new Intl.NumberFormat('en-US', {
-    style: 'currency',
-    currency: 'USD',
-    maximumFractionDigits: 0,
-  }).format(value);
+
 
 const PortfolioScreen = () => {
   const strings = useStrings();

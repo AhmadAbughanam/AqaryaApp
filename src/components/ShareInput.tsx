@@ -10,6 +10,7 @@ import {
   TextInput,
   View,
 } from 'react-native';
+import {formatCurrency} from '../utils/formatters';
 import {Colors} from '../constants/colors';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
@@ -25,12 +26,7 @@ interface ShareInputProps {
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
-const formatCurrency = (value: number): string =>
-  new Intl.NumberFormat('en-US', {
-    style: 'currency',
-    currency: 'USD',
-    maximumFractionDigits: 0,
-  }).format(value);
+
 
 // ─── Component ────────────────────────────────────────────────────────────────
 

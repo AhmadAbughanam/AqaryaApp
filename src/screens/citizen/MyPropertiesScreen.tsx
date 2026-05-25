@@ -15,6 +15,7 @@ import {
   TextInput,
   View,
 } from 'react-native';
+import {formatCurrency} from '../../utils/formatters';
 import {NativeStackScreenProps} from '@react-navigation/native-stack';
 import StatusBadge from '../../components/StatusBadge';
 import Button from '../../components/Button';
@@ -39,12 +40,7 @@ type StatusFilter = 'active' | 'pending' | 'draft' | 'rejected' | null;
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
-const formatCurrency = (value: number): string =>
-  new Intl.NumberFormat('en-US', {
-    style: 'currency',
-    currency: 'USD',
-    maximumFractionDigits: 0,
-  }).format(value);
+
 
 const formatDate = (iso: string): string => {
   try {

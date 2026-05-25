@@ -12,7 +12,7 @@ import {
   View,
 } from 'react-native';
 import {AdminAnalytics, getAnalytics} from '../../api/admin';
-import {formatDateTime} from '../../utils/formatters';
+import {formatDateTime, formatDecimal} from '../../utils/formatters';
 import {AC} from '../../constants/adminColors';
 import {useStrings} from '../../i18n';
 import {WarningCircleIcon} from '../../components/AdminIcon';
@@ -45,7 +45,6 @@ const getHealthTone = (score: number): 'success' | 'warning' | 'error' => {
   return 'error';
 };
 
-const fmt = (n: number): string => n.toLocaleString();
 const fmtJod = (amount: number): string => `JOD ${(amount / 1000).toFixed(1)}k`;
 
 const TONE_COLOR: Record<'success' | 'warning' | 'error', string> = {
@@ -97,7 +96,7 @@ const StatGrid = ({
     {items.map(item => (
       <View key={item.label} style={styles.statCell}>
         <Text style={[styles.statValue, item.accent && styles.statValueAccent]}>
-          {typeof item.value === 'number' ? fmt(item.value) : item.value}
+          {typeof item.value === 'number' ? formatDecimal(item.value) : item.value}
         </Text>
         <Text style={styles.statLabel}>{item.label}</Text>
       </View>
@@ -361,10 +360,10 @@ const AnalyticsScreen = () => {
   const healthColor = TONE_COLOR[derived.operationalHealthTone];
 
   const healthStats: {label: string; value: string}[] = [
-    {label: an.statCitizens, value: fmt(analytics.totalCitizenUsers)},
-    {label: an.statListings, value: fmt(analytics.totalProperties)},
-    {label: an.statOpportunities, value: fmt(derived.investTotal)},
-    {label: an.statProviders, value: fmt(analytics.providers.total)},
+    {label: an.statCitizens, value: formatDecimal(analytics.totalCitizenUsers)},
+    {label: an.statListings, value: formatDecimal(analytics.totalProperties)},
+    {label: an.statOpportunities, value: formatDecimal(derived.investTotal)},
+    {label: an.statProviders, value: formatDecimal(analytics.providers.total)},
   ];
 
   return (
@@ -442,13 +441,13 @@ const AnalyticsScreen = () => {
       <View style={styles.tileRow}>
         <MetricTile
           label={an.tileTotalListings}
-          value={fmt(analytics.totalProperties)}
+          value={formatDecimal(analytics.totalProperties)}
           sub={`${derived.verificationRate}% verified`}
           direction={derived.verificationRate >= 70 ? 'up' : 'neutral'}
         />
         <MetricTile
           label={an.tilePendingReview}
-          value={fmt(analytics.pendingVerificationProperties + analytics.needsChangesProperties)}
+          value={formatDecimal(analytics.pendingVerificationProperties + analytics.needsChangesProperties)}
           sub={
             analytics.pendingVerificationProperties > 0
               ? `${analytics.pendingVerificationProperties} pending`
@@ -461,13 +460,13 @@ const AnalyticsScreen = () => {
       <View style={styles.tileRow}>
         <MetricTile
           label={an.tileAnchoredRecords}
-          value={fmt(analytics.totalAnchored)}
+          value={formatDecimal(analytics.totalAnchored)}
           sub={`${derived.anchorRate}% of verified`}
           direction={derived.anchorRate >= 70 ? 'up' : 'neutral'}
         />
         <MetricTile
           label={an.tileSimulations}
-          value={fmt(analytics.totalSimulations)}
+          value={formatDecimal(analytics.totalSimulations)}
           sub={
             analytics.totalSimulationVolume > 0
               ? fmtJod(analytics.totalSimulationVolume)
@@ -511,13 +510,13 @@ const AnalyticsScreen = () => {
       <View style={styles.tileRow}>
         <MetricTile
           label={an.tilePublished}
-          value={fmt(analytics.investments.published)}
+          value={formatDecimal(analytics.investments.published)}
           sub={`${derived.investPublishRate}% publish rate`}
           direction={derived.investPublishRate >= 50 ? 'up' : 'neutral'}
         />
         <MetricTile
           label={an.tileReviewBacklog}
-          value={fmt(derived.investReviewBacklog)}
+          value={formatDecimal(derived.investReviewBacklog)}
           sub={
             analytics.investments.submitted > 0
               ? `${analytics.investments.submitted} submitted`
@@ -549,7 +548,7 @@ const AnalyticsScreen = () => {
           <View style={styles.simRow}>
             <Text style={styles.simLabel}>{an.investSimulations}</Text>
             <Text style={styles.simValue}>
-              {fmt(analytics.investments.totalSimulations)}
+              {formatDecimal(analytics.investments.totalSimulations)}
               {analytics.investments.totalSimulationVolume > 0
                 ? `  ·  ${fmtJod(analytics.investments.totalSimulationVolume)}`
                 : ''}
@@ -564,13 +563,13 @@ const AnalyticsScreen = () => {
       <View style={styles.tileRow}>
         <MetricTile
           label={an.tileVerifiedProviders}
-          value={fmt(analytics.providers.verified)}
+          value={formatDecimal(analytics.providers.verified)}
           sub={`${derived.providerVerifiedRate}% of total`}
           direction={derived.providerVerifiedRate >= 50 ? 'up' : 'neutral'}
         />
         <MetricTile
           label={an.tilePendingReview}
-          value={fmt(analytics.providers.underReview)}
+          value={formatDecimal(analytics.providers.underReview)}
           sub={analytics.providers.underReview > 0 ? an.subNeedsAttention : an.subQueueClear}
           direction={analytics.providers.underReview > 0 ? 'down' : 'up'}
         />
@@ -599,13 +598,13 @@ const AnalyticsScreen = () => {
       <View style={styles.tileRow}>
         <MetricTile
           label={an.tileOpenReports}
-          value={fmt(analytics.moderation.reportsOpen + analytics.moderation.reportsUnderReview)}
+          value={formatDecimal(analytics.moderation.reportsOpen + analytics.moderation.reportsUnderReview)}
           sub={derived.moderationBacklog > 0 ? an.subNeedsAction : an.subClear}
           direction={derived.moderationBacklog > 0 ? 'down' : 'up'}
         />
         <MetricTile
           label={an.tileQualityFlags}
-          value={fmt(analytics.moderation.unresolvedQualityFlags)}
+          value={formatDecimal(analytics.moderation.unresolvedQualityFlags)}
           sub={
             analytics.moderation.unresolvedQualityFlags > 0 ? an.subUnresolved : an.subAllResolved
           }
@@ -643,13 +642,13 @@ const AnalyticsScreen = () => {
       <View style={styles.tileRow}>
         <MetricTile
           label={an.tileSupportThreads}
-          value={fmt(analytics.support.totalThreads)}
-          sub={`${fmt(analytics.support.totalMessages)} messages`}
+          value={formatDecimal(analytics.support.totalThreads)}
+          sub={`${formatDecimal(analytics.support.totalMessages)} messages`}
           direction={analytics.support.totalThreads > 0 ? 'up' : 'neutral'}
         />
         <MetricTile
           label={an.tileRecentMessages}
-          value={fmt(analytics.support.recentMessages)}
+          value={formatDecimal(analytics.support.recentMessages)}
           sub={an.subLast7Days}
           direction={analytics.support.recentMessages > 0 ? 'up' : 'neutral'}
         />
