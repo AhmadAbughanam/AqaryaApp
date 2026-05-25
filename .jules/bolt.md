@@ -1,0 +1,3 @@
+## 2024-06-25 - React Native Render Bottleneck with Intl Formatter
+**Learning:** Instantiating `Intl.NumberFormat` inline inside render methods of deeply nested or long list components causes significant JS thread CPU overhead in React Native apps, leading to dropped frames.
+**Action:** Always instantiate and cache `Intl.NumberFormat` or `Intl.DateTimeFormat` objects externally (e.g. in `src/utils/formatters.ts`) and use the cached instances within React components. Ensure when refactoring local formatters to pay close attention to custom local options, like compact currency display or enforced decimal limits.

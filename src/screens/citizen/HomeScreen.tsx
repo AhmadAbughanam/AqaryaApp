@@ -17,6 +17,7 @@ import {
   TextInput,
   View,
 } from 'react-native';
+import {formatCurrency} from '../../utils/formatters';
 import {getNotifications} from '../../api/notifications';
 import {NativeStackScreenProps} from '@react-navigation/native-stack';
 import {BottomTabNavigationProp} from '@react-navigation/bottom-tabs';
@@ -67,12 +68,7 @@ const {width: SCREEN_W} = Dimensions.get('window');
 const CARD_PAD = 16;
 const CARD_GAP = 10;
 
-const formatCurrency = (value: number): string =>
-  new Intl.NumberFormat('en-US', {
-    style: 'currency',
-    currency: 'USD',
-    maximumFractionDigits: 0,
-  }).format(value);
+
 
 const marketModeToType = (mode: MarketMode): MarketType =>
   mode === 'buy' ? 'sale' : mode === 'rent' ? 'rent' : 'investment';

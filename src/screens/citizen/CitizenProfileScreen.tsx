@@ -13,6 +13,7 @@ import {
   Text,
   View,
 } from 'react-native';
+import {formatDecimal} from '../../utils/formatters';
 import {BottomTabNavigationProp} from '@react-navigation/bottom-tabs';
 import {NativeStackScreenProps} from '@react-navigation/native-stack';
 import Button from '../../components/Button';
@@ -474,7 +475,7 @@ const CitizenProfileScreen = ({navigation}: Props) => {
           iconNode={<WalletMenuIcon color={Colors.textPrimary} />}
           label={strings.profile.menuWallet}
           right={walletBalance != null
-            ? `JOD ${new Intl.NumberFormat('en-US', {minimumFractionDigits: 2}).format(walletBalance.availableBalance)}`
+            ? `JOD ${formatDecimal(walletBalance.availableBalance)}`
             : undefined}
           onPress={() => navigation.navigate('Wallet')}
         />
