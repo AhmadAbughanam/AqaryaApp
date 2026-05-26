@@ -94,5 +94,4 @@ const CitizenStack = () => {
   );
 };
 
-
 export default CitizenStack;
