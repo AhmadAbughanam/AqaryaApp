@@ -1,0 +1,3 @@
+## 2024-05-18 - Caching Intl Instances in React Native
+**Learning:** `Intl.NumberFormat` and `Intl.DateTimeFormat` instantiations are notoriously slow in JavaScript (particularly in React Native environments like Hermes or JSC) because they require loading locale data and configuring internal formatters. Calling `new Intl.NumberFormat()` inside render loops or list item renders causes significant thread blocking and unnecessary garbage collection.
+**Action:** Always extract and cache `Intl` instances at the module level (e.g., in `src/utils/formatters.ts`) and export wrapper functions instead of instantiating them inline.

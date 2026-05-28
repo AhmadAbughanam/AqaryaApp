@@ -21,18 +21,13 @@ import {
   verifyProperty,
 } from '../../api/admin';
 import {AdminStackParamList} from '../../navigation/AdminStack';
-import {formatDateTime} from '../../utils/formatters';
+import { formatDateTime, formatCurrencyNoFraction as formatCurrency } from '../../utils/formatters';
 import {AC} from '../../constants/adminColors';
 import {useStrings} from '../../i18n';
 
 type Props = NativeStackScreenProps<AdminStackParamList, 'AdminPropertyDetail'>;
 
-const formatCurrency = (value: number): string =>
-  new Intl.NumberFormat('en-US', {
-    style: 'currency',
-    currency: 'USD',
-    maximumFractionDigits: 0,
-  }).format(value);
+
 
 const InfoRow = ({label, value}: {label: string; value: string}) => (
   <View style={styles.infoRow}>

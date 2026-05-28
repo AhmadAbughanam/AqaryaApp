@@ -18,18 +18,13 @@ import {
   reviewInvestmentOpportunity,
 } from '../../api/admin';
 import {AdminStackParamList} from '../../navigation/AdminStack';
-import {formatDateTime} from '../../utils/formatters';
+import { formatDateTime, formatCurrencyNoFraction as formatCurrency } from '../../utils/formatters';
 import {AC} from '../../constants/adminColors';
 import {useStrings} from '../../i18n';
 
 type Props = NativeStackScreenProps<AdminStackParamList, 'AdminInvestmentDetail'>;
 
-const formatCurrency = (value: number): string =>
-  new Intl.NumberFormat('en-US', {
-    style: 'currency',
-    currency: 'USD',
-    maximumFractionDigits: 0,
-  }).format(value);
+
 
 const formatPercent = (value: number): string => `${value}%`;
 
