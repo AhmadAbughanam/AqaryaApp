@@ -1,0 +1,3 @@
+## 2024-05-30 - Caching Intl Formatters to Prevent React Render Bottlenecks
+**Learning:** Found multiple instances where `new Intl.NumberFormat` and `new Intl.DateTimeFormat` were being instantiated inside React components and render loops. These operations are surprisingly slow and create performance bottlenecks when rendering lists or frequently updating components.
+**Action:** Created cached versions of these formatters in `src/utils/formatters.ts` and refactored the components to use these shared instances instead of creating new ones on the fly. Will watch out for this anti-pattern in the future.
