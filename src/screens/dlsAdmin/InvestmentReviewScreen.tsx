@@ -19,7 +19,7 @@ import {
 import ConfirmationModal from '../../components/ConfirmationModal';
 import StatusBadge from '../../components/StatusBadge';
 import {AdminStackParamList} from '../../navigation/AdminStack';
-import {formatDateTime} from '../../utils/formatters';
+import {formatCurrencyNoFraction, formatDateTime} from '../../utils/formatters';
 import {AC} from '../../constants/adminColors';
 import {useStrings} from '../../i18n';
 
@@ -50,11 +50,7 @@ const STATUS_ACCENT: Partial<Record<StatusFilter, string>> = {
 };
 
 const formatCurrency = (value: number): string =>
-  new Intl.NumberFormat('en-US', {
-    style: 'currency',
-    currency: 'USD',
-    maximumFractionDigits: 0,
-  }).format(value);
+  formatCurrencyNoFraction(value);
 
 const InvestmentReviewScreen = ({navigation}: Props) => {
   const strings = useStrings();
