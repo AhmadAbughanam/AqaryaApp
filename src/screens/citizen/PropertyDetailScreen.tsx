@@ -13,7 +13,7 @@ import VerificationBadge from '../../components/VerificationBadge';
 import Button from '../../components/Button';
 import {buyProperty, getPropertyDetails, PropertyDetails} from '../../api/properties';
 import {CitizenStackParamList} from '../../navigation/CitizenStack';
-import {formatDateTime} from '../../utils/formatters';
+import {formatCurrencyNoFraction, formatDateTime} from '../../utils/formatters';
 import {Colors} from '../../constants/colors';
 import {useStrings} from '../../i18n';
 import PropertyImage from '../../components/PropertyImage';
@@ -22,11 +22,7 @@ import {AppImages} from '../../assets/images';
 type Props = NativeStackScreenProps<CitizenStackParamList, 'PropertyDetail'>;
 
 const formatCurrency = (value: number): string =>
-  new Intl.NumberFormat('en-US', {
-    style: 'currency',
-    currency: 'USD',
-    maximumFractionDigits: 0,
-  }).format(value);
+  formatCurrencyNoFraction(value);
 
 const InfoRow = ({label, value}: {label: string; value: string}) => (
   <View style={styles.infoRow}>

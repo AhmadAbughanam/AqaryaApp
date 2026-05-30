@@ -32,6 +32,8 @@ import PropertyImage from '../../components/PropertyImage';
 import {CitizenBrandLogo} from '../../components/CitizenBrandBar';
 import {VerificationStatus} from '../../api/properties';
 import {AppImages} from '../../assets/images';
+import {formatCurrencyNoFraction} from '../../utils/formatters';
+
 
 type Props = NativeStackScreenProps<CitizenStackParamList, 'MyProperties'>;
 type Tab = 'mine' | 'favorites';
@@ -40,11 +42,7 @@ type StatusFilter = 'active' | 'pending' | 'draft' | 'rejected' | null;
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
 const formatCurrency = (value: number): string =>
-  new Intl.NumberFormat('en-US', {
-    style: 'currency',
-    currency: 'USD',
-    maximumFractionDigits: 0,
-  }).format(value);
+  formatCurrencyNoFraction(value);
 
 const formatDate = (iso: string): string => {
   try {
