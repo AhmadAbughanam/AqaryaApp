@@ -19,9 +19,11 @@ import {
 import ConfirmationModal from '../../components/ConfirmationModal';
 import StatusBadge from '../../components/StatusBadge';
 import {AdminStackParamList} from '../../navigation/AdminStack';
-import {formatDateTime} from '../../utils/formatters';
+
 import {AC} from '../../constants/adminColors';
 import {useStrings} from '../../i18n';
+import {formatCurrency, formatDateTime} from '../../utils/formatters';
+
 
 type Props = NativeStackScreenProps<AdminStackParamList, 'InvestmentReview'>;
 type QuickAction = 'approve' | 'publish';
@@ -49,12 +51,6 @@ const STATUS_ACCENT: Partial<Record<StatusFilter, string>> = {
   rejected: AC.danger,
 };
 
-const formatCurrency = (value: number): string =>
-  new Intl.NumberFormat('en-US', {
-    style: 'currency',
-    currency: 'USD',
-    maximumFractionDigits: 0,
-  }).format(value);
 
 const InvestmentReviewScreen = ({navigation}: Props) => {
   const strings = useStrings();

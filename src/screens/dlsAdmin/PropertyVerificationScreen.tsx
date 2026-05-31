@@ -21,9 +21,11 @@ import ConfirmationModal from '../../components/ConfirmationModal';
 import StatusBadge from '../../components/StatusBadge';
 import {AdminStackParamList} from '../../navigation/AdminStack';
 import {VerificationStatus} from '../../api/properties';
-import {formatDateTime} from '../../utils/formatters';
+
 import {AC} from '../../constants/adminColors';
 import {useStrings} from '../../i18n';
+import {formatDateTime} from '../../utils/formatters';
+
 
 type Props = NativeStackScreenProps<AdminStackParamList, 'PropertyVerification'>;
 type AdminAction = 'verify' | 'freeze' | 'anchor';

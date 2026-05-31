@@ -13,22 +13,18 @@ import Card from '../../components/Card';
 import VerificationBadge from '../../components/VerificationBadge';
 import Button from '../../components/Button';
 import Input from '../../components/Input';
-import {formatDateTime} from '../../utils/formatters';
+
 import {buyProperty, getProperties, PropertyListItem} from '../../api/properties';
 import {CitizenStackParamList} from '../../navigation/CitizenStack';
 import {Colors} from '../../constants/colors';
 import {useStrings} from '../../i18n';
+import {formatCurrency, formatDateTime} from '../../utils/formatters';
+
 
 type Props = NativeStackScreenProps<CitizenStackParamList, 'MyProperties'>;
 
 const PAGE_SIZE = 20;
 
-const formatCurrency = (value: number): string =>
-  new Intl.NumberFormat('en-US', {
-    style: 'currency',
-    currency: 'USD',
-    maximumFractionDigits: 0,
-  }).format(value);
 
 const PropertyListScreen = ({navigation}: Props) => {
   const strings = useStrings();
