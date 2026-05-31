@@ -12,10 +12,12 @@ import {
   View,
 } from 'react-native';
 import {AdminAnalytics, getAnalytics} from '../../api/admin';
-import {formatDateTime} from '../../utils/formatters';
+
 import {AC} from '../../constants/adminColors';
 import {useStrings} from '../../i18n';
 import {WarningCircleIcon} from '../../components/AdminIcon';
+import {formatDateTime} from '../../utils/formatters';
+
 
 // ─── Types ─────────────────────────────────────────────────────────────────────
 
@@ -44,6 +46,9 @@ const getHealthTone = (score: number): 'success' | 'warning' | 'error' => {
   if (score >= 60) {return 'warning';}
   return 'error';
 };
+
+
+
 
 const fmt = (n: number): string => n.toLocaleString();
 const fmtJod = (amount: number): string => `JOD ${(amount / 1000).toFixed(1)}k`;

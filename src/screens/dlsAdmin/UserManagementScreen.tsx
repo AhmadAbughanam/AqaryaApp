@@ -17,9 +17,11 @@ import {
 } from '../../api/admin';
 import StatusBadge from '../../components/StatusBadge';
 import {AdminStackParamList} from '../../navigation/AdminStack';
-import {formatDateTime} from '../../utils/formatters';
+
 import {AC} from '../../constants/adminColors';
 import {useStrings} from '../../i18n';
+import {formatDateTime} from '../../utils/formatters';
+
 
 type Props = NativeStackScreenProps<AdminStackParamList, 'UserManagement'>;
 
