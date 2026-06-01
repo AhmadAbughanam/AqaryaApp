@@ -4,29 +4,21 @@
 import React from 'react';
 import {StyleSheet, Text, View} from 'react-native';
 import {PortfolioItem} from '../api/investments';
-import {formatDateTime} from '../utils/formatters';
+import {formatCurrency, formatDateTime, formatDefaultNumber as formatNumber} from '../utils/formatters';
 import Card from './Card';
 import {Colors} from '../constants/colors';
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
-const formatCurrency = (value: number): string =>
-  new Intl.NumberFormat('en-US', {
-    style: 'currency',
-    currency: 'USD',
-    maximumFractionDigits: 0,
-  }).format(value);
 
-const formatNumber = (value: number): string =>
-  new Intl.NumberFormat('en-US').format(value);
+
+
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
 interface PortfolioCardProps {
   item: PortfolioItem;
 }
-
-// ─── Component ────────────────────────────────────────────────────────────────
 
 const PortfolioCard = ({item}: PortfolioCardProps) => {
   const ownershipFormatted = item.ownershipPercentage.toFixed(2);
