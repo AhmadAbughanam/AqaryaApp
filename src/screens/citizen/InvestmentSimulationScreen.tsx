@@ -27,18 +27,13 @@ import Input from '../../components/Input';
 import Modal from '../../components/Modal';
 import {CitizenStackParamList} from '../../navigation/CitizenStack';
 import {CitizenTabParamList} from '../../navigation/CitizenTabNavigator';
+import {formatCurrencyUsd} from "../../utils/formatters";
 import {Colors} from '../../constants/colors';
 import {useStrings} from '../../i18n';
 
 type Props = NativeStackScreenProps<CitizenStackParamList, 'InvestmentSimulation'>;
 type ExitScenario = 'conservative' | 'base' | 'optimistic';
 
-const formatCurrency = (value: number): string =>
-  new Intl.NumberFormat('en-US', {
-    style: 'currency',
-    currency: 'USD',
-    maximumFractionDigits: 0,
-  }).format(value);
 
 const InvestmentSimulationScreen = ({navigation, route}: Props) => {
   const strings = useStrings();
@@ -297,10 +292,10 @@ const InvestmentSimulationScreen = ({navigation, route}: Props) => {
               <View style={styles.selectionStats}>
                 <Text style={styles.selectionStat}>{strings.investmentSimulation.sponsorLabel} {item.sponsorName}</Text>
                 <Text style={styles.selectionStat}>
-                  {formatCurrency(item.pricePerShare)} {strings.investmentSimulation.perShare}
+                  {formatCurrencyUsd(item.pricePerShare)} {strings.investmentSimulation.perShare}
                 </Text>
                 <Text style={styles.selectionStat}>
-                  Minimum ticket {formatCurrency(item.minimumInvestmentAmount)}
+                  Minimum ticket {formatCurrencyUsd(item.minimumInvestmentAmount)}
                 </Text>
                 <Text style={styles.selectionStat}>
                   Target IRR {(item.targetIrr * 100).toFixed(1)}% | Cash yield{' '}
@@ -436,12 +431,12 @@ const InvestmentSimulationScreen = ({navigation, route}: Props) => {
             <Text style={styles.previewTitle}>Projected Return</Text>
 
             <View style={styles.previewMetric}>
-              <Text style={styles.previewMetricValue}>{formatCurrency(computed.projectedExitValue)}</Text>
+              <Text style={styles.previewMetricValue}>{formatCurrencyUsd(computed.projectedExitValue)}</Text>
               <Text style={styles.previewMetricLabel}>Projected Value</Text>
             </View>
             <View style={styles.previewMetric}>
               <Text style={[styles.previewMetricValue, styles.previewMetricAccent]}>
-                +{formatCurrency(Math.max(0, computed.projectedProfit))}
+                +{formatCurrencyUsd(Math.max(0, computed.projectedProfit))}
               </Text>
               <Text style={styles.previewMetricLabel}>Net Profit</Text>
             </View>
@@ -455,7 +450,7 @@ const InvestmentSimulationScreen = ({navigation, route}: Props) => {
             ) : null}
             <View style={styles.previewMetric}>
               <Text style={[styles.previewMetricValue, styles.previewMetricAccent]}>
-                +{formatCurrency(computed.annualNetCashFlow)}
+                +{formatCurrencyUsd(computed.annualNetCashFlow)}
               </Text>
               <Text style={styles.previewMetricLabel}>Annual Yield</Text>
             </View>
@@ -469,7 +464,7 @@ const InvestmentSimulationScreen = ({navigation, route}: Props) => {
               ) : null}
             </View>
             <Text style={styles.previewRoiSub}>
-              Invest {formatCurrency(computed.totalAmount)}  →  Earn {formatCurrency(computed.projectedExitValue)}
+              Invest {formatCurrencyUsd(computed.totalAmount)}  →  Earn {formatCurrencyUsd(computed.projectedExitValue)}
             </Text>
             <Text style={styles.previewDisclaimer}>
               This is a projection based on the selected scenario and holding period. Actual returns may vary.
@@ -500,7 +495,7 @@ const InvestmentSimulationScreen = ({navigation, route}: Props) => {
         title={strings.investmentSimulation.investmentRecordedTitle}
         subtitle={
           lastResult
-            ? `${formatCurrency(lastResult.projectedProfit)} projected profit at ${lastResult.equityMultiple.toFixed(2)}x equity multiple.`
+            ? `${formatCurrencyUsd(lastResult.projectedProfit)} projected profit at ${lastResult.equityMultiple.toFixed(2)}x equity multiple.`
             : 'The simulated investment has been saved to your history.'
         }
         primaryAction={{

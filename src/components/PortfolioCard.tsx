@@ -4,21 +4,9 @@
 import React from 'react';
 import {StyleSheet, Text, View} from 'react-native';
 import {PortfolioItem} from '../api/investments';
-import {formatDateTime} from '../utils/formatters';
+import {formatDateTime, formatCurrencyUsd, formatNumber} from '../utils/formatters';
 import Card from './Card';
 import {Colors} from '../constants/colors';
-
-// ─── Helpers ──────────────────────────────────────────────────────────────────
-
-const formatCurrency = (value: number): string =>
-  new Intl.NumberFormat('en-US', {
-    style: 'currency',
-    currency: 'USD',
-    maximumFractionDigits: 0,
-  }).format(value);
-
-const formatNumber = (value: number): string =>
-  new Intl.NumberFormat('en-US').format(value);
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -62,14 +50,14 @@ const PortfolioCard = ({item}: PortfolioCardProps) => {
         <View style={styles.valueBannerItem}>
           <Text style={styles.valueBannerLabel}>Simulated Value</Text>
           <Text style={styles.valueBannerAmount}>
-            {formatCurrency(item.simulatedValue)}
+            {formatCurrencyUsd(item.simulatedValue)}
           </Text>
         </View>
         <View style={styles.valueBannerDivider} />
         <View style={styles.valueBannerItem}>
           <Text style={styles.valueBannerLabel}>Per Share</Text>
           <Text style={styles.valueBannerAmount}>
-            {formatCurrency(item.pricePerShare)}
+            {formatCurrencyUsd(item.pricePerShare)}
           </Text>
         </View>
       </View>

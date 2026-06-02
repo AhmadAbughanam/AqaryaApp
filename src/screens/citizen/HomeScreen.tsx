@@ -39,6 +39,7 @@ import {
   unsaveListing,
   unsaveOpportunity,
 } from '../../api/savedListings';
+import {formatCurrencyUsd} from "../../utils/formatters";
 import {Colors} from '../../constants/colors';
 import {useStrings} from '../../i18n';
 import {useInvestMode} from '../../store/investModeState';
@@ -67,12 +68,6 @@ const {width: SCREEN_W} = Dimensions.get('window');
 const CARD_PAD = 16;
 const CARD_GAP = 10;
 
-const formatCurrency = (value: number): string =>
-  new Intl.NumberFormat('en-US', {
-    style: 'currency',
-    currency: 'USD',
-    maximumFractionDigits: 0,
-  }).format(value);
 
 const marketModeToType = (mode: MarketMode): MarketType =>
   mode === 'buy' ? 'sale' : mode === 'rent' ? 'rent' : 'investment';
@@ -366,7 +361,7 @@ const HomeScreen = ({navigation, route}: Props) => {
         <View style={styles.cardDivider} />
 
         <View style={styles.cardPriceRow}>
-          <Text style={styles.cardPrice}>{formatCurrency(item.price)}</Text>
+          <Text style={styles.cardPrice}>{formatCurrencyUsd(item.price)}</Text>
           <View style={styles.cardSpecs}>
             {item.areaSqm != null ? (
               <View style={styles.cardSpecChip}>
@@ -454,7 +449,7 @@ const HomeScreen = ({navigation, route}: Props) => {
 
           {/* Price + Target ROI */}
           <View style={styles.investPriceRow}>
-            <Text style={styles.investPrice}>{formatCurrency(item.minimumInvestmentAmount)}</Text>
+            <Text style={styles.investPrice}>{formatCurrencyUsd(item.minimumInvestmentAmount)}</Text>
             <View style={styles.investRoiBadge}>
               <Text style={styles.investRoiText}>Target ROI {roiLabel}</Text>
             </View>
@@ -468,8 +463,8 @@ const HomeScreen = ({navigation, route}: Props) => {
           {/* Funding stats */}
           <View style={styles.investStatsRow}>
             <Text style={styles.investStatFunded}>{fundingPct}% funded</Text>
-            <Text style={styles.investStatSub}>{formatCurrency(item.fundedAmount)}</Text>
-            <Text style={styles.investStatSub}>{formatCurrency(item.fundingGoal)}</Text>
+            <Text style={styles.investStatSub}>{formatCurrencyUsd(item.fundedAmount)}</Text>
+            <Text style={styles.investStatSub}>{formatCurrencyUsd(item.fundingGoal)}</Text>
           </View>
 
           {/* Aqarya score + CTA */}

@@ -7,6 +7,7 @@ import {PilotProperty} from '../api/investments';
 import Card from './Card';
 import ActionButton from './ActionButton';
 import {Colors} from '../constants/colors';
+import {formatCurrencyUsd, formatNumber} from '../utils/formatters';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -15,18 +16,6 @@ interface InvestmentCardProps {
   onSelect: (property: PilotProperty) => void;
   disabled?: boolean;
 }
-
-// ─── Helpers ──────────────────────────────────────────────────────────────────
-
-const formatCurrency = (value: number): string =>
-  new Intl.NumberFormat('en-US', {
-    style: 'currency',
-    currency: 'USD',
-    maximumFractionDigits: 0,
-  }).format(value);
-
-const formatNumber = (value: number): string =>
-  new Intl.NumberFormat('en-US').format(value);
 
 // ─── Component ────────────────────────────────────────────────────────────────
 
@@ -57,7 +46,7 @@ const InvestmentCard = ({
         <View style={styles.valuePill}>
           <Text style={styles.valuePillLabel}>Value</Text>
           <Text style={styles.valuePillAmount}>
-            {formatCurrency(property.propertyValue)}
+            {formatCurrencyUsd(property.propertyValue)}
           </Text>
         </View>
       </View>
@@ -66,7 +55,7 @@ const InvestmentCard = ({
       <View style={styles.statsRow}>
         <View style={styles.statItem}>
           <Text style={styles.statValue}>
-            {formatCurrency(property.pricePerShare)}
+            {formatCurrencyUsd(property.pricePerShare)}
           </Text>
           <Text style={styles.statLabel}>Per Share</Text>
         </View>
