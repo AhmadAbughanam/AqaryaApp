@@ -14,6 +14,7 @@ import Button from '../../components/Button';
 import {buyProperty, getPropertyDetails, PropertyDetails} from '../../api/properties';
 import {CitizenStackParamList} from '../../navigation/CitizenStack';
 import {formatDateTime} from '../../utils/formatters';
+import {formatCurrencyUsd} from "../../utils/formatters";
 import {Colors} from '../../constants/colors';
 import {useStrings} from '../../i18n';
 import PropertyImage from '../../components/PropertyImage';
@@ -21,12 +22,6 @@ import {AppImages} from '../../assets/images';
 
 type Props = NativeStackScreenProps<CitizenStackParamList, 'PropertyDetail'>;
 
-const formatCurrency = (value: number): string =>
-  new Intl.NumberFormat('en-US', {
-    style: 'currency',
-    currency: 'USD',
-    maximumFractionDigits: 0,
-  }).format(value);
 
 const InfoRow = ({label, value}: {label: string; value: string}) => (
   <View style={styles.infoRow}>
@@ -82,7 +77,7 @@ const PropertyDetailScreen = ({route, navigation}: Props) => {
   const onBuyProperty = () => {
     Alert.alert(
       strings.propertyDetail.confirmBuyTitle,
-      `Buy ${property.title} for ${formatCurrency(property.price)}?`,
+      `Buy ${property.title} for ${formatCurrencyUsd(property.price)}?`,
       [
         {text: strings.propertyDetail.confirmBuyCancel, style: 'cancel'},
         {
@@ -138,7 +133,7 @@ const PropertyDetailScreen = ({route, navigation}: Props) => {
 
       <View style={styles.statsRow}>
         <Card variant="dark" padding="md" style={styles.statCard}>
-          <Text style={styles.darkStatValue}>{formatCurrency(property.price)}</Text>
+          <Text style={styles.darkStatValue}>{formatCurrencyUsd(property.price)}</Text>
           <Text style={styles.darkStatLabel}>
             {isSale ? strings.propertyDetail.askingPrice : strings.propertyDetail.projectPrice}
           </Text>
@@ -161,10 +156,10 @@ const PropertyDetailScreen = ({route, navigation}: Props) => {
         <InfoRow label={strings.propertyDetail.ownerLabel} value={property.ownerName} />
         <InfoRow label={strings.propertyDetail.marketTypeLabel} value={property.marketType} />
         <InfoRow label={strings.propertyDetail.ownershipTypeLabel} value={property.ownershipType} />
-        <InfoRow label={strings.propertyDetail.propertyValueLabel} value={formatCurrency(property.propertyValue)} />
+        <InfoRow label={strings.propertyDetail.propertyValueLabel} value={formatCurrencyUsd(property.propertyValue)} />
         <InfoRow
           label={property.marketType === 'sale' ? strings.propertyDetail.salePriceLabel : strings.propertyDetail.pricePerShareLabel}
-          value={formatCurrency(property.pricePerShare)}
+          value={formatCurrencyUsd(property.pricePerShare)}
         />
       </Card>
 

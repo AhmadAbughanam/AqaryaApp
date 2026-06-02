@@ -16,6 +16,7 @@ import Input from '../../components/Input';
 import {formatDateTime} from '../../utils/formatters';
 import {buyProperty, getProperties, PropertyListItem} from '../../api/properties';
 import {CitizenStackParamList} from '../../navigation/CitizenStack';
+import {formatCurrencyUsd} from "../../utils/formatters";
 import {Colors} from '../../constants/colors';
 import {useStrings} from '../../i18n';
 
@@ -23,12 +24,6 @@ type Props = NativeStackScreenProps<CitizenStackParamList, 'MyProperties'>;
 
 const PAGE_SIZE = 20;
 
-const formatCurrency = (value: number): string =>
-  new Intl.NumberFormat('en-US', {
-    style: 'currency',
-    currency: 'USD',
-    maximumFractionDigits: 0,
-  }).format(value);
 
 const PropertyListScreen = ({navigation}: Props) => {
   const strings = useStrings();
@@ -66,7 +61,7 @@ const PropertyListScreen = ({navigation}: Props) => {
   const onBuyProperty = (property: PropertyListItem) => {
     Alert.alert(
       strings.propertyDetail.confirmBuyTitle,
-      `Buy ${property.title} for ${formatCurrency(property.price)}?`,
+      `Buy ${property.title} for ${formatCurrencyUsd(property.price)}?`,
       [
         {text: strings.propertyDetail.confirmBuyCancel, style: 'cancel'},
         {
@@ -109,11 +104,11 @@ const PropertyListScreen = ({navigation}: Props) => {
 
       <View style={styles.metricsRow}>
         <View style={styles.metricPill}>
-          <Text style={styles.metricValue}>{formatCurrency(item.price)}</Text>
+          <Text style={styles.metricValue}>{formatCurrencyUsd(item.price)}</Text>
           <Text style={styles.metricLabel}>{strings.propertyList.askingPrice}</Text>
         </View>
         <View style={styles.metricPill}>
-          <Text style={styles.metricValue}>{formatCurrency(item.propertyValue)}</Text>
+          <Text style={styles.metricValue}>{formatCurrencyUsd(item.propertyValue)}</Text>
           <Text style={styles.metricLabel}>{strings.propertyList.valuation}</Text>
         </View>
         <View style={styles.metricPill}>

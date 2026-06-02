@@ -21,18 +21,13 @@ import {
   verifyProperty,
 } from '../../api/admin';
 import {AdminStackParamList} from '../../navigation/AdminStack';
+import {formatCurrencyUsd} from '../../utils/formatters';
 import {formatDateTime} from '../../utils/formatters';
 import {AC} from '../../constants/adminColors';
 import {useStrings} from '../../i18n';
 
 type Props = NativeStackScreenProps<AdminStackParamList, 'AdminPropertyDetail'>;
 
-const formatCurrency = (value: number): string =>
-  new Intl.NumberFormat('en-US', {
-    style: 'currency',
-    currency: 'USD',
-    maximumFractionDigits: 0,
-  }).format(value);
 
 const InfoRow = ({label, value}: {label: string; value: string}) => (
   <View style={styles.infoRow}>
@@ -165,12 +160,12 @@ const AdminPropertyDetailScreen = ({route, navigation}: Props) => {
         <Text style={styles.heroDesc}>{property.description}</Text>
         <View style={styles.heroStats}>
           <View style={styles.heroStatBlock}>
-            <Text style={styles.heroStatValue}>{formatCurrency(property.price)}</Text>
+            <Text style={styles.heroStatValue}>{formatCurrencyUsd(property.price)}</Text>
             <Text style={styles.heroStatLabel}>{pd.labelAsking}</Text>
           </View>
           <View style={styles.heroStatDivider} />
           <View style={styles.heroStatBlock}>
-            <Text style={styles.heroStatValue}>{formatCurrency(property.propertyValue)}</Text>
+            <Text style={styles.heroStatValue}>{formatCurrencyUsd(property.propertyValue)}</Text>
             <Text style={styles.heroStatLabel}>{pd.labelValuation}</Text>
           </View>
           <View style={styles.heroStatDivider} />
@@ -208,8 +203,8 @@ const AdminPropertyDetailScreen = ({route, navigation}: Props) => {
 
       {/* Listing Profile */}
       <SectionCard title={pd.sectionEntity} accentColor={AC.accent}>
-        <InfoRow label={pd.labelAsking} value={formatCurrency(property.price)} />
-        <InfoRow label={pd.labelValuation} value={formatCurrency(property.propertyValue)} />
+        <InfoRow label={pd.labelAsking} value={formatCurrencyUsd(property.price)} />
+        <InfoRow label={pd.labelValuation} value={formatCurrencyUsd(property.propertyValue)} />
         <InfoRow
           label={pd.labelAvailableShares}
           value={`${property.availableShares}/${property.totalShares}`}

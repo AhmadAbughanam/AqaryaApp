@@ -26,6 +26,7 @@ import {
   SavedListing,
 } from '../../api/savedListings';
 import {CitizenStackParamList} from '../../navigation/CitizenStack';
+import {formatCurrencyUsd} from "../../utils/formatters";
 import {Colors} from '../../constants/colors';
 import {useStrings} from '../../i18n';
 import PropertyImage from '../../components/PropertyImage';
@@ -39,12 +40,6 @@ type StatusFilter = 'active' | 'pending' | 'draft' | 'rejected' | null;
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
-const formatCurrency = (value: number): string =>
-  new Intl.NumberFormat('en-US', {
-    style: 'currency',
-    currency: 'USD',
-    maximumFractionDigits: 0,
-  }).format(value);
 
 const formatDate = (iso: string): string => {
   try {
@@ -274,7 +269,7 @@ const MyPropertyCard = ({
         </View>
 
         {/* Price */}
-        <Text style={s.priceText}>{formatCurrency(item.price)}</Text>
+        <Text style={s.priceText}>{formatCurrencyUsd(item.price)}</Text>
 
         {/* Date */}
         <Text style={s.dateText}>{dateLabel}</Text>
@@ -394,7 +389,7 @@ const FavoriteCard = ({
         </View>
 
         {/* Price */}
-        <Text style={s.priceText}>{formatCurrency(price)}</Text>
+        <Text style={s.priceText}>{formatCurrencyUsd(price)}</Text>
 
         {/* Date */}
         <Text style={s.dateText}>{savedDate}</Text>

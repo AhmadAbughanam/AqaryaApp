@@ -24,6 +24,7 @@ import {CitizenTabParamList} from '../../navigation/CitizenTabNavigator';
 import {CitizenProfileStackParamList} from '../../navigation/CitizenProfileStack';
 import {useAuth} from '../../store/AuthContext';
 import {useLanguage, useStrings, SupportedLanguage} from '../../i18n';
+import {formatMinimumTwoDecimals} from '../../utils/formatters';
 import {Colors} from '../../constants/colors';
 import {AppImages} from '../../assets/images';
 
@@ -474,7 +475,7 @@ const CitizenProfileScreen = ({navigation}: Props) => {
           iconNode={<WalletMenuIcon color={Colors.textPrimary} />}
           label={strings.profile.menuWallet}
           right={walletBalance != null
-            ? `JOD ${new Intl.NumberFormat('en-US', {minimumFractionDigits: 2}).format(walletBalance.availableBalance)}`
+            ? `JOD ${formatMinimumTwoDecimals(walletBalance.availableBalance)}`
             : undefined}
           onPress={() => navigation.navigate('Wallet')}
         />
