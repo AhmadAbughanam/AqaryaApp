@@ -1,0 +1,3 @@
+## 2026-06-08 - Caching Intl Formatters to Prevent Render Bottlenecks
+**Learning:** Frequent inline instantiation of `Intl.NumberFormat` and `Intl.DateTimeFormat` within React Native components creates significant performance bottlenecks during render cycles. Re-creating these formatters repeatedly (e.g. for every list item or component re-render) causes high memory allocation and CPU overhead, especially in long lists or dashboards like `AnalyticsScreen`.
+**Action:** Always extract and export cached instances of `Intl` formatters into a shared utility file (e.g., `src/utils/formatters.ts`) and use the imported `.format()` methods within components instead of inline instantiation.
