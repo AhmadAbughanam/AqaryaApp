@@ -1,0 +1,30 @@
+src/components/PortfolioCard.tsx:14:  new Intl.NumberFormat('en-US', {
+src/components/PortfolioCard.tsx:21:  new Intl.NumberFormat('en-US').format(value);
+src/components/ShareInput.tsx:29:  new Intl.NumberFormat('en-US', {
+src/components/InvestmentCard.tsx:22:  new Intl.NumberFormat('en-US', {
+src/components/InvestmentCard.tsx:29:  new Intl.NumberFormat('en-US').format(value);
+src/components/InvestmentSummaryCard.tsx:21:  new Intl.NumberFormat('en-US', {
+src/components/InvestmentSummaryCard.tsx:29:  new Intl.NumberFormat('en-US').format(value);
+src/utils/formatters.ts:10:  return new Intl.DateTimeFormat('en-US', {
+src/screens/citizen/PortfolioScreen.tsx:17:  new Intl.NumberFormat('en-US', {
+src/screens/citizen/WalletScreen.tsx:39:  new Intl.NumberFormat('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2}).format(v);
+src/screens/citizen/HomeScreen.tsx:71:  new Intl.NumberFormat('en-US', {
+src/screens/citizen/CitizenProfileScreen.tsx:477:            ? `JOD ${new Intl.NumberFormat('en-US', {minimumFractionDigits: 2}).format(walletBalance.availableBalance)}`
+src/screens/citizen/InvestmentSimulationScreen.tsx:37:  new Intl.NumberFormat('en-US', {
+src/screens/citizen/PublicListingDetailScreen.tsx:38:  new Intl.NumberFormat('en-US', {
+src/screens/citizen/PublicListingDetailScreen.tsx:150:      ? `JOD ${new Intl.NumberFormat('en-US', {minimumFractionDigits: 2}).format(walletBalance.availableBalance)}`
+src/screens/citizen/PublicListingDetailScreen.tsx:207:    const fmtJod = new Intl.NumberFormat('en-US', {minimumFractionDigits: 2}).format;
+src/screens/citizen/PublicListingDetailScreen.tsx:480:            {`JOD ${new Intl.NumberFormat('en-US', {minimumFractionDigits: 2}).format(walletBalance.availableBalance)}`}
+src/screens/citizen/PropertyDetailScreen.tsx:25:  new Intl.NumberFormat('en-US', {
+src/screens/citizen/MyPropertiesScreen.tsx:43:  new Intl.NumberFormat('en-US', {
+src/screens/citizen/PropertyListScreen.tsx:27:  new Intl.NumberFormat('en-US', {
+src/screens/citizen/InvestmentOpportunityDetailScreen.tsx:76:  new Intl.NumberFormat('en-US', {style: 'currency', currency: 'USD', maximumFractionDigits: 0}).format(v);
+src/screens/citizen/InvestmentOpportunityDetailScreen.tsx:184:      const needed = new Intl.NumberFormat('en-US', {minimumFractionDigits: 2}).format(estimatedTotal);
+src/screens/citizen/InvestmentOpportunityDetailScreen.tsx:186:        ? new Intl.NumberFormat('en-US', {minimumFractionDigits: 2}).format(walletBalance.availableBalance)
+src/screens/citizen/InvestmentOpportunityDetailScreen.tsx:195:    const totalFmt = new Intl.NumberFormat('en-US', {minimumFractionDigits: 2}).format(estimatedTotal);
+src/screens/citizen/InvestmentOpportunityDetailScreen.tsx:312:                  ? `JOD ${new Intl.NumberFormat('en-US', {minimumFractionDigits: 2}).format(walletBalance.availableBalance)}`
+src/screens/citizen/InvestmentOpportunityDetailScreen.tsx:599:                  {`JOD ${new Intl.NumberFormat('en-US', {minimumFractionDigits: 2}).format(walletBalance.availableBalance)}`}
+src/screens/citizen/MapScreen.tsx:55:  new Intl.NumberFormat('en-US', {style: 'currency', currency: 'USD', maximumFractionDigits: 0}).format(v);
+src/screens/dlsAdmin/AdminPropertyDetailScreen.tsx:31:  new Intl.NumberFormat('en-US', {
+src/screens/dlsAdmin/InvestmentReviewScreen.tsx:53:  new Intl.NumberFormat('en-US', {
+src/screens/dlsAdmin/AdminInvestmentDetailScreen.tsx:28:  new Intl.NumberFormat('en-US', {
