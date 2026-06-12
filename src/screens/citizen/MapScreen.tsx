@@ -31,6 +31,7 @@ import {MarketMode} from '../../types/market';
 import PropertyImage from '../../components/PropertyImage';
 import {CitizenTabParamList} from '../../navigation/CitizenTabNavigator';
 import {AppImages} from '../../assets/images';
+import {formatCurrency} from '../../utils/formatters';
 
 type Props = NativeStackScreenProps<CitizenMapStackParamList, 'MapMain'>;
 
@@ -50,9 +51,6 @@ const ITEM_H = CARD_H + CARD_GAP;
 
 const toMarketType = (mode: MarketMode): MarketType =>
   mode === 'buy' ? 'sale' : mode === 'rent' ? 'rent' : 'investment';
-
-const formatCurrency = (v: number) =>
-  new Intl.NumberFormat('en-US', {style: 'currency', currency: 'USD', maximumFractionDigits: 0}).format(v);
 
 // ─── Leaflet HTML ─────────────────────────────────────────────────────────────
 // CARTO Positron (street) + ESRI World Imagery (satellite) — both free, no API key.
