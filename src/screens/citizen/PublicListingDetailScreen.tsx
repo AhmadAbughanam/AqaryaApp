@@ -28,6 +28,7 @@ import PropertyImage from '../../components/PropertyImage';
 import {useInvestMode} from '../../store/investModeState';
 import {getWalletBalance, WalletBalance} from '../../api/wallet';
 import {AppImages} from '../../assets/images';
+import { formatMin2Decimals, formatCurrencyUsd } from '../../utils/formatters';
 
 type LocalRoute = RouteProp<
   {PublicListingDetail: {id: string; marketType?: 'sale' | 'rent' | 'investment'}},
@@ -35,11 +36,7 @@ type LocalRoute = RouteProp<
 >;
 
 const formatCurrency = (value: number): string =>
-  new Intl.NumberFormat('en-US', {
-    style: 'currency',
-    currency: 'USD',
-    maximumFractionDigits: 0,
-  }).format(value);
+  formatCurrencyUsd(value);
 
 const InfoRow = ({label, value, isDark = false}: {label: string; value: string; isDark?: boolean}) => (
   <View style={[styles.infoRow, isDark && styles.darkInfoRow]}>
@@ -147,7 +144,7 @@ const PublicListingDetailScreen = () => {
 
   useLayoutEffect(() => {
     const balanceText = walletBalance != null
-      ? `JOD ${new Intl.NumberFormat('en-US', {minimumFractionDigits: 2}).format(walletBalance.availableBalance)}`
+      ? `JOD ${formatMin2Decimals(walletBalance.availableBalance)}`
       : '—';
     navigation.setOptions({
       headerStyle: {
@@ -204,7 +201,7 @@ const PublicListingDetailScreen = () => {
   const isRent = !isInvestment && property.marketType === 'rent';
 
   const onBuy = () => {
-    const fmtJod = new Intl.NumberFormat('en-US', {minimumFractionDigits: 2}).format;
+    const fmtJod = formatMin2Decimals;
 
     if (!walletBalance || walletBalance.availableBalance < property.price) {
       const needed = fmtJod(property.price);
@@ -477,7 +474,7 @@ const PublicListingDetailScreen = () => {
             Ejod Balance:
           </Text>
           <Text style={[styles.balanceChipValue, isInvestment && styles.balanceChipValueDark]}>
-            {`JOD ${new Intl.NumberFormat('en-US', {minimumFractionDigits: 2}).format(walletBalance.availableBalance)}`}
+            {`JOD ${formatMin2Decimals(walletBalance.availableBalance)}`}
           </Text>
         </View>
       )}

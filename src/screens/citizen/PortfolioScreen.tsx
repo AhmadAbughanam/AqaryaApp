@@ -12,13 +12,10 @@ import Card from '../../components/Card';
 import StatusBadge from '../../components/StatusBadge';
 import {Colors} from '../../constants/colors';
 import {useStrings} from '../../i18n';
+import { formatCurrencyUsd } from '../../utils/formatters';
 
 const formatCurrency = (value: number): string =>
-  new Intl.NumberFormat('en-US', {
-    style: 'currency',
-    currency: 'USD',
-    maximumFractionDigits: 0,
-  }).format(value);
+  formatCurrencyUsd(value);
 
 const PortfolioScreen = () => {
   const strings = useStrings();
