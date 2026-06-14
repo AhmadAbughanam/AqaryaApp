@@ -18,15 +18,11 @@ interface InvestmentCardProps {
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
-const formatCurrency = (value: number): string =>
-  new Intl.NumberFormat('en-US', {
-    style: 'currency',
-    currency: 'USD',
-    maximumFractionDigits: 0,
-  }).format(value);
+import { formatCurrencyUsd, formatNumber } from '../utils/formatters';
 
-const formatNumber = (value: number): string =>
-  new Intl.NumberFormat('en-US').format(value);
+const formatCurrency = (value: number): string => formatCurrencyUsd(value);
+
+
 
 // ─── Component ────────────────────────────────────────────────────────────────
 

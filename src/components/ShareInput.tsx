@@ -25,12 +25,9 @@ interface ShareInputProps {
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
-const formatCurrency = (value: number): string =>
-  new Intl.NumberFormat('en-US', {
-    style: 'currency',
-    currency: 'USD',
-    maximumFractionDigits: 0,
-  }).format(value);
+import { formatCurrencyUsd } from '../utils/formatters';
+
+const formatCurrency = (value: number): string => formatCurrencyUsd(value);
 
 // ─── Component ────────────────────────────────────────────────────────────────
 
