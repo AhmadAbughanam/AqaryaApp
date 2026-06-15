@@ -1,0 +1,3 @@
+## 2025-06-15 - Cached Intl Formatters for Performance
+**Learning:** `Intl.NumberFormat` and `Intl.DateTimeFormat` instantiations are expensive and cause measurable performance bottlenecks in React components that are frequently re-rendered or where many formats are processed in long lists (e.g., properties list or investment detail screens).
+**Action:** Always cache and reuse `Intl` formatter instances instead of creating them inline within renders or loops. Shared helpers (e.g. `formatNumber`, `formatCurrency`, `formatDateTime`) should initialize and maintain cached formatters based on configuration keys in `src/utils/formatters.ts`.
