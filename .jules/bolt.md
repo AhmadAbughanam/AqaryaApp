@@ -1,0 +1,3 @@
+## 2024-06-16 - Inline Intl instantiation causes performance bottlenecks during React renders
+**Learning:** Frequent instantiations of `Intl.NumberFormat` and `Intl.DateTimeFormat` within render functions or commonly used helper functions create noticeable performance bottlenecks. These APIs are expensive to initialize, which gets repeatedly triggered on re-renders across the application causing slower performance.
+**Action:** Always cache and reuse `Intl` formatter instances instead of creating them inline. Utilize the shared cached formatters in `src/utils/formatters.ts` rather than calling `new Intl.NumberFormat()` or `new Intl.DateTimeFormat()`.
