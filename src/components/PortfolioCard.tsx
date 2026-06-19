@@ -1,3 +1,4 @@
+import { formatCurrency, formatNumber } from '../utils/formatters';
 // Card for displaying a single simulated portfolio position.
 // Redesigned with ownership ring, dark value pill, and stat grid.
 
@@ -10,15 +11,7 @@ import {Colors} from '../constants/colors';
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
-const formatCurrency = (value: number): string =>
-  new Intl.NumberFormat('en-US', {
-    style: 'currency',
-    currency: 'USD',
-    maximumFractionDigits: 0,
-  }).format(value);
 
-const formatNumber = (value: number): string =>
-  new Intl.NumberFormat('en-US').format(value);
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 

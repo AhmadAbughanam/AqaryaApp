@@ -1,3 +1,4 @@
+import { formatTwoDecimals } from '../../utils/formatters';
 // Ejod Smart Wallet screen.
 // Shows balance, locked/pending amounts, deposit & withdrawal flows,
 // and an immutable transaction ledger — per the blockchain product spec.
@@ -35,8 +36,7 @@ type Props = NativeStackScreenProps<CitizenProfileStackParamList, 'Wallet'>;
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
-const fmt = (v: number) =>
-  new Intl.NumberFormat('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2}).format(v);
+const fmt = (v: number) => formatTwoDecimals(v);
 
 const TX_ICON: Record<TransactionType, string> = {
   deposit:      '↓',
