@@ -1,3 +1,4 @@
+import { formatCompactCurrency, formatNumber } from '../utils/formatters';
 // Summary metrics card for portfolio overview statistics.
 // Redesigned as a dark banner with three stat columns — matching the
 // floating stat card aesthetic from the screenshot.
@@ -17,16 +18,9 @@ interface InvestmentSummaryCardProps {
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
-const formatCurrency = (value: number): string =>
-  new Intl.NumberFormat('en-US', {
-    style: 'currency',
-    currency: 'USD',
-    notation: 'compact',
-    maximumFractionDigits: 1,
-  }).format(value);
 
-const formatNumber = (value: number): string =>
-  new Intl.NumberFormat('en-US').format(value);
+
+
 
 // ─── Sub-component ────────────────────────────────────────────────────────────
 
@@ -74,7 +68,7 @@ const InvestmentSummaryCard = ({
         />
         <View style={styles.columnDivider} />
         <StatColumn
-          value={formatCurrency(totalPortfolioValue)}
+          value={formatCompactCurrency(totalPortfolioValue)}
           label="Portfolio Value"
           highlight
         />

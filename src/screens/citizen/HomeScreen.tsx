@@ -1,3 +1,4 @@
+import { formatCurrency } from '../../utils/formatters';
 // Home tab: marketplace landing with real listing data.
 // Supports Buy / Rent / Invest modes with live API results.
 // Navigation to PublicListingDetail stays within CitizenHomeStack.
@@ -67,12 +68,7 @@ const {width: SCREEN_W} = Dimensions.get('window');
 const CARD_PAD = 16;
 const CARD_GAP = 10;
 
-const formatCurrency = (value: number): string =>
-  new Intl.NumberFormat('en-US', {
-    style: 'currency',
-    currency: 'USD',
-    maximumFractionDigits: 0,
-  }).format(value);
+
 
 const marketModeToType = (mode: MarketMode): MarketType =>
   mode === 'buy' ? 'sale' : mode === 'rent' ? 'rent' : 'investment';

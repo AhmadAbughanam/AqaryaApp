@@ -1,3 +1,4 @@
+import { formatCurrency } from '../utils/formatters';
 // Numeric share input field for investment simulation forms.
 // Features animated focus border, increment/decrement controls, and max shares hint.
 
@@ -25,12 +26,7 @@ interface ShareInputProps {
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
-const formatCurrency = (value: number): string =>
-  new Intl.NumberFormat('en-US', {
-    style: 'currency',
-    currency: 'USD',
-    maximumFractionDigits: 0,
-  }).format(value);
+
 
 // ─── Component ────────────────────────────────────────────────────────────────
 

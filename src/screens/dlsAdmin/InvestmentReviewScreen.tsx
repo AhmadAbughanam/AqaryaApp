@@ -1,3 +1,4 @@
+import { formatCurrency } from '../../utils/formatters';
 import React, {useCallback, useEffect, useMemo, useState} from 'react';
 import {
   ActivityIndicator,
@@ -49,12 +50,7 @@ const STATUS_ACCENT: Partial<Record<StatusFilter, string>> = {
   rejected: AC.danger,
 };
 
-const formatCurrency = (value: number): string =>
-  new Intl.NumberFormat('en-US', {
-    style: 'currency',
-    currency: 'USD',
-    maximumFractionDigits: 0,
-  }).format(value);
+
 
 const InvestmentReviewScreen = ({navigation}: Props) => {
   const strings = useStrings();
