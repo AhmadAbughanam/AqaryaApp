@@ -3,6 +3,7 @@
 // and an immutable transaction ledger — per the blockchain product spec.
 
 import React, {useCallback, useEffect, useState} from 'react';
+import {formatTwoDecimals} from '../../utils/formatters';
 import {
   ActivityIndicator,
   Alert,
@@ -35,8 +36,7 @@ type Props = NativeStackScreenProps<CitizenProfileStackParamList, 'Wallet'>;
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
-const fmt = (v: number) =>
-  new Intl.NumberFormat('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2}).format(v);
+
 
 const TX_ICON: Record<TransactionType, string> = {
   deposit:      '↓',
@@ -267,25 +267,25 @@ const WalletScreen = ({}: Props) => {
               <Text style={st.balLabel}>{w.balLabel}</Text>
               <Text style={st.balAmount}>
                 <Text style={st.balCurrency}>JOD </Text>
-                {fmt(balance?.ejodBalance ?? 0)}
+                {formatTwoDecimals(balance?.ejodBalance ?? 0)}
               </Text>
               <Text style={st.balSubtitle}>{w.balSubtitle}</Text>
 
               <View style={st.balTilesRow}>
                 <BalanceTile
                   label={w.available}
-                  value={`JOD ${fmt(balance?.availableBalance ?? 0)}`}
+                  value={`JOD ${formatTwoDecimals(balance?.availableBalance ?? 0)}`}
                   accent
                 />
                 <View style={st.balTileSep} />
                 <BalanceTile
                   label={w.locked}
-                  value={`JOD ${fmt(balance?.lockedAmount ?? 0)}`}
+                  value={`JOD ${formatTwoDecimals(balance?.lockedAmount ?? 0)}`}
                 />
                 <View style={st.balTileSep} />
                 <BalanceTile
                   label={w.pending}
-                  value={`JOD ${fmt(balance?.pendingDeposits ?? 0)}`}
+                  value={`JOD ${formatTwoDecimals(balance?.pendingDeposits ?? 0)}`}
                 />
               </View>
 
@@ -348,7 +348,7 @@ const WalletScreen = ({}: Props) => {
             </View>
             <View style={st.txRight}>
               <Text style={[st.txAmount, {color: TX_COLOR[item.type]}]}>
-                {TX_SIGN[item.type]}JOD {fmt(item.amount)}
+                {TX_SIGN[item.type]}JOD {formatTwoDecimals(item.amount)}
               </Text>
               <View style={[
                 st.txStatusBadge,
