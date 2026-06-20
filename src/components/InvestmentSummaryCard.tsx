@@ -3,6 +3,7 @@
 // floating stat card aesthetic from the screenshot.
 
 import React from 'react';
+import {formatNumber} from '../utils/formatters';
 import {StyleSheet, Text, View} from 'react-native';
 import Card from './Card';
 import {Colors} from '../constants/colors';
@@ -25,8 +26,7 @@ const formatCurrency = (value: number): string =>
     maximumFractionDigits: 1,
   }).format(value);
 
-const formatNumber = (value: number): string =>
-  new Intl.NumberFormat('en-US').format(value);
+
 
 // ─── Sub-component ────────────────────────────────────────────────────────────
 

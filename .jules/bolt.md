@@ -1,0 +1,3 @@
+## 2025-03-08 - [React Native Intl Performance]
+**Learning:** Instantiating `Intl.NumberFormat` inline within React components (especially in lists like `PropertyListScreen` or detail views like `InvestmentOpportunityDetailScreen`) creates significant object allocation overhead on each render cycle in React Native, leading to UI thread bottleneck and slower screen transitions.
+**Action:** Always extract `Intl.NumberFormat` and `Intl.DateTimeFormat` into a centralized helper file (e.g., `src/utils/formatters.ts`) to be instantiated once as a singleton, and export wrapper functions for UI formatting.
