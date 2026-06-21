@@ -1,0 +1,3 @@
+## 2024-06-21 - Intl Formatter Bottlenecks
+**Learning:** Instantiating `Intl.NumberFormat` and `Intl.DateTimeFormat` on every render creates a noticeable performance bottleneck in React components, particularly when rendering lists of properties or portfolios. Replacing inline formatters with self-referencing wrapper functions during refactoring creates infinite recursion bugs (e.g., `const formatCurrency = (v) => formatCurrency(v)`).
+**Action:** Always cache and reuse `Intl` instances in a centralized utility file (`src/utils/formatters.ts`). During automated refactoring of local utility functions, aggressively remove the local wrapper entirely and replace it by importing the global formatter directly to avoid infinite loops.
