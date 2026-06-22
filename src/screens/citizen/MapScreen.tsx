@@ -17,6 +17,7 @@ import {
 } from 'react-native';
 import WebView, {WebViewMessageEvent} from 'react-native-webview';
 import {NativeStackScreenProps} from '@react-navigation/native-stack';
+import { formatCurrency } from "../../utils/formatters";
 import {BottomTabNavigationProp} from '@react-navigation/bottom-tabs';
 import MarketModeSwitcher from '../../components/MarketModeSwitcher';
 import CitizenBrandBar from '../../components/CitizenBrandBar';
@@ -51,8 +52,7 @@ const ITEM_H = CARD_H + CARD_GAP;
 const toMarketType = (mode: MarketMode): MarketType =>
   mode === 'buy' ? 'sale' : mode === 'rent' ? 'rent' : 'investment';
 
-const formatCurrency = (v: number) =>
-  new Intl.NumberFormat('en-US', {style: 'currency', currency: 'USD', maximumFractionDigits: 0}).format(v);
+
 
 // ─── Leaflet HTML ─────────────────────────────────────────────────────────────
 // CARTO Positron (street) + ESRI World Imagery (satellite) — both free, no API key.
