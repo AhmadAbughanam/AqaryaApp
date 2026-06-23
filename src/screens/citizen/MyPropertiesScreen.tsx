@@ -27,6 +27,7 @@ import {
 } from '../../api/savedListings';
 import {CitizenStackParamList} from '../../navigation/CitizenStack';
 import {Colors} from '../../constants/colors';
+import {formatCurrency} from '../../utils/formatters';
 import {useStrings} from '../../i18n';
 import PropertyImage from '../../components/PropertyImage';
 import {CitizenBrandLogo} from '../../components/CitizenBrandBar';
@@ -38,13 +39,6 @@ type Tab = 'mine' | 'favorites';
 type StatusFilter = 'active' | 'pending' | 'draft' | 'rejected' | null;
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
-
-const formatCurrency = (value: number): string =>
-  new Intl.NumberFormat('en-US', {
-    style: 'currency',
-    currency: 'USD',
-    maximumFractionDigits: 0,
-  }).format(value);
 
 const formatDate = (iso: string): string => {
   try {

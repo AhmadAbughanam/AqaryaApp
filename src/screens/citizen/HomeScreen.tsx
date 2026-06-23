@@ -40,6 +40,7 @@ import {
   unsaveOpportunity,
 } from '../../api/savedListings';
 import {Colors} from '../../constants/colors';
+import {formatCurrency} from '../../utils/formatters';
 import {useStrings} from '../../i18n';
 import {useInvestMode} from '../../store/investModeState';
 import PropertyImage from '../../components/PropertyImage';
@@ -66,13 +67,6 @@ type Props = NativeStackScreenProps<CitizenHomeStackParamList, 'HomeMain'>;
 const {width: SCREEN_W} = Dimensions.get('window');
 const CARD_PAD = 16;
 const CARD_GAP = 10;
-
-const formatCurrency = (value: number): string =>
-  new Intl.NumberFormat('en-US', {
-    style: 'currency',
-    currency: 'USD',
-    maximumFractionDigits: 0,
-  }).format(value);
 
 const marketModeToType = (mode: MarketMode): MarketType =>
   mode === 'buy' ? 'sale' : mode === 'rent' ? 'rent' : 'investment';
