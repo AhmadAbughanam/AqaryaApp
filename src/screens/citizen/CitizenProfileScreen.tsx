@@ -25,6 +25,7 @@ import {CitizenProfileStackParamList} from '../../navigation/CitizenProfileStack
 import {useAuth} from '../../store/AuthContext';
 import {useLanguage, useStrings, SupportedLanguage} from '../../i18n';
 import {Colors} from '../../constants/colors';
+import {formatMinFraction2} from '../../utils/formatters';
 import {AppImages} from '../../assets/images';
 
 type Props = NativeStackScreenProps<CitizenProfileStackParamList, 'Profile'>;
@@ -474,7 +475,7 @@ const CitizenProfileScreen = ({navigation}: Props) => {
           iconNode={<WalletMenuIcon color={Colors.textPrimary} />}
           label={strings.profile.menuWallet}
           right={walletBalance != null
-            ? `JOD ${new Intl.NumberFormat('en-US', {minimumFractionDigits: 2}).format(walletBalance.availableBalance)}`
+            ? `JOD ${formatMinFraction2(walletBalance.availableBalance)}`
             : undefined}
           onPress={() => navigation.navigate('Wallet')}
         />

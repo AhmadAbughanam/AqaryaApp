@@ -20,6 +20,7 @@ import {useNavigation, useRoute, RouteProp, useFocusEffect} from '@react-navigat
 import {NativeStackNavigationProp} from '@react-navigation/native-stack';
 import {CitizenHomeStackParamList} from '../../navigation/CitizenHomeStack';
 import {Colors} from '../../constants/colors';
+import {formatMinFraction2} from '../../utils/formatters';
 import {useInvestMode} from '../../store/investModeState';
 import {
   getOpportunityDetail,
@@ -181,9 +182,9 @@ const InvestmentOpportunityDetailScreen = () => {
     const estimatedTotal = parsedShares * opportunity.pricePerShare * 1.0225;
 
     if (!walletBalance || walletBalance.availableBalance < estimatedTotal) {
-      const needed = new Intl.NumberFormat('en-US', {minimumFractionDigits: 2}).format(estimatedTotal);
+      const needed = formatMinFraction2(estimatedTotal);
       const have   = walletBalance
-        ? new Intl.NumberFormat('en-US', {minimumFractionDigits: 2}).format(walletBalance.availableBalance)
+        ? formatMinFraction2(walletBalance.availableBalance)
         : '0.00';
       Alert.alert(
         strings.opportunityDetail.insufficientBalanceTitle,
@@ -192,7 +193,7 @@ const InvestmentOpportunityDetailScreen = () => {
       return;
     }
 
-    const totalFmt = new Intl.NumberFormat('en-US', {minimumFractionDigits: 2}).format(estimatedTotal);
+    const totalFmt = formatMinFraction2(estimatedTotal);
     Alert.alert(
       strings.opportunityDetail.simulateButton,
       `Invest ${parsedShares} shares in ${opportunity.title} for ~JOD ${totalFmt}?\n\nThis will be deducted from your Ejod Wallet.`,
@@ -309,7 +310,7 @@ const InvestmentOpportunityDetailScreen = () => {
               <Text style={s.headerBalanceIcon}>◈</Text>
               <Text style={s.headerBalanceText}>
                 {walletBalance != null
-                  ? `JOD ${new Intl.NumberFormat('en-US', {minimumFractionDigits: 2}).format(walletBalance.availableBalance)}`
+                  ? `JOD ${formatMinFraction2(walletBalance.availableBalance)}`
                   : '—'}
               </Text>
             </View>
@@ -596,7 +597,7 @@ const InvestmentOpportunityDetailScreen = () => {
               <View style={s.ctaBalRow}>
                 <Text style={[s.ctaBalIcon, !sufficient && {color: T.ERR}]}>◈</Text>
                 <Text style={[s.ctaBalText, !sufficient && {color: T.ERR}]}>
-                  {`JOD ${new Intl.NumberFormat('en-US', {minimumFractionDigits: 2}).format(walletBalance.availableBalance)}`}
+                  {`JOD ${formatMinFraction2(walletBalance.availableBalance)}`}
                 </Text>
               </View>
             );
