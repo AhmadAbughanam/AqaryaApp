@@ -3,6 +3,7 @@
 // and an immutable transaction ledger — per the blockchain product spec.
 
 import React, {useCallback, useEffect, useState} from 'react';
+import {formatJOD} from '../../utils/formatters';
 import {
   ActivityIndicator,
   Alert,
@@ -36,7 +37,7 @@ type Props = NativeStackScreenProps<CitizenProfileStackParamList, 'Wallet'>;
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
 const fmt = (v: number) =>
-  new Intl.NumberFormat('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2}).format(v);
+  formatJOD(v);
 
 const TX_ICON: Record<TransactionType, string> = {
   deposit:      '↓',
