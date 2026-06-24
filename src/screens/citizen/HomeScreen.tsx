@@ -4,6 +4,7 @@
 // Cross-tab navigation to PropertiesTab/MapTab uses getParent().
 
 import React, {useCallback, useEffect, useState} from 'react';
+import {formatCurrency} from '../../utils/formatters';
 import {
   ActivityIndicator,
   Dimensions,
@@ -66,13 +67,6 @@ type Props = NativeStackScreenProps<CitizenHomeStackParamList, 'HomeMain'>;
 const {width: SCREEN_W} = Dimensions.get('window');
 const CARD_PAD = 16;
 const CARD_GAP = 10;
-
-const formatCurrency = (value: number): string =>
-  new Intl.NumberFormat('en-US', {
-    style: 'currency',
-    currency: 'USD',
-    maximumFractionDigits: 0,
-  }).format(value);
 
 const marketModeToType = (mode: MarketMode): MarketType =>
   mode === 'buy' ? 'sale' : mode === 'rent' ? 'rent' : 'investment';
