@@ -1,0 +1,3 @@
+## 2025-02-12 - Intl Formatter Extraction in React Native
+**Learning:** `Intl.NumberFormat` and `Intl.DateTimeFormat` instantiations are notoriously slow in JavaScript/React Native. Many components were repeatedly instantiating them inline, which is a known performance bottleneck, especially in lists. Also, `Intl.NumberFormat.prototype.format` is a bound function, so it can be exported directly (e.g. `export const formatCurrency = new Intl.NumberFormat(...).format`) without an additional wrapper.
+**Action:** When working in React applications, extract `Intl` initializations to module-level singletons or memoize them to prevent performance degradation on every render.
