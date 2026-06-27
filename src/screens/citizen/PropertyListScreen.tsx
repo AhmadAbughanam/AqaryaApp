@@ -18,17 +18,11 @@ import {buyProperty, getProperties, PropertyListItem} from '../../api/properties
 import {CitizenStackParamList} from '../../navigation/CitizenStack';
 import {Colors} from '../../constants/colors';
 import {useStrings} from '../../i18n';
+import { formatCurrency } from '../../utils/formatters';
 
 type Props = NativeStackScreenProps<CitizenStackParamList, 'MyProperties'>;
 
 const PAGE_SIZE = 20;
-
-const formatCurrency = (value: number): string =>
-  new Intl.NumberFormat('en-US', {
-    style: 'currency',
-    currency: 'USD',
-    maximumFractionDigits: 0,
-  }).format(value);
 
 const PropertyListScreen = ({navigation}: Props) => {
   const strings = useStrings();

@@ -1,0 +1,3 @@
+## 2025-02-18 - Cached Intl Formatters for Performance
+**Learning:** Re-instantiating `Intl.NumberFormat` inside React components (especially those rendered multiple times in lists like InvestmentCard or PortfolioCard) causes unnecessary allocation and garbage collection churn, which can noticeably impact performance during heavy renders on React Native.
+**Action:** Extract and reuse cached `Intl` formatter instances in a shared utilities file (e.g., `src/utils/formatters.ts`). Directly export the bound `.format` method (e.g., `export const formatCurrency = new Intl.NumberFormat(...).format`) to avoid wrapping costs. Ensure specialized formatter variations (e.g., `{ notation: 'compact' }`) are individually cached and reused rather than parameterized inline.

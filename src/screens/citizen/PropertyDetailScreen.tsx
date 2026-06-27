@@ -18,15 +18,9 @@ import {Colors} from '../../constants/colors';
 import {useStrings} from '../../i18n';
 import PropertyImage from '../../components/PropertyImage';
 import {AppImages} from '../../assets/images';
+import { formatCurrency } from '../../utils/formatters';
 
 type Props = NativeStackScreenProps<CitizenStackParamList, 'PropertyDetail'>;
-
-const formatCurrency = (value: number): string =>
-  new Intl.NumberFormat('en-US', {
-    style: 'currency',
-    currency: 'USD',
-    maximumFractionDigits: 0,
-  }).format(value);
 
 const InfoRow = ({label, value}: {label: string; value: string}) => (
   <View style={styles.infoRow}>
