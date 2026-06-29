@@ -29,16 +29,11 @@ import {CitizenStackParamList} from '../../navigation/CitizenStack';
 import {CitizenTabParamList} from '../../navigation/CitizenTabNavigator';
 import {Colors} from '../../constants/colors';
 import {useStrings} from '../../i18n';
+import { formatCurrency } from '../../utils/formatters';
+
 
 type Props = NativeStackScreenProps<CitizenStackParamList, 'InvestmentSimulation'>;
 type ExitScenario = 'conservative' | 'base' | 'optimistic';
-
-const formatCurrency = (value: number): string =>
-  new Intl.NumberFormat('en-US', {
-    style: 'currency',
-    currency: 'USD',
-    maximumFractionDigits: 0,
-  }).format(value);
 
 const InvestmentSimulationScreen = ({navigation, route}: Props) => {
   const strings = useStrings();

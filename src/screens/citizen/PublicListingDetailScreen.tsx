@@ -21,7 +21,7 @@ import {getPropertyDetails, buyPropertyWithWallet, PropertyDetails} from '../../
 import {checkListingSaved, saveListing, unsaveListing} from '../../api/savedListings';
 import {reportListing, ReportReason, REPORT_REASON_LABELS} from '../../api/moderation';
 import {CitizenTabParamList} from '../../navigation/CitizenTabNavigator';
-import {formatDateTime} from '../../utils/formatters';
+import { formatDateTime, formatCurrency, formatFractionMin2 } from '../../utils/formatters';
 import {Colors} from '../../constants/colors';
 import {useStrings} from '../../i18n';
 import PropertyImage from '../../components/PropertyImage';
@@ -33,13 +33,6 @@ type LocalRoute = RouteProp<
   {PublicListingDetail: {id: string; marketType?: 'sale' | 'rent' | 'investment'}},
   'PublicListingDetail'
 >;
-
-const formatCurrency = (value: number): string =>
-  new Intl.NumberFormat('en-US', {
-    style: 'currency',
-    currency: 'USD',
-    maximumFractionDigits: 0,
-  }).format(value);
 
 const InfoRow = ({label, value, isDark = false}: {label: string; value: string; isDark?: boolean}) => (
   <View style={[styles.infoRow, isDark && styles.darkInfoRow]}>
@@ -147,7 +140,7 @@ const PublicListingDetailScreen = () => {
 
   useLayoutEffect(() => {
     const balanceText = walletBalance != null
-      ? `JOD ${new Intl.NumberFormat('en-US', {minimumFractionDigits: 2}).format(walletBalance.availableBalance)}`
+      ? `JOD ${formatFractionMin2(walletBalance.availableBalance)}`
       : '—';
     navigation.setOptions({
       headerStyle: {
@@ -204,11 +197,10 @@ const PublicListingDetailScreen = () => {
   const isRent = !isInvestment && property.marketType === 'rent';
 
   const onBuy = () => {
-    const fmtJod = new Intl.NumberFormat('en-US', {minimumFractionDigits: 2}).format;
 
     if (!walletBalance || walletBalance.availableBalance < property.price) {
-      const needed = fmtJod(property.price);
-      const have   = walletBalance ? fmtJod(walletBalance.availableBalance) : '0.00';
+      const needed = formatFractionMin2(property.price);
+      const have   = walletBalance ? formatFractionMin2(walletBalance.availableBalance) : '0.00';
       Alert.alert(
         'Insufficient Balance',
         `You need JOD ${needed} in your Ejod Wallet to buy this property.\n\nYour balance: JOD ${have}\n\nPlease deposit funds first.`,
@@ -218,7 +210,7 @@ const PublicListingDetailScreen = () => {
 
     Alert.alert(
       strings.publicListing.purchaseTitle,
-      `Buy ${property.title} for JOD ${fmtJod(property.price)}?\n\nThis will be deducted from your Ejod Wallet.`,
+      `Buy ${property.title} for JOD ${formatFractionMin2(property.price)}?\n\nThis will be deducted from your Ejod Wallet.`,
       [
         {text: strings.publicListing.purchaseCancel, style: 'cancel'},
         {
@@ -477,7 +469,7 @@ const PublicListingDetailScreen = () => {
             Ejod Balance:
           </Text>
           <Text style={[styles.balanceChipValue, isInvestment && styles.balanceChipValueDark]}>
-            {`JOD ${new Intl.NumberFormat('en-US', {minimumFractionDigits: 2}).format(walletBalance.availableBalance)}`}
+            {`JOD ${formatFractionMin2(walletBalance.availableBalance)}`}
           </Text>
         </View>
       )}
@@ -492,7 +484,6 @@ const PublicListingDetailScreen = () => {
         style={styles.ctaButton}
         loading={isBuying}
       />
-
 
       {/* ── Report ──────────────────────────────────────────────────────────── */}
       <Pressable

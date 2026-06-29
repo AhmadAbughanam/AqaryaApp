@@ -30,13 +30,15 @@ import {
 } from '../../api/wallet';
 import {Colors} from '../../constants/colors';
 import {useStrings} from '../../i18n';
+import { formatFraction2 } from '../../utils/formatters';
+
 
 type Props = NativeStackScreenProps<CitizenProfileStackParamList, 'Wallet'>;
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
 const fmt = (v: number) =>
-  new Intl.NumberFormat('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2}).format(v);
+  formatFraction2(v);
 
 const TX_ICON: Record<TransactionType, string> = {
   deposit:      '↓',
