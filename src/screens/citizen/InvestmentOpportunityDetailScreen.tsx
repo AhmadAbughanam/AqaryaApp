@@ -4,6 +4,7 @@
 // Distinct from buy/rent detail screens — intentional dark design language.
 
 import React, {useCallback, useEffect, useRef, useState} from 'react';
+import {formatCurrency, formatTwoDecimals} from '../../utils/formatters';
 import {
   ActivityIndicator,
   Alert,
@@ -71,9 +72,6 @@ const TRUST_CONFIG: Record<TrustBadgeTier, {label: string; bg: string; text: str
 };
 
 // ─── Helpers ───────────────────────────────────────────────────────────────────
-
-const fmt$ = (v: number) =>
-  new Intl.NumberFormat('en-US', {style: 'currency', currency: 'USD', maximumFractionDigits: 0}).format(v);
 
 const fmtPct = (v: number) => `${(v * 100).toFixed(1)}%`;
 
@@ -181,9 +179,9 @@ const InvestmentOpportunityDetailScreen = () => {
     const estimatedTotal = parsedShares * opportunity.pricePerShare * 1.0225;
 
     if (!walletBalance || walletBalance.availableBalance < estimatedTotal) {
-      const needed = new Intl.NumberFormat('en-US', {minimumFractionDigits: 2}).format(estimatedTotal);
+      const needed = formatTwoDecimals(estimatedTotal);
       const have   = walletBalance
-        ? new Intl.NumberFormat('en-US', {minimumFractionDigits: 2}).format(walletBalance.availableBalance)
+        ? formatTwoDecimals(walletBalance.availableBalance)
         : '0.00';
       Alert.alert(
         strings.opportunityDetail.insufficientBalanceTitle,
@@ -192,7 +190,7 @@ const InvestmentOpportunityDetailScreen = () => {
       return;
     }
 
-    const totalFmt = new Intl.NumberFormat('en-US', {minimumFractionDigits: 2}).format(estimatedTotal);
+    const totalFmt = formatTwoDecimals(estimatedTotal);
     Alert.alert(
       strings.opportunityDetail.simulateButton,
       `Invest ${parsedShares} shares in ${opportunity.title} for ~JOD ${totalFmt}?\n\nThis will be deducted from your Ejod Wallet.`,
@@ -309,7 +307,7 @@ const InvestmentOpportunityDetailScreen = () => {
               <Text style={s.headerBalanceIcon}>◈</Text>
               <Text style={s.headerBalanceText}>
                 {walletBalance != null
-                  ? `JOD ${new Intl.NumberFormat('en-US', {minimumFractionDigits: 2}).format(walletBalance.availableBalance)}`
+                  ? `JOD ${formatTwoDecimals(walletBalance.availableBalance)}`
                   : '—'}
               </Text>
             </View>
@@ -375,7 +373,7 @@ const InvestmentOpportunityDetailScreen = () => {
             ) : null}
             <View style={s.opStatItem}>
               <Text style={s.opStatLabel}>USD / unit</Text>
-              <Text style={s.opStatVal}>{fmt$(opportunity.pricePerShare)}</Text>
+              <Text style={s.opStatVal}>{formatCurrency(opportunity.pricePerShare)}</Text>
             </View>
             <View style={s.opStatSep} />
             <View style={s.opStatItem}>
@@ -392,7 +390,7 @@ const InvestmentOpportunityDetailScreen = () => {
           {/* Funded % + raised amount */}
           <View style={s.opFundRow}>
             <Text style={s.opFundedPct}>{fmtPct(opportunity.fundingProgress)} funded</Text>
-            <Text style={s.opFundedAmt}>{fmt$(opportunity.fundedAmount)}</Text>
+            <Text style={s.opFundedAmt}>{formatCurrency(opportunity.fundedAmount)}</Text>
           </View>
 
           {/* Funding level stars */}
@@ -433,7 +431,7 @@ const InvestmentOpportunityDetailScreen = () => {
           <OverviewRow label="Type"         value={opportunity.assetClass} />
           <OverviewRow label="Status"       value={opportunity.stage} />
           <OverviewRow label="Developer"    value={opportunity.sponsorName} verified={badge != null} badgeColor={badge?.text} />
-          <OverviewRow label="Funding Goal" value={fmt$(opportunity.fundingGoal)} />
+          <OverviewRow label="Funding Goal" value={formatCurrency(opportunity.fundingGoal)} />
         </View>
 
         {/* ── Returns Grid ──────────────────────────────────────────────────── */}
@@ -455,7 +453,7 @@ const InvestmentOpportunityDetailScreen = () => {
           <DetailRow label={strings.opportunityDetail.ownershipLabel}          value={opportunity.ownershipStructure} />
           <DetailRow label={strings.opportunityDetail.distributionModelLabel}  value={opportunity.distributionModel} />
           <DetailRow label={strings.opportunityDetail.exitStrategyLabel}       value={opportunity.exitModel} />
-          <DetailRow label={strings.opportunityDetail.minimumInvestmentLabel}  value={fmt$(opportunity.minimumInvestmentAmount)} />
+          <DetailRow label={strings.opportunityDetail.minimumInvestmentLabel}  value={formatCurrency(opportunity.minimumInvestmentAmount)} />
           <DetailRow label={strings.opportunityDetail.mgmtFeeLabel}            value={fmtPct(opportunity.managementFeeRate)} />
         </View>
 
@@ -513,7 +511,7 @@ const InvestmentOpportunityDetailScreen = () => {
             </TouchableOpacity>
           </View>
           <Text style={s.inputHint}>
-            Min {opportunity.minimumShares} · Max {opportunity.availableShares} · {fmt$(opportunity.pricePerShare)} / unit
+            Min {opportunity.minimumShares} · Max {opportunity.availableShares} · {formatCurrency(opportunity.pricePerShare)} / unit
           </Text>
 
           {/* Holding period chips */}
@@ -564,7 +562,7 @@ const InvestmentOpportunityDetailScreen = () => {
           {estimatedCost != null ? (
             <View style={s.costPreview}>
               <Text style={s.costLabel}>{strings.opportunityDetail.estimatedEntryCostLabel}</Text>
-              <Text style={s.costValue}>{fmt$(estimatedCost)}</Text>
+              <Text style={s.costValue}>{formatCurrency(estimatedCost)}</Text>
               <Text style={s.costNote}>{strings.opportunityDetail.platformFeeNote}</Text>
             </View>
           ) : null}
@@ -588,7 +586,7 @@ const InvestmentOpportunityDetailScreen = () => {
       <View style={s.ctaBar}>
         <View style={{flex: 1}}>
           <Text style={s.ctaLabel}>{strings.opportunityDetail.minInvestmentLabel}</Text>
-          <Text style={s.ctaAmount}>{fmt$(opportunity.minimumInvestmentAmount)}</Text>
+          <Text style={s.ctaAmount}>{formatCurrency(opportunity.minimumInvestmentAmount)}</Text>
           {walletBalance != null && (() => {
             const estimatedTotal = sharesValid ? parsedShares * opportunity.pricePerShare * 1.0225 : 0;
             const sufficient = walletBalance.availableBalance >= (estimatedTotal || opportunity.minimumInvestmentAmount);
@@ -596,7 +594,7 @@ const InvestmentOpportunityDetailScreen = () => {
               <View style={s.ctaBalRow}>
                 <Text style={[s.ctaBalIcon, !sufficient && {color: T.ERR}]}>◈</Text>
                 <Text style={[s.ctaBalText, !sufficient && {color: T.ERR}]}>
-                  {`JOD ${new Intl.NumberFormat('en-US', {minimumFractionDigits: 2}).format(walletBalance.availableBalance)}`}
+                  {`JOD ${formatTwoDecimals(walletBalance.availableBalance)}`}
                 </Text>
               </View>
             );
@@ -628,10 +626,10 @@ const InvestmentOpportunityDetailScreen = () => {
 
             {simulationResult ? (
               <View style={s.modalResults}>
-                <SimRow label={strings.opportunityDetail.totalEntryCostLabel}    value={fmt$(simulationResult.totalAmount)} />
-                <SimRow label={strings.opportunityDetail.annualCashFlowLabel}    value={fmt$(simulationResult.annualNetCashFlow)} />
-                <SimRow label={strings.opportunityDetail.projectedExitValueLabel}value={fmt$(simulationResult.projectedExitValue)} />
-                <SimRow label={strings.opportunityDetail.projectedProfitLabel}   value={fmt$(simulationResult.projectedProfit)}   highlight />
+                <SimRow label={strings.opportunityDetail.totalEntryCostLabel}    value={formatCurrency(simulationResult.totalAmount)} />
+                <SimRow label={strings.opportunityDetail.annualCashFlowLabel}    value={formatCurrency(simulationResult.annualNetCashFlow)} />
+                <SimRow label={strings.opportunityDetail.projectedExitValueLabel}value={formatCurrency(simulationResult.projectedExitValue)} />
+                <SimRow label={strings.opportunityDetail.projectedProfitLabel}   value={formatCurrency(simulationResult.projectedProfit)}   highlight />
                 <SimRow label={strings.opportunityDetail.equityMultipleLabel}    value={`${simulationResult.equityMultiple.toFixed(2)}×`} highlight />
               </View>
             ) : null}

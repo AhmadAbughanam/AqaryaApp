@@ -2,6 +2,7 @@
 // Presents property specs, amenities, seller info, and a context-appropriate CTA.
 // Used by CitizenHomeStack and CitizenMapStack.
 
+import {formatCurrency, formatTwoDecimals} from '../../utils/formatters';
 import React, {useCallback, useEffect, useLayoutEffect, useState} from 'react';
 import {
   ActivityIndicator,
@@ -34,12 +35,7 @@ type LocalRoute = RouteProp<
   'PublicListingDetail'
 >;
 
-const formatCurrency = (value: number): string =>
-  new Intl.NumberFormat('en-US', {
-    style: 'currency',
-    currency: 'USD',
-    maximumFractionDigits: 0,
-  }).format(value);
+
 
 const InfoRow = ({label, value, isDark = false}: {label: string; value: string; isDark?: boolean}) => (
   <View style={[styles.infoRow, isDark && styles.darkInfoRow]}>
@@ -147,7 +143,7 @@ const PublicListingDetailScreen = () => {
 
   useLayoutEffect(() => {
     const balanceText = walletBalance != null
-      ? `JOD ${new Intl.NumberFormat('en-US', {minimumFractionDigits: 2}).format(walletBalance.availableBalance)}`
+      ? `JOD ${formatTwoDecimals(walletBalance.availableBalance)}`
       : '—';
     navigation.setOptions({
       headerStyle: {
@@ -204,7 +200,7 @@ const PublicListingDetailScreen = () => {
   const isRent = !isInvestment && property.marketType === 'rent';
 
   const onBuy = () => {
-    const fmtJod = new Intl.NumberFormat('en-US', {minimumFractionDigits: 2}).format;
+    const fmtJod = formatTwoDecimals;
 
     if (!walletBalance || walletBalance.availableBalance < property.price) {
       const needed = fmtJod(property.price);
@@ -477,7 +473,7 @@ const PublicListingDetailScreen = () => {
             Ejod Balance:
           </Text>
           <Text style={[styles.balanceChipValue, isInvestment && styles.balanceChipValueDark]}>
-            {`JOD ${new Intl.NumberFormat('en-US', {minimumFractionDigits: 2}).format(walletBalance.availableBalance)}`}
+            {`JOD ${formatTwoDecimals(walletBalance.availableBalance)}`}
           </Text>
         </View>
       )}

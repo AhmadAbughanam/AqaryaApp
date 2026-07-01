@@ -15,3 +15,29 @@ export const formatDateTime = (isoDate: string): string => {
     minute: '2-digit',
   }).format(date);
 };
+
+// Cached Number Formatters to prevent performance bottlenecks during React renders
+
+export const formatCurrency = new Intl.NumberFormat('en-US', {
+  style: 'currency',
+  currency: 'USD',
+  maximumFractionDigits: 0,
+}).format;
+
+export const formatNumber = new Intl.NumberFormat('en-US').format;
+
+export const formatTwoDecimals = new Intl.NumberFormat('en-US', {
+  minimumFractionDigits: 2,
+}).format;
+
+export const formatTwoDecimalsExact = new Intl.NumberFormat('en-US', {
+  minimumFractionDigits: 2,
+  maximumFractionDigits: 2,
+}).format;
+
+export const formatCompactCurrency = new Intl.NumberFormat('en-US', {
+  style: 'currency',
+  currency: 'USD',
+  notation: 'compact',
+  maximumFractionDigits: 1,
+}).format;

@@ -2,6 +2,7 @@
 // My Properties: owned listings from getMyProfile().
 // Favorites: saved items from getSavedItems() with unsave capability.
 
+import {formatCurrency} from '../../utils/formatters';
 import React, {useCallback, useEffect, useRef, useState} from 'react';
 import {
   ActivityIndicator,
@@ -39,12 +40,7 @@ type StatusFilter = 'active' | 'pending' | 'draft' | 'rejected' | null;
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
-const formatCurrency = (value: number): string =>
-  new Intl.NumberFormat('en-US', {
-    style: 'currency',
-    currency: 'USD',
-    maximumFractionDigits: 0,
-  }).format(value);
+
 
 const formatDate = (iso: string): string => {
   try {
