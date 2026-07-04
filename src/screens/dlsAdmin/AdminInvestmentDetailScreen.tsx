@@ -18,18 +18,13 @@ import {
   reviewInvestmentOpportunity,
 } from '../../api/admin';
 import {AdminStackParamList} from '../../navigation/AdminStack';
-import {formatDateTime} from '../../utils/formatters';
+import { formatCurrencyUsd, formatDateTime } from '../../utils/formatters';
 import {AC} from '../../constants/adminColors';
 import {useStrings} from '../../i18n';
 
 type Props = NativeStackScreenProps<AdminStackParamList, 'AdminInvestmentDetail'>;
 
-const formatCurrency = (value: number): string =>
-  new Intl.NumberFormat('en-US', {
-    style: 'currency',
-    currency: 'USD',
-    maximumFractionDigits: 0,
-  }).format(value);
+
 
 const formatPercent = (value: number): string => `${value}%`;
 
@@ -165,7 +160,7 @@ const AdminInvestmentDetailScreen = ({route, navigation}: Props) => {
           <View style={styles.metricDivider} />
           <View style={styles.metricBlock}>
             <Text style={styles.metricValue}>
-              {formatCurrency(opportunity.pricePerShare)}
+              {formatCurrencyUsd(opportunity.pricePerShare)}
             </Text>
             <Text style={styles.metricLabel}>{id.metricPerShare}</Text>
           </View>
@@ -215,9 +210,9 @@ const AdminInvestmentDetailScreen = ({route, navigation}: Props) => {
 
       {/* Financials */}
       <SectionCard title={id.sectionFinancials} accentColor={AC.success}>
-        <InfoRow label={id.labelPricePerShare} value={formatCurrency(opportunity.pricePerShare)} />
-        <InfoRow label={id.labelFundingGoal} value={formatCurrency(opportunity.fundingGoal)} />
-        <InfoRow label={id.labelFundedAmount} value={formatCurrency(opportunity.fundedAmount)} />
+        <InfoRow label={id.labelPricePerShare} value={formatCurrencyUsd(opportunity.pricePerShare)} />
+        <InfoRow label={id.labelFundingGoal} value={formatCurrencyUsd(opportunity.fundingGoal)} />
+        <InfoRow label={id.labelFundedAmount} value={formatCurrencyUsd(opportunity.fundedAmount)} />
         <InfoRow
           label={id.labelAvailableShares}
           value={`${opportunity.availableShares}/${opportunity.totalShares}`}

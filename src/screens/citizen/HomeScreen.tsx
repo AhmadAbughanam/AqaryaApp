@@ -46,6 +46,7 @@ import PropertyImage from '../../components/PropertyImage';
 import CitizenBrandBar from '../../components/CitizenBrandBar';
 import {detectJordanCity, DetectedCity, CITY_CENTERS} from '../../utils/jordanCityDetector';
 import {AppImages} from '../../assets/images';
+import { formatCurrencyUsd } from '../../utils/formatters';
 
 // React Native provides navigator.geolocation as a deprecated polyfill.
 // This tsconfig omits DOM lib so we declare the minimal shape we need here.
@@ -67,12 +68,7 @@ const {width: SCREEN_W} = Dimensions.get('window');
 const CARD_PAD = 16;
 const CARD_GAP = 10;
 
-const formatCurrency = (value: number): string =>
-  new Intl.NumberFormat('en-US', {
-    style: 'currency',
-    currency: 'USD',
-    maximumFractionDigits: 0,
-  }).format(value);
+
 
 const marketModeToType = (mode: MarketMode): MarketType =>
   mode === 'buy' ? 'sale' : mode === 'rent' ? 'rent' : 'investment';
@@ -366,7 +362,7 @@ const HomeScreen = ({navigation, route}: Props) => {
         <View style={styles.cardDivider} />
 
         <View style={styles.cardPriceRow}>
-          <Text style={styles.cardPrice}>{formatCurrency(item.price)}</Text>
+          <Text style={styles.cardPrice}>{formatCurrencyUsd(item.price)}</Text>
           <View style={styles.cardSpecs}>
             {item.areaSqm != null ? (
               <View style={styles.cardSpecChip}>
@@ -454,7 +450,7 @@ const HomeScreen = ({navigation, route}: Props) => {
 
           {/* Price + Target ROI */}
           <View style={styles.investPriceRow}>
-            <Text style={styles.investPrice}>{formatCurrency(item.minimumInvestmentAmount)}</Text>
+            <Text style={styles.investPrice}>{formatCurrencyUsd(item.minimumInvestmentAmount)}</Text>
             <View style={styles.investRoiBadge}>
               <Text style={styles.investRoiText}>Target ROI {roiLabel}</Text>
             </View>
@@ -468,8 +464,8 @@ const HomeScreen = ({navigation, route}: Props) => {
           {/* Funding stats */}
           <View style={styles.investStatsRow}>
             <Text style={styles.investStatFunded}>{fundingPct}% funded</Text>
-            <Text style={styles.investStatSub}>{formatCurrency(item.fundedAmount)}</Text>
-            <Text style={styles.investStatSub}>{formatCurrency(item.fundingGoal)}</Text>
+            <Text style={styles.investStatSub}>{formatCurrencyUsd(item.fundedAmount)}</Text>
+            <Text style={styles.investStatSub}>{formatCurrencyUsd(item.fundingGoal)}</Text>
           </View>
 
           {/* Aqarya score + CTA */}
