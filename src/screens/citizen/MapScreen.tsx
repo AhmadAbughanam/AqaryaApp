@@ -1,3 +1,4 @@
+import { formatCurrencyUsd } from '../../utils/formatters';
 // Interactive map — Leaflet.js via WebView on CARTO Positron tiles (free, no API key).
 // Satellite toggle via ESRI World Imagery (also free).
 // Price pins appear for all properties that have latitude/longitude.
@@ -51,8 +52,7 @@ const ITEM_H = CARD_H + CARD_GAP;
 const toMarketType = (mode: MarketMode): MarketType =>
   mode === 'buy' ? 'sale' : mode === 'rent' ? 'rent' : 'investment';
 
-const formatCurrency = (v: number) =>
-  new Intl.NumberFormat('en-US', {style: 'currency', currency: 'USD', maximumFractionDigits: 0}).format(v);
+
 
 // ─── Leaflet HTML ─────────────────────────────────────────────────────────────
 // CARTO Positron (street) + ESRI World Imagery (satellite) — both free, no API key.
@@ -324,7 +324,7 @@ const PropertyCard = React.memo(({
       <View style={[styles.cardDivider, isDark && styles.cardDividerDark]} />
 
       <View style={styles.cardPriceRow}>
-        <Text style={[styles.cardPrice, isDark && styles.cardPriceDark]}>{formatCurrency(item.price)}</Text>
+        <Text style={[styles.cardPrice, isDark && styles.cardPriceDark]}>{formatCurrencyUsd(item.price)}</Text>
         <View style={styles.specs}>
           {item.areaSqm != null && <View style={[styles.specChip, isDark && styles.specChipDark]}><Text style={[styles.specText, isDark && styles.specTextDark]}>{item.areaSqm} m²</Text></View>}
           {item.bedrooms != null && <View style={[styles.specChip, isDark && styles.specChipDark]}><Text style={[styles.specText, isDark && styles.specTextDark]}>{item.bedrooms} bd</Text></View>}

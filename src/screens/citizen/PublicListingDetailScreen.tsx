@@ -21,7 +21,7 @@ import {getPropertyDetails, buyPropertyWithWallet, PropertyDetails} from '../../
 import {checkListingSaved, saveListing, unsaveListing} from '../../api/savedListings';
 import {reportListing, ReportReason, REPORT_REASON_LABELS} from '../../api/moderation';
 import {CitizenTabParamList} from '../../navigation/CitizenTabNavigator';
-import {formatDateTime} from '../../utils/formatters';
+import { formatCurrencyUsd, formatDateTime, formatMinTwoDecimals } from '../../utils/formatters';
 import {Colors} from '../../constants/colors';
 import {useStrings} from '../../i18n';
 import PropertyImage from '../../components/PropertyImage';
@@ -34,12 +34,7 @@ type LocalRoute = RouteProp<
   'PublicListingDetail'
 >;
 
-const formatCurrency = (value: number): string =>
-  new Intl.NumberFormat('en-US', {
-    style: 'currency',
-    currency: 'USD',
-    maximumFractionDigits: 0,
-  }).format(value);
+
 
 const InfoRow = ({label, value, isDark = false}: {label: string; value: string; isDark?: boolean}) => (
   <View style={[styles.infoRow, isDark && styles.darkInfoRow]}>
@@ -147,7 +142,7 @@ const PublicListingDetailScreen = () => {
 
   useLayoutEffect(() => {
     const balanceText = walletBalance != null
-      ? `JOD ${new Intl.NumberFormat('en-US', {minimumFractionDigits: 2}).format(walletBalance.availableBalance)}`
+      ? `JOD ${formatMinTwoDecimals(walletBalance.availableBalance)}`
       : '—';
     navigation.setOptions({
       headerStyle: {
@@ -204,7 +199,7 @@ const PublicListingDetailScreen = () => {
   const isRent = !isInvestment && property.marketType === 'rent';
 
   const onBuy = () => {
-    const fmtJod = new Intl.NumberFormat('en-US', {minimumFractionDigits: 2}).format;
+    const fmtJod = formatMinTwoDecimals;
 
     if (!walletBalance || walletBalance.availableBalance < property.price) {
       const needed = fmtJod(property.price);
@@ -361,7 +356,7 @@ const PublicListingDetailScreen = () => {
       {/* ── Price strip ─────────────────────────────────────────────────────── */}
       <View style={styles.statsRow}>
         <Card variant="dark" padding="md" style={styles.statCard}>
-          <Text style={styles.darkStatValue}>{formatCurrency(property.price)}</Text>
+          <Text style={styles.darkStatValue}>{formatCurrencyUsd(property.price)}</Text>
           <Text style={styles.darkStatLabel}>{priceLabel}</Text>
         </Card>
         <Card
@@ -369,7 +364,7 @@ const PublicListingDetailScreen = () => {
           padding="md"
           style={[styles.statCard, isInvestment && styles.darkSurfaceCard]}>
           <Text style={[styles.lightStatValue, isInvestment && styles.darkTextPrimary]}>
-            {formatCurrency(property.propertyValue)}
+            {formatCurrencyUsd(property.propertyValue)}
           </Text>
           <Text style={[styles.lightStatLabel, isInvestment && styles.darkTextMuted]}>
             {strings.publicListing.valuation}
@@ -454,7 +449,7 @@ const PublicListingDetailScreen = () => {
             value={`${property.availableShares} / ${property.totalShares}`}
             isDark
           />
-          <InfoRow label={strings.publicListing.pricePerShare} value={formatCurrency(property.pricePerShare)} isDark />
+          <InfoRow label={strings.publicListing.pricePerShare} value={formatCurrencyUsd(property.pricePerShare)} isDark />
         </Card>
       ) : null}
 
@@ -477,7 +472,7 @@ const PublicListingDetailScreen = () => {
             Ejod Balance:
           </Text>
           <Text style={[styles.balanceChipValue, isInvestment && styles.balanceChipValueDark]}>
-            {`JOD ${new Intl.NumberFormat('en-US', {minimumFractionDigits: 2}).format(walletBalance.availableBalance)}`}
+            {`JOD ${formatMinTwoDecimals(walletBalance.availableBalance)}`}
           </Text>
         </View>
       )}

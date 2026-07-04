@@ -11,6 +11,7 @@ import {
   View,
 } from 'react-native';
 import {Colors} from '../constants/colors';
+import { formatCurrencyUsd } from '../utils/formatters';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -25,12 +26,7 @@ interface ShareInputProps {
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
-const formatCurrency = (value: number): string =>
-  new Intl.NumberFormat('en-US', {
-    style: 'currency',
-    currency: 'USD',
-    maximumFractionDigits: 0,
-  }).format(value);
+
 
 // ─── Component ────────────────────────────────────────────────────────────────
 
@@ -207,7 +203,7 @@ const ShareInput = ({
       ) : totalCost !== null ? (
         <View style={styles.costPreview}>
           <Text style={styles.costLabel}>Estimated Total</Text>
-          <Text style={styles.costValue}>{formatCurrency(totalCost)}</Text>
+          <Text style={styles.costValue}>{formatCurrencyUsd(totalCost)}</Text>
         </View>
       ) : null}
     </View>

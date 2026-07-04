@@ -12,13 +12,9 @@ import Card from '../../components/Card';
 import StatusBadge from '../../components/StatusBadge';
 import {Colors} from '../../constants/colors';
 import {useStrings} from '../../i18n';
+import { formatCurrencyUsd } from '../../utils/formatters';
 
-const formatCurrency = (value: number): string =>
-  new Intl.NumberFormat('en-US', {
-    style: 'currency',
-    currency: 'USD',
-    maximumFractionDigits: 0,
-  }).format(value);
+
 
 const PortfolioScreen = () => {
   const strings = useStrings();
@@ -97,7 +93,7 @@ const PortfolioScreen = () => {
               </Card>
               <Card variant="default" padding="md" style={styles.summaryCard}>
                 <Text style={styles.lightStatValue}>
-                  {formatCurrency(summary.totalOutlay)}
+                  {formatCurrencyUsd(summary.totalOutlay)}
                 </Text>
                 <Text style={styles.lightStatLabel}>{strings.portfolio.totalOutlayLabel}</Text>
               </Card>
@@ -106,7 +102,7 @@ const PortfolioScreen = () => {
             <Card variant="default" padding="md" style={styles.expectedCard}>
               <Text style={styles.expectedLabel}>{strings.portfolio.expectedAnnualReturn}</Text>
               <Text style={styles.expectedValue}>
-                {formatCurrency(summary.expectedAnnualReturn)}
+                {formatCurrencyUsd(summary.expectedAnnualReturn)}
               </Text>
             </Card>
 
@@ -139,12 +135,12 @@ const PortfolioScreen = () => {
                 <Text style={styles.itemMetricLabel}>{strings.portfolio.sharesOwnedLabel}</Text>
               </View>
               <View style={styles.itemMetric}>
-                <Text style={styles.itemMetricValue}>{formatCurrency(item.totalAmount)}</Text>
+                <Text style={styles.itemMetricValue}>{formatCurrencyUsd(item.totalAmount)}</Text>
                 <Text style={styles.itemMetricLabel}>{strings.portfolio.totalAmountLabel}</Text>
               </View>
               <View style={styles.itemMetric}>
                 <Text style={styles.itemMetricValue}>
-                  {formatCurrency(item.annualIncomeEstimate ?? item.expectedAnnualReturn)}
+                  {formatCurrencyUsd(item.annualIncomeEstimate ?? item.expectedAnnualReturn)}
                 </Text>
                 <Text style={styles.itemMetricLabel}>{strings.portfolio.annualCashFlowLabel}</Text>
               </View>
