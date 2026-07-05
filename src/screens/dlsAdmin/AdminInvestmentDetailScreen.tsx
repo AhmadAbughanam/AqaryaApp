@@ -1,4 +1,6 @@
 import React, {useCallback, useEffect, useState} from 'react';
+import {formatCurrencyUSD} from '../../utils/formatters';
+
 import {
   ActivityIndicator,
   Alert,
@@ -25,11 +27,7 @@ import {useStrings} from '../../i18n';
 type Props = NativeStackScreenProps<AdminStackParamList, 'AdminInvestmentDetail'>;
 
 const formatCurrency = (value: number): string =>
-  new Intl.NumberFormat('en-US', {
-    style: 'currency',
-    currency: 'USD',
-    maximumFractionDigits: 0,
-  }).format(value);
+  formatCurrencyUSD(value);
 
 const formatPercent = (value: number): string => `${value}%`;
 

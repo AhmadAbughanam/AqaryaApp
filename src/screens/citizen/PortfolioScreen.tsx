@@ -1,4 +1,6 @@
 import React, {useEffect, useMemo, useState} from 'react';
+import {formatCurrencyUSD} from '../../utils/formatters';
+
 import {
   ActivityIndicator,
   FlatList,
@@ -14,11 +16,7 @@ import {Colors} from '../../constants/colors';
 import {useStrings} from '../../i18n';
 
 const formatCurrency = (value: number): string =>
-  new Intl.NumberFormat('en-US', {
-    style: 'currency',
-    currency: 'USD',
-    maximumFractionDigits: 0,
-  }).format(value);
+  formatCurrencyUSD(value);
 
 const PortfolioScreen = () => {
   const strings = useStrings();

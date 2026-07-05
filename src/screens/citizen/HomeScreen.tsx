@@ -4,6 +4,8 @@
 // Cross-tab navigation to PropertiesTab/MapTab uses getParent().
 
 import React, {useCallback, useEffect, useState} from 'react';
+import {formatCurrencyUSD} from '../../utils/formatters';
+
 import {
   ActivityIndicator,
   Dimensions,
@@ -68,11 +70,7 @@ const CARD_PAD = 16;
 const CARD_GAP = 10;
 
 const formatCurrency = (value: number): string =>
-  new Intl.NumberFormat('en-US', {
-    style: 'currency',
-    currency: 'USD',
-    maximumFractionDigits: 0,
-  }).format(value);
+  formatCurrencyUSD(value);
 
 const marketModeToType = (mode: MarketMode): MarketType =>
   mode === 'buy' ? 'sale' : mode === 'rent' ? 'rent' : 'investment';

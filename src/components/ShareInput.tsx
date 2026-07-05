@@ -2,6 +2,8 @@
 // Features animated focus border, increment/decrement controls, and max shares hint.
 
 import React, {useRef, useState} from 'react';
+import {formatCurrencyUSD} from '../utils/formatters';
+
 import {
   Animated,
   Pressable,
@@ -26,11 +28,7 @@ interface ShareInputProps {
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
 const formatCurrency = (value: number): string =>
-  new Intl.NumberFormat('en-US', {
-    style: 'currency',
-    currency: 'USD',
-    maximumFractionDigits: 0,
-  }).format(value);
+  formatCurrencyUSD(value);
 
 // ─── Component ────────────────────────────────────────────────────────────────
 
