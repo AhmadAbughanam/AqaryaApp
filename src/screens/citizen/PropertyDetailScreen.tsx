@@ -1,4 +1,6 @@
 import React, {useCallback, useEffect, useState} from 'react';
+import {formatCurrencyUSD} from '../../utils/formatters';
+
 import {
   ActivityIndicator,
   Alert,
@@ -22,11 +24,7 @@ import {AppImages} from '../../assets/images';
 type Props = NativeStackScreenProps<CitizenStackParamList, 'PropertyDetail'>;
 
 const formatCurrency = (value: number): string =>
-  new Intl.NumberFormat('en-US', {
-    style: 'currency',
-    currency: 'USD',
-    maximumFractionDigits: 0,
-  }).format(value);
+  formatCurrencyUSD(value);
 
 const InfoRow = ({label, value}: {label: string; value: string}) => (
   <View style={styles.infoRow}>

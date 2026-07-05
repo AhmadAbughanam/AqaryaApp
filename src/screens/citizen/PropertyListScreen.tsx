@@ -1,4 +1,6 @@
 import React, {useCallback, useEffect, useState} from 'react';
+import {formatCurrencyUSD} from '../../utils/formatters';
+
 import {
   ActivityIndicator,
   Alert,
@@ -24,11 +26,7 @@ type Props = NativeStackScreenProps<CitizenStackParamList, 'MyProperties'>;
 const PAGE_SIZE = 20;
 
 const formatCurrency = (value: number): string =>
-  new Intl.NumberFormat('en-US', {
-    style: 'currency',
-    currency: 'USD',
-    maximumFractionDigits: 0,
-  }).format(value);
+  formatCurrencyUSD(value);
 
 const PropertyListScreen = ({navigation}: Props) => {
   const strings = useStrings();

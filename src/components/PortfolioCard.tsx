@@ -2,6 +2,8 @@
 // Redesigned with ownership ring, dark value pill, and stat grid.
 
 import React from 'react';
+import {formatNumber, formatCurrencyUSD} from '../utils/formatters';
+
 import {StyleSheet, Text, View} from 'react-native';
 import {PortfolioItem} from '../api/investments';
 import {formatDateTime} from '../utils/formatters';
@@ -11,14 +13,9 @@ import {Colors} from '../constants/colors';
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
 const formatCurrency = (value: number): string =>
-  new Intl.NumberFormat('en-US', {
-    style: 'currency',
-    currency: 'USD',
-    maximumFractionDigits: 0,
-  }).format(value);
+  formatCurrencyUSD(value);
 
-const formatNumber = (value: number): string =>
-  new Intl.NumberFormat('en-US').format(value);
+
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 

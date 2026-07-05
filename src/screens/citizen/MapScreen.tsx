@@ -4,6 +4,8 @@
 // Tapping a pin selects the property in the bottom carousel and vice versa.
 
 import React, {useCallback, useEffect, useRef, useState} from 'react';
+import {formatCurrencyUSD} from '../../utils/formatters';
+
 import {
   ActivityIndicator,
   Animated,
@@ -52,7 +54,7 @@ const toMarketType = (mode: MarketMode): MarketType =>
   mode === 'buy' ? 'sale' : mode === 'rent' ? 'rent' : 'investment';
 
 const formatCurrency = (v: number) =>
-  new Intl.NumberFormat('en-US', {style: 'currency', currency: 'USD', maximumFractionDigits: 0}).format(v);
+  formatCurrencyUSD(v);
 
 // ─── Leaflet HTML ─────────────────────────────────────────────────────────────
 // CARTO Positron (street) + ESRI World Imagery (satellite) — both free, no API key.

@@ -1,4 +1,6 @@
 import React, {useCallback, useEffect, useMemo, useState} from 'react';
+import {formatCurrencyUSD} from '../../utils/formatters';
+
 import {
   ActivityIndicator,
   FlatList,
@@ -34,11 +36,7 @@ type Props = NativeStackScreenProps<CitizenStackParamList, 'InvestmentSimulation
 type ExitScenario = 'conservative' | 'base' | 'optimistic';
 
 const formatCurrency = (value: number): string =>
-  new Intl.NumberFormat('en-US', {
-    style: 'currency',
-    currency: 'USD',
-    maximumFractionDigits: 0,
-  }).format(value);
+  formatCurrencyUSD(value);
 
 const InvestmentSimulationScreen = ({navigation, route}: Props) => {
   const strings = useStrings();
