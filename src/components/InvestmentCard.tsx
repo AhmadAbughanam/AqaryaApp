@@ -2,6 +2,7 @@
 // Redesigned to match the Riskify dark-stat-card aesthetic with share availability bar.
 
 import React from 'react';
+import {formatCurrency, formatNumber} from '../utils/formatters';
 import {StyleSheet, Text, View} from 'react-native';
 import {PilotProperty} from '../api/investments';
 import Card from './Card';
@@ -17,16 +18,6 @@ interface InvestmentCardProps {
 }
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
-
-const formatCurrency = (value: number): string =>
-  new Intl.NumberFormat('en-US', {
-    style: 'currency',
-    currency: 'USD',
-    maximumFractionDigits: 0,
-  }).format(value);
-
-const formatNumber = (value: number): string =>
-  new Intl.NumberFormat('en-US').format(value);
 
 // ─── Component ────────────────────────────────────────────────────────────────
 

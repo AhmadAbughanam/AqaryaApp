@@ -1,6 +1,7 @@
 // Citizen profile screen — messenger-style layout matching design reference.
 
 import React, {useCallback, useEffect, useState} from 'react';
+import {formatTwoDecimals} from '../../utils/formatters';
 import {
   ActivityIndicator,
   Alert,
@@ -474,7 +475,7 @@ const CitizenProfileScreen = ({navigation}: Props) => {
           iconNode={<WalletMenuIcon color={Colors.textPrimary} />}
           label={strings.profile.menuWallet}
           right={walletBalance != null
-            ? `JOD ${new Intl.NumberFormat('en-US', {minimumFractionDigits: 2}).format(walletBalance.availableBalance)}`
+            ? `JOD ${formatTwoDecimals(walletBalance.availableBalance)}`
             : undefined}
           onPress={() => navigation.navigate('Wallet')}
         />

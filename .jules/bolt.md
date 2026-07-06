@@ -1,0 +1,3 @@
+## 2024-05-17 - Performance bottleneck with Intl formatting
+**Learning:** `new Intl.NumberFormat` is being instantiated inside many React components' render cycles or in inline formatters. This is a known performance anti-pattern because the instantiation is an expensive operation and creating it on every render can cause frame drops on low-end devices in React Native.
+**Action:** Extract formatters as cached singletons using `new Intl.NumberFormat().format` in `src/utils/formatters.ts` and import them directly into the components. Preserving special `{ notation: 'compact' }` and other styles.
