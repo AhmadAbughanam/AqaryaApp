@@ -98,3 +98,6 @@ backend/.env.*
 !.yarn/releases
 !.yarn/sdks
 !.yarn/versions
+
+# Local deploy config (VPS credentials)
+scripts/deploy.env
