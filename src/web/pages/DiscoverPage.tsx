@@ -1,4 +1,4 @@
-import {useState, type FormEvent} from 'react';
+import {useEffect, useState, type FormEvent} from 'react';
 import {Link} from 'react-router-dom';
 import {getProperties, type MarketType, type PropertyListItem} from '../../api/properties';
 import {
@@ -12,10 +12,18 @@ import {useAsyncData} from '../useAsyncData';
 
 type BrowseMode = Extract<MarketType, 'sale' | 'rent'>;
 
+const CITY_CHIPS = ['Amman', 'Umrah', 'Zarqa'] as const;
+
 export function DiscoverPage() {
   const [mode, setMode] = useState<BrowseMode>('sale');
   const [query, setQuery] = useState('');
   const [appliedQuery, setAppliedQuery] = useState('');
+
+  // Debounced live search; Enter applies immediately via the form.
+  useEffect(() => {
+    const id = setTimeout(() => setAppliedQuery(query.trim()), 300);
+    return () => clearTimeout(id);
+  }, [query]);
 
   const result = useAsyncData<PropertyListItem[]>(async () => {
     const response = await getProperties({
@@ -27,22 +35,43 @@ export function DiscoverPage() {
     return response.items;
   }, [mode, appliedQuery]);
 
-  function search(event: FormEvent) {
+  function applyNow(event: FormEvent) {
     event.preventDefault();
     setAppliedQuery(query.trim());
   }
 
   const items = result.data ?? [];
+  const activeChip = appliedQuery.toLowerCase();
 
   return (
     <>
       <PageHeader
         eyebrow="Source-authenticated"
-        title="Verified listings in Umrah & Jordan"
-        description="Every listing here is tied to an authoritative source and checked for ownership and identity before it is published."
-        action={<Link className="button button--secondary" to="/app/notifications">Notifications</Link>}
+        title="Find a verified property"
+        action={<Link className="button button--secondary" to="/app/notifications">Alerts</Link>}
       />
-      <section className="hero-search">
+
+      <div className="discover-search">
+        <form className="search-field" onSubmit={applyNow} role="search">
+          <span className="search-field__icon" aria-hidden="true">⌕</span>
+          <input
+            aria-label="Search properties"
+            enterKeyHint="search"
+            onChange={event => setQuery(event.target.value)}
+            placeholder="City, area, or property"
+            value={query}
+          />
+          {query ? (
+            <button
+              aria-label="Clear search"
+              className="search-field__clear"
+              onClick={() => setQuery('')}
+              type="button">
+              ×
+            </button>
+          ) : null}
+        </form>
+
         <div className="segmented-control" aria-label="Market type">
           {(['sale', 'rent'] as const).map(value => (
             <button
@@ -54,38 +83,31 @@ export function DiscoverPage() {
             </button>
           ))}
         </div>
-        <form className="search-form" onSubmit={search}>
-          <span aria-hidden="true">⌕</span>
-          <input
-            aria-label="Search properties"
-            onChange={event => setQuery(event.target.value)}
-            placeholder="Search by city, area, or property"
-            value={query}
-          />
-          <button className="button button--primary" type="submit">Search</button>
-        </form>
-        <div className="quick-filters">
-          {['Amman', 'Umrah', 'Zarqa', 'Reset'].map(filter => (
-            <button
-              key={filter}
-              onClick={() => {
-                const next = filter === 'Reset' ? '' : filter;
-                setQuery(next);
-                setAppliedQuery(next);
-              }}
-              type="button">
-              {filter}
-            </button>
-          ))}
+
+        <div className="chip-row">
+          {CITY_CHIPS.map(city => {
+            const on = activeChip === city.toLowerCase();
+            return (
+              <button
+                className={on ? 'chip is-active' : 'chip'}
+                key={city}
+                onClick={() => setQuery(on ? '' : city)}
+                type="button">
+                {city}
+              </button>
+            );
+          })}
         </div>
-      </section>
+      </div>
+
       <section className="section-heading">
         <div>
-          <span className="eyebrow">Curated for you</span>
+          <span className="eyebrow">{appliedQuery ? `Results for “${appliedQuery}”` : 'Curated for you'}</span>
           <h2>{mode === 'sale' ? 'Homes & plots for sale' : 'Homes for rent'}</h2>
         </div>
-        <span>{items.length} results</span>
+        <span>{items.length} {items.length === 1 ? 'result' : 'results'}</span>
       </section>
+
       {result.loading ? <LoadingState label="Loading verified records…" /> : null}
       {result.error ? <ErrorState message={result.error} retry={result.refresh} /> : null}
       {!result.loading && !result.error && !items.length ? (
