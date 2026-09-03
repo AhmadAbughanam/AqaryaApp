@@ -11,7 +11,6 @@ export interface ProfileAggregateStats {
 
 export interface UserPreference {
   notificationsEnabled: boolean;
-  language: string;
 }
 
 export interface OwnedProfileProperty {
@@ -71,18 +70,7 @@ export const getMyProfile = async (): Promise<CitizenProfile> => {
       savedCount: savedPropertyIds.size,
       totalOwnedValue: owned.reduce((sum, record) => sum + record.propertyValue, 0),
     },
-    preference: {notificationsEnabled: true, language: 'en'},
+    preference: {notificationsEnabled: true},
     ownedProperties,
-  };
-};
-
-export const updatePreferences = async (prefs: {
-  notificationsEnabled?: boolean;
-  language?: string;
-}): Promise<{notificationsEnabled: boolean; language: string}> => {
-  await mockDelay(80);
-  return {
-    notificationsEnabled: prefs.notificationsEnabled ?? true,
-    language: prefs.language ?? 'en',
   };
 };

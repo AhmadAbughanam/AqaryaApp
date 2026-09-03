@@ -1,7 +1,6 @@
 import {NavLink, Outlet} from 'react-router-dom';
 import {AppImages} from '../assets/images';
 import {useAuth} from '../store/AuthContext';
-import {useLanguage} from '../i18n';
 import {copy} from './copy';
 
 const citizenItems = [
@@ -25,25 +24,15 @@ const adminItems = [
 
 export function AppLayout({variant}: {variant: 'citizen' | 'admin'}) {
   const {signOut} = useAuth();
-  const {language, setLanguage} = useLanguage();
-  const text = copy[language];
 
   if (variant === 'citizen') {
     return (
       <div className="mobile-shell">
         <header className="mobile-topbar">
           <span className="mobile-wordmark">Aqarya</span>
-          <div className="mobile-topbar__actions">
-            <button
-              className="text-button"
-              onClick={() => setLanguage(language === 'en' ? 'ar' : 'en')}
-              type="button">
-              {text.language}
-            </button>
-            <button className="text-button" onClick={signOut} type="button">
-              {text.signOut}
-            </button>
-          </div>
+          <button className="text-button" onClick={signOut} type="button">
+            {copy.signOut}
+          </button>
         </header>
         <main className="mobile-main">
           <Outlet />
@@ -56,7 +45,7 @@ export function AppLayout({variant}: {variant: 'citizen' | 'admin'}) {
               key={item.to}
               to={item.to}>
               <span aria-hidden="true">{item.icon}</span>
-              {text.citizenNav[item.key]}
+              {copy.citizenNav[item.key]}
             </NavLink>
           ))}
         </nav>
@@ -82,19 +71,13 @@ export function AppLayout({variant}: {variant: 'citizen' | 'admin'}) {
               key={item.to}
               to={item.to}>
               <span aria-hidden="true">{item.icon}</span>
-              {text.adminNav[item.key]}
+              {copy.adminNav[item.key]}
             </NavLink>
           ))}
         </nav>
         <div className="sidebar__footer">
-          <button
-            className="text-button"
-            onClick={() => setLanguage(language === 'en' ? 'ar' : 'en')}
-            type="button">
-            {text.language}
-          </button>
           <button className="text-button" onClick={signOut} type="button">
-            {text.signOut}
+            {copy.signOut}
           </button>
         </div>
       </aside>
