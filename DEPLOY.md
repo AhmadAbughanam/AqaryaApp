@@ -10,18 +10,22 @@ the `aqarya_internal` docker network.
 Internet ──▶ amanah-drive-caddy-1 (:443)  ──aqarya_internal──▶ aqarya-web-1 (nginx, dist/)
 ```
 
-## Publish the latest `main`
+## How it deploys
 
-On the VPS:
+Push to `main` → GitHub Actions ([`.github/workflows/deploy.yml`](./.github/workflows/deploy.yml)):
 
-```bash
-cd /opt/aqarya
-sh scripts/redeploy.sh
-```
+1. **build** — `npm ci`, `npm run verify`, upload `dist/` as an artifact.
+2. **deploy** — download the artifact, `rsync` it to `/opt/aqarya/dist/` on the
+   VPS (which is bind-mounted into `aqarya-web-1`), then reload nginx. The build
+   is done in CI, so nothing on the server needs to compile or `git pull`.
 
-`redeploy.sh` does: `git pull` → build `dist/` in a throwaway `node:20` container →
-reload nginx. Because `dist/` is bind-mounted into `aqarya-web-1`, the site is
-live the moment the build finishes.
+The `deploy` job only runs when the repo variable `DEPLOY_ENABLED` is `true`
+(see below).
+
+### Manual publish (fallback)
+
+On the VPS, `scripts/redeploy.sh` still works: `git pull` → build `dist/` in a
+throwaway `node:20` container → reload nginx.
 
 ## One-time container setup (already done, for reference)
 
@@ -57,21 +61,18 @@ aqarya.online, www.aqarya.online {
 }
 ```
 
-## Make `git push` deploy automatically (optional)
-
-[`.github/workflows/deploy.yml`](./.github/workflows/deploy.yml) runs
-`npm run verify` on every push. It will also SSH into the VPS and run
-`scripts/redeploy.sh` once you enable it:
+## Enabling auto-deploy (one-time)
 
 1. Create an SSH keypair for deploys; add the **public** key to
-   `~/.ssh/authorized_keys` on the VPS (root, or a user that can run docker).
+   `~/.ssh/authorized_keys` on the VPS (root, or a user that can run docker + rsync).
 2. Repo → Settings → Secrets and variables → Actions:
-   - Secrets: `DEPLOY_SSH_KEY` (private key), `DEPLOY_USER` (e.g. `root`),
-     `DEPLOY_HOST` (e.g. `srv1931482` or its IP), `DEPLOY_PORT` (optional, `22`)
-   - Variable: `DEPLOY_ENABLED` = `true`
+   - **Secrets:** `DEPLOY_SSH_KEY` (the private key, whole PEM block),
+     `DEPLOY_USER` (`root`), `DEPLOY_HOST` (`aqarya.online`),
+     `DEPLOY_PORT` (optional, defaults to `22`)
+   - **Variable:** `DEPLOY_ENABLED` = `true`
 
 Until `DEPLOY_ENABLED` is `true`, pushes only build and verify — nothing touches
-the server.
+the server. Trigger a first run from **Actions → Deploy → Run workflow**.
 
 ## Verify
 
