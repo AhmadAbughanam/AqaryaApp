@@ -57,7 +57,7 @@ export function PropertyDetailPage() {
         eyebrow={property.marketType === 'rent' ? 'For rent' : 'For sale'}
         title={property.title}
         description={property.location}
-        action={<Link className="button button--secondary" to="/app">Back to listings</Link>}
+        action={<Link className="button button--secondary" to="/app">Back</Link>}
       />
       <div className="detail-layout">
         <section>

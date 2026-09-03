@@ -42,7 +42,7 @@ export function SellPropertyPage() {
 
   return (
     <>
-      <PageHeader eyebrow="Verified listing" title="List a property for sale" description="Submit ownership details for review before the listing is published." action={<Link className="button button--secondary" to="/app/my-properties">Cancel</Link>} />
+      <PageHeader title="List a property for sale" action={<Link className="button button--secondary" to="/app/my-properties">Cancel</Link>} />
       <form className="panel form-panel" onSubmit={submit}>
         <div className="form-section"><span className="eyebrow">1 · Property</span><h2>Property details</h2></div>
         <div className="form-grid">

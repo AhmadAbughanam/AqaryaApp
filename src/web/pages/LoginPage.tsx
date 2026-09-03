@@ -4,15 +4,11 @@ import {AppImages} from '../../assets/images';
 import {useAuth} from '../../store/AuthContext';
 
 const TEXT = {
-  orientation:
-    'A digital trust and operations layer for property in Jordan — verify first, then publish and contract.',
   heading: 'Choose how to enter',
   sanad: 'Login with SANAD',
-  sanadNote: 'Enter as a citizen using your SANAD digital identity.',
+  sanadNote: 'Continue as a citizen.',
   admin: 'Admin access',
-  adminNote: 'Open the government operations console.',
-  footer:
-    'Aqarya links to SANAD identity and the Department of Lands and Survey through authorised integrations. The land registry stays authoritative.',
+  adminNote: 'Government operations console.',
 };
 
 export function LoginPage() {
@@ -42,7 +38,6 @@ export function LoginPage() {
       />
       <div className="auth-screen__inner">
         <p className="auth-wordmark">Aqarya</p>
-        <p className="auth-orientation">{TEXT.orientation}</p>
 
         <div className="auth-card">
           <h1>{TEXT.heading}</h1>
@@ -63,8 +58,6 @@ export function LoginPage() {
             {TEXT.admin}
           </button>
           <p className="auth-btn__note">{TEXT.adminNote}</p>
-
-          <p className="auth-card__footer">{TEXT.footer}</p>
         </div>
       </div>
     </div>

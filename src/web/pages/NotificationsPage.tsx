@@ -10,7 +10,7 @@ export function NotificationsPage() {
   }
   return (
     <>
-      <PageHeader eyebrow="Updates" title="Notifications" description="Status changes, saved search matches, messages, and system notices." />
+      <PageHeader title="Notifications" />
       {result.loading ? <LoadingState /> : null}
       {result.error ? <ErrorState message={result.error} retry={result.refresh} /> : null}
       {result.data && !result.data.length ? <EmptyState title="You're all caught up" description="New platform updates will appear here." /> : null}

@@ -8,9 +8,7 @@ export function MyPropertiesPage() {
   return (
     <>
       <PageHeader
-        eyebrow="Ownership workspace"
         title="My properties"
-        description="Manage owned property and submit verified sale listings."
         action={<Link className="button button--primary" to="/app/sell">List a property</Link>}
       />
       {result.loading ? <LoadingState /> : null}

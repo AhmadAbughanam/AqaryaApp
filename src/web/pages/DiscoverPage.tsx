@@ -44,10 +44,7 @@ export function DiscoverPage() {
 
   return (
     <>
-      <PageHeader
-        eyebrow="Source-authenticated"
-        title="Find a verified property"
-      />
+      <PageHeader title="Find a verified property" />
 
       <div className="discover-search">
         <form className="search-field" onSubmit={applyNow} role="search">
@@ -100,7 +97,7 @@ export function DiscoverPage() {
 
       <section className="section-heading">
         <div>
-          <span className="eyebrow">{appliedQuery ? `Results for “${appliedQuery}”` : 'Curated for you'}</span>
+          {appliedQuery ? <span className="eyebrow">Results for “{appliedQuery}”</span> : null}
           <h2>{mode === 'sale' ? 'Homes & plots for sale' : 'Homes for rent'}</h2>
         </div>
         <span>{items.length} {items.length === 1 ? 'result' : 'results'}</span>

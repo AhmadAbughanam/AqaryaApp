@@ -14,7 +14,7 @@ export function ProfilePage() {
 
   return (
     <>
-      <PageHeader eyebrow="Citizen account" title="Profile" description="Your verified identity, preferences, and activity." />
+      <PageHeader title="Profile" />
       <section className="profile-hero panel">
         <div className="profile-hero__cover" style={{backgroundImage: `url(${AppImages.backgrounds.profileHero})`}} />
         <img src={AppImages.placeholders.profileAvatar} alt="Profile" />
