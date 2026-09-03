@@ -40,7 +40,7 @@ export function MessagesPage() {
 
   return (
     <>
-      <PageHeader eyebrow="Secure support" title="Messages" description="Discuss listings and opportunities with the Aqarya support team." />
+      <PageHeader eyebrow="Secure support" title="Messages" description="Discuss verified listings with the Aqarya support team." />
       {threads.loading ? <LoadingState /> : null}
       {threads.error ? <ErrorState message={threads.error} retry={threads.refresh} /> : null}
       {threads.data ? (

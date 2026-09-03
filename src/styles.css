@@ -502,3 +502,13 @@ td small { color: var(--muted); display: block; margin-top: 4px; }
 .map-result h3 { font-size: 13px; margin: 7px 0 3px; }
 .map-result p { color: var(--muted); font-size: 10px; margin: 0; }
 .map-result > strong { font-size: 12px; white-space: nowrap; }
+
+/* ---- Mobile shell: tighten desktop-tuned spacing that leaves gaps ---- */
+.mobile-main .profile-hero { align-items: start; min-height: 0; padding-top: 78px; }
+.mobile-main .profile-hero__cover { height: 96px; }
+.mobile-main .settings-list .section-heading { margin: 0 0 6px; }
+.mobile-main .panel > .section-heading:first-child { margin-top: 0; }
+.mobile-main .conversation { min-height: 340px; }
+.mobile-main .message-stream { max-height: 60vh; }
+.mobile-main .help-grid .panel { padding: 20px; }
+.mobile-main .help-grid h2, .mobile-main .help-grid h3 { margin-top: 8px; }
