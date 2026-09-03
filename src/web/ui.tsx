@@ -52,13 +52,13 @@ export function PageHeader({
 
 export function StatusBadge({status}: {status: string | null | undefined}) {
   const normalized = status?.replaceAll('_', ' ') || 'unknown';
-  const tone = /verified|approved|published|completed|resolved|active|anchored/.test(
+  const tone = /verified|approved|published|completed|resolved|active|anchored|sealed/.test(
     normalized,
   )
     ? 'success'
     : /rejected|failed|frozen|dismissed|suspended/.test(normalized)
       ? 'danger'
-      : /pending|review|submitted|open/.test(normalized)
+      : /pending|review|submitted|open|draft|needs/.test(normalized)
         ? 'warning'
         : 'neutral';
   return <span className={`status status--${tone}`}>{normalized}</span>;
@@ -66,9 +66,12 @@ export function StatusBadge({status}: {status: string | null | undefined}) {
 
 export function LoadingState({label = 'Loading…'}: {label?: string}) {
   return (
-    <div className="state state--loading" role="status">
-      <span className="spinner" />
-      <p>{label}</p>
+    <div className="state state--loading" role="status" aria-label={label}>
+      <div className="skeleton-stack">
+        <div className="skeleton skeleton--tall" />
+        <div className="skeleton" />
+        <div className="skeleton" />
+      </div>
     </div>
   );
 }

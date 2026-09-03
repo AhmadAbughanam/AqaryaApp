@@ -81,19 +81,21 @@ export function PropertyDetailPage() {
               <div className="chip-list">{property.amenities.map(item => <span key={item}>{item}</span>)}</div>
             ) : null}
           </article>
-          <article className="panel verification-panel">
+          <article className="panel record-card">
             <div>
-              <span className="eyebrow">Source verification</span>
-              <h2>Tamper-evident property record</h2>
+              <span className="eyebrow">Source-authenticated</span>
+              <h2>Verified property record</h2>
             </div>
-            <dl>
-              <div><dt>Property check</dt><dd><StatusBadge status={property.propertyVerificationStatus} /></dd></div>
-              <div><dt>Identity check</dt><dd><StatusBadge status={property.identityVerificationStatus} /></dd></div>
-              <div><dt>Record</dt><dd><StatusBadge status={property.recordStatus === 'sealed' ? 'sealed' : 'draft'} /></dd></div>
-              <div><dt>Last verified</dt><dd>{formatDate(property.verificationTimestamp)}</dd></div>
-              <div className="full"><dt>Record ID</dt><dd className="mono">{property.verificationRecordId || 'Pending'}</dd></div>
-              <div className="full"><dt>Record hash</dt><dd className="mono">{property.recordHash}</dd></div>
-            </dl>
+            <ul className="record-checks">
+              <li><i />Property check <StatusBadge status={property.propertyVerificationStatus} /></li>
+              <li><i />Identity check <StatusBadge status={property.identityVerificationStatus} /></li>
+              <li><i />Record <StatusBadge status={property.recordStatus === 'sealed' ? 'sealed' : 'draft'} /></li>
+            </ul>
+            <div className="record-meta">
+              <div><span>Record ID</span><span className="mono">{property.verificationRecordId || 'Pending'}</span></div>
+              <div><span>Hash</span><span className="mono">{property.recordHash}</span></div>
+              <div><span>Last verified</span><span>{formatDate(property.verificationTimestamp)}</span></div>
+            </div>
           </article>
         </section>
         <aside className="purchase-card panel">

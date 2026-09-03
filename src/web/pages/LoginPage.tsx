@@ -3,14 +3,6 @@ import {Navigate, useNavigate} from 'react-router-dom';
 import {AppImages} from '../../assets/images';
 import {useAuth} from '../../store/AuthContext';
 
-const TEXT = {
-  heading: 'Choose how to enter',
-  sanad: 'Login with SANAD',
-  sanadNote: 'Continue as a citizen.',
-  admin: 'Admin access',
-  adminNote: 'Government operations console.',
-};
-
 export function LoginPage() {
   const {role, signIn} = useAuth();
   const navigate = useNavigate();
@@ -39,25 +31,30 @@ export function LoginPage() {
       <div className="auth-screen__inner">
         <p className="auth-wordmark">Aqarya</p>
 
+        <div className="auth-lead">
+          <h1>The digital land record for Jordan.</h1>
+          <p>Verify · Publish · Contract</p>
+        </div>
+
         <div className="auth-card">
-          <h1>{TEXT.heading}</h1>
+          <span className="eyebrow">Choose how to enter</span>
 
           <button
             className="auth-btn auth-btn--primary"
             onClick={() => enterAs('citizen')}
             type="button">
-            <span>{TEXT.sanad}</span>
+            <span>Login with SANAD</span>
             <img src={AppImages.logos.sanad} alt="SANAD" />
           </button>
-          <p className="auth-btn__note">{TEXT.sanadNote}</p>
+          <p className="auth-btn__note">Continue as a citizen.</p>
 
           <button
             className="auth-btn auth-btn--ghost"
             onClick={() => enterAs('admin')}
             type="button">
-            {TEXT.admin}
+            Admin access
           </button>
-          <p className="auth-btn__note">{TEXT.adminNote}</p>
+          <p className="auth-btn__note">Government operations console.</p>
         </div>
       </div>
     </div>
