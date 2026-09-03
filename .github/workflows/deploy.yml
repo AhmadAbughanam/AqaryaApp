@@ -34,7 +34,8 @@ jobs:
           echo "${{ secrets.DEPLOY_SSH_KEY }}" > ~/.ssh/id_ed25519
           chmod 600 ~/.ssh/id_ed25519
           PORT="${{ secrets.DEPLOY_PORT || '22' }}"
-          ssh-keyscan -p "$PORT" -H "${{ secrets.DEPLOY_HOST }}" >> ~/.ssh/known_hosts 2>/dev/null
+          ssh-keyscan -p "$PORT" -H "${{ secrets.DEPLOY_HOST }}" >> ~/.ssh/known_hosts 2>/dev/null || true
           ssh -p "$PORT" -i ~/.ssh/id_ed25519 \
+            -o IdentitiesOnly=yes -o StrictHostKeyChecking=accept-new \
             "${{ secrets.DEPLOY_USER }}@${{ secrets.DEPLOY_HOST }}" \
             'cd /opt/aqarya && sh scripts/redeploy.sh'
