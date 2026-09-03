@@ -1,8 +1,11 @@
-import {createAuthenticatedApiClient} from './client';
-
-const api = createAuthenticatedApiClient();
-
-// ─── Types ────────────────────────────────────────────────────────────────────
+import {
+  announcements,
+  contentBlocks,
+  mockDelay,
+  MockError,
+  nowIso,
+  uid,
+} from '../mock/db';
 
 export type AnnouncementAudience = 'all_citizens' | 'all_providers' | 'one_user';
 export type AnnouncementStatus = 'active' | 'archived';
@@ -64,8 +67,6 @@ export interface UpsertContentBlockRequest {
   active?: boolean;
 }
 
-// ─── Display helpers ──────────────────────────────────────────────────────────
-
 export const AUDIENCE_LABELS: Record<AnnouncementAudience, string> = {
   all_citizens: 'All Citizens',
   all_providers: 'All Providers',
@@ -77,13 +78,25 @@ export const ANNOUNCEMENT_STATUS_LABELS: Record<AnnouncementStatus, string> = {
   archived: 'Archived',
 };
 
-// ─── Admin: announcements ─────────────────────────────────────────────────────
-
 export const createAnnouncement = async (
   dto: CreateAnnouncementRequest,
 ): Promise<Announcement> => {
-  const response = await api.post<Announcement>('/admin/announcements', dto);
-  return response.data;
+  await mockDelay();
+  const announcement: Announcement = {
+    id: uid('ann'),
+    title: dto.title,
+    body: dto.body,
+    type: dto.type,
+    audience: dto.audience,
+    targetUserId: dto.targetUserId ?? null,
+    status: 'active',
+    createdBy: 'admin',
+    createdAt: nowIso(),
+    sentAt: nowIso(),
+    archivedAt: null,
+  };
+  announcements.unshift(announcement);
+  return announcement;
 };
 
 export const getAnnouncements = async (params?: {
@@ -91,33 +104,69 @@ export const getAnnouncements = async (params?: {
   limit?: number;
   status?: AnnouncementStatus;
 }): Promise<AnnouncementsResponse> => {
-  const response = await api.get<AnnouncementsResponse>('/admin/announcements', {params});
-  return response.data;
+  await mockDelay();
+  const filtered = params?.status
+    ? announcements.filter(item => item.status === params.status)
+    : announcements;
+  return {
+    items: filtered.map(item => ({...item})),
+    total: filtered.length,
+    page: params?.page ?? 1,
+    limit: params?.limit ?? filtered.length,
+  };
 };
 
 export const archiveAnnouncement = async (id: string): Promise<Announcement> => {
-  const response = await api.patch<Announcement>(`/admin/announcements/${id}/archive`);
-  return response.data;
+  await mockDelay();
+  const target = announcements.find(item => item.id === id);
+  if (!target) throw new MockError('Announcement not found.', 404);
+  target.status = 'archived';
+  target.archivedAt = nowIso();
+  return {...target};
 };
 
-// ─── Admin: content blocks ────────────────────────────────────────────────────
-
 export const getAdminContentBlocks = async (): Promise<ContentBlock[]> => {
-  const response = await api.get<ContentBlock[]>('/admin/content');
-  return response.data;
+  await mockDelay();
+  return [...contentBlocks]
+    .sort((a, b) => a.order - b.order)
+    .map(block => ({...block}));
 };
 
 export const upsertContentBlock = async (
   key: string,
   dto: UpsertContentBlockRequest,
 ): Promise<ContentBlock> => {
-  const response = await api.put<ContentBlock>(`/admin/content/${key}`, dto);
-  return response.data;
+  await mockDelay();
+  const existing = contentBlocks.find(block => block.key === key);
+  if (existing) {
+    existing.title = dto.title;
+    existing.body = dto.body;
+    existing.icon = dto.icon ?? existing.icon;
+    existing.order = dto.order ?? existing.order;
+    existing.active = dto.active ?? existing.active;
+    existing.updatedAt = nowIso();
+    existing.updatedBy = 'admin';
+    return {...existing};
+  }
+  const block: ContentBlock = {
+    id: uid('cb'),
+    key,
+    title: dto.title,
+    body: dto.body,
+    icon: dto.icon ?? null,
+    order: dto.order ?? contentBlocks.length + 1,
+    active: dto.active ?? true,
+    updatedAt: nowIso(),
+    updatedBy: 'admin',
+  };
+  contentBlocks.push(block);
+  return {...block};
 };
 
-// ─── Citizen: active content blocks ──────────────────────────────────────────
-
 export const getActiveContentBlocks = async (): Promise<ContentBlock[]> => {
-  const response = await api.get<ContentBlock[]>('/content/active');
-  return response.data;
+  await mockDelay();
+  return contentBlocks
+    .filter(block => block.active)
+    .sort((a, b) => a.order - b.order)
+    .map(block => ({...block}));
 };

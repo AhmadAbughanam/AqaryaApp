@@ -1,16 +1,17 @@
-import {getSecureToken} from '../services/secureStorage';
-import {ApiError, createAuthenticatedApiClient} from './client';
+import {
+  CURRENT_USER,
+  mockDelay,
+  MockError,
+  nowIso,
+  properties,
+  recordAudit,
+  uid,
+  type MarketType,
+  type PropertyRecord,
+  type VerificationStatus,
+} from '../mock/db';
 
-export type VerificationStatus =
-  | 'pending'
-  | 'pending_verification'
-  | 'needs_changes'
-  | 'verified'
-  | 'rejected'
-  | 'frozen'
-  | 'sold';
-
-export type MarketType = 'sale' | 'investment' | 'rent';
+export type {MarketType, VerificationStatus};
 
 export interface PropertyListItem {
   id: string;
@@ -20,8 +21,6 @@ export interface PropertyListItem {
   description: string;
   price: number;
   propertyValue: number;
-  totalShares: number;
-  availableShares: number;
   marketType: MarketType;
   verificationStatus: VerificationStatus;
   verificationTimestamp: string;
@@ -46,26 +45,18 @@ export interface PropertyAuditItem {
 }
 
 export interface PropertyDetails extends PropertyListItem {
-  ownerId?: string | null;
-  seller?: {
-    id: string;
-    username: string;
-  } | null;
+  ownerId: string;
   ownershipType: string;
   ownershipProofType: string;
   ownershipProofNumber: string;
-  pricePerShare: number;
   propertyVerificationStatus: 'pending' | 'verified' | 'rejected';
   identityVerificationStatus: 'pending' | 'verified' | 'rejected';
   rejectionReason?: string | null;
-  blockchainHash: string;
-  blockchainTransactionId: string;
-  blockchainStatus: 'pending' | 'anchored' | 'failed';
-  imageUrls: string[];
+  recordHash: string;
+  recordStatus: 'draft' | 'sealed';
+  verificationRecordId?: string | null;
   createdAt: string;
   updatedAt: string;
-  verificationRecordId?: string | null;
-  verificationPayload?: Record<string, unknown> | null;
   auditTrail: PropertyAuditItem[];
 }
 
@@ -81,7 +72,6 @@ export interface CreateSaleListingRequest {
   imageUrls?: string[];
   price: number;
   propertyValue: number;
-  totalShares?: number;
   city?: string;
   propertyType?: string;
   bedrooms?: number;
@@ -90,22 +80,6 @@ export interface CreateSaleListingRequest {
   amenities?: string[];
   latitude?: number;
   longitude?: number;
-}
-
-interface PaginatedPropertiesResponse {
-  items: PropertyListItem[];
-  page: number;
-  limit: number;
-  total: number;
-}
-
-interface Envelope<T> {
-  data?: T;
-  items?: T;
-}
-
-export interface PurchasePropertyResponse extends PropertyListItem {
-  message: string;
 }
 
 export interface GetPropertiesParams {
@@ -117,12 +91,7 @@ export interface GetPropertiesParams {
   propertyType?: string;
   minPrice?: number;
   maxPrice?: number;
-  sort?: 'price_asc' | 'price_desc' | 'newest';
   bedrooms?: number;
-  bathrooms?: number;
-  minAreaSqm?: number;
-  maxAreaSqm?: number;
-  amenities?: string[];
   verifiedOnly?: boolean;
 }
 
@@ -134,542 +103,186 @@ export interface PropertiesPage {
   hasNextPage: boolean;
 }
 
-const propertiesApi = createAuthenticatedApiClient();
+export interface StructuredOfferResponse {
+  id: string;
+  propertyId: string;
+  status: 'submitted';
+  message: string;
+}
 
-const isDevSessionToken = (token: string | null): boolean =>
-  Boolean(token && token.startsWith('dev-jwt-'));
+const toListItem = (record: PropertyRecord): PropertyListItem => ({
+  id: record.id,
+  title: record.title,
+  location: record.location,
+  ownerName: record.ownerName,
+  description: record.description,
+  price: record.price,
+  propertyValue: record.propertyValue,
+  marketType: record.marketType,
+  verificationStatus: record.verificationStatus,
+  verificationTimestamp: record.verificationTimestamp,
+  city: record.city,
+  propertyType: record.propertyType,
+  bedrooms: record.bedrooms,
+  bathrooms: record.bathrooms,
+  areaSqm: record.areaSqm,
+  amenities: record.amenities,
+  latitude: record.latitude,
+  longitude: record.longitude,
+  imageUrls: record.imageUrls,
+});
 
-const devPropertyRecords: PropertyDetails[] = [
-  {
-    id: 'prop-001',
-    title: 'Jabal Amman Courtyard House',
-    location: 'Amman, Jabal Amman',
-    city: 'Amman',
-    propertyType: 'Villa',
-    bedrooms: 4,
-    bathrooms: 3,
-    areaSqm: 280,
-    amenities: ['Private garden', 'Garage', 'City views'],
-    latitude: 31.9539,
-    longitude: 35.9106,
-    ownerName: 'Mahmoud Al-Khatib',
-    description: 'Verified family home listed for direct sale in a prime residential quarter.',
-    price: 1550000,
-    propertyValue: 1500000,
-    totalShares: 1,
-    availableShares: 1,
-    marketType: 'sale',
-    verificationStatus: 'verified',
-    verificationTimestamp: '2026-02-12T09:20:00.000Z',
-    ownerId: 'citizen',
-    seller: {id: 'citizen', username: 'citizen'},
-    ownershipType: 'Freehold',
-    ownershipProofType: 'title_deed',
-    ownershipProofNumber: 'TD-2026-1001',
-    pricePerShare: 1550000,
-    propertyVerificationStatus: 'verified',
-    identityVerificationStatus: 'verified',
-    rejectionReason: null,
-    blockchainHash: '0x7f8dd31fa6f4214f9cc441ea77c9a3f2126e4a2ac69d8f39f8a6e6230a1d4d79',
-    blockchainTransactionId: '0x3abf1dd923e9e7f55a89c4db03b8ad4f73f8fbcf6a9e1476c2d7d0cb4ce11f28',
-    blockchainStatus: 'anchored',
-    imageUrls: [],
-    createdAt: '2025-11-03T10:00:00.000Z',
-    updatedAt: '2026-02-12T09:20:00.000Z',
-    verificationRecordId: 'aqarya-vrf-dev-sale-001',
-    verificationPayload: {provider: 'mock-chain', ownershipSignals: {ownerLinkedToAccount: true}},
-    auditTrail: [],
-  },
-  {
-    id: 'prop-002',
-    title: 'Irbid Hillside Villa',
-    location: 'Irbid, University Street',
-    city: 'Irbid',
-    propertyType: 'Villa',
-    bedrooms: 5,
-    bathrooms: 4,
-    areaSqm: 390,
-    amenities: ['Swimming pool', 'Garden', 'Garage'],
-    latitude: 32.5556,
-    longitude: 35.8500,
-    ownerName: 'Rana Al-Majali',
-    description: 'Standalone villa approved for sale and visible in the public sale marketplace.',
-    price: 2250000,
-    propertyValue: 2200000,
-    totalShares: 1,
-    availableShares: 1,
-    marketType: 'sale',
-    verificationStatus: 'verified',
-    verificationTimestamp: '2026-01-24T14:45:00.000Z',
-    ownerId: 'citizen2',
-    seller: {id: 'citizen2', username: 'citizen2'},
-    ownershipType: 'Leasehold',
-    ownershipProofType: 'municipal_record',
-    ownershipProofNumber: 'MR-2026-221',
-    pricePerShare: 2250000,
-    propertyVerificationStatus: 'verified',
-    identityVerificationStatus: 'verified',
-    rejectionReason: null,
-    blockchainHash: '0x9bc84f1d53b0d239af0eb6a031fd84a0a2b6bd7f1705f51273f26b2a8a3d9910',
-    blockchainTransactionId: '0xa1727d8a4a20bcf88a98dd2f970d6f7c0de9e4dd8fcb7d56ffec8b19e7f1119b',
-    blockchainStatus: 'anchored',
-    imageUrls: [],
-    createdAt: '2025-10-11T11:30:00.000Z',
-    updatedAt: '2026-01-24T14:45:00.000Z',
-    verificationRecordId: 'aqarya-vrf-dev-sale-002',
-    verificationPayload: {provider: 'mock-chain', ownershipSignals: {ownerLinkedToAccount: true}},
-    auditTrail: [],
-  },
-  {
-    id: 'prop-003',
-    title: 'Sweifieh Modern Apartment',
-    location: 'Amman, Sweifieh',
-    city: 'Amman',
-    propertyType: 'Apartment',
-    bedrooms: 2,
-    bathrooms: 2,
-    areaSqm: 130,
-    amenities: ['Parking', 'Elevator', 'Gym', 'Security'],
-    latitude: 31.9481,
-    longitude: 35.8700,
-    ownerName: 'Khalid Al-Nabulsi',
-    description: 'Bright two-bedroom apartment in a well-maintained building in Sweifieh.',
-    price: 600,
-    propertyValue: 170000,
-    totalShares: 1,
-    availableShares: 1,
-    marketType: 'rent',
-    verificationStatus: 'verified',
-    verificationTimestamp: '2026-03-01T09:00:00.000Z',
-    ownerId: 'citizen2',
-    seller: {id: 'citizen2', username: 'citizen2'},
-    ownershipType: 'Freehold',
-    ownershipProofType: 'title_deed',
-    ownershipProofNumber: 'TD-RENT-DEV-01',
-    pricePerShare: 600,
-    propertyVerificationStatus: 'verified',
-    identityVerificationStatus: 'verified',
-    rejectionReason: null,
-    blockchainHash: '0xdevsweifiehrenthash',
-    blockchainTransactionId: '0xdevsweifiehtx',
-    blockchainStatus: 'anchored',
-    imageUrls: [],
-    createdAt: '2026-02-20T10:00:00.000Z',
-    updatedAt: '2026-03-01T09:00:00.000Z',
-    verificationRecordId: 'aqarya-vrf-dev-rent-001',
-    verificationPayload: {provider: 'mock-chain', ownershipSignals: {ownerLinkedToAccount: true}},
-    auditTrail: [],
-  },
-  {
-    id: 'prop-004',
-    title: 'University District Villa',
-    location: 'Irbid, University District',
-    city: 'Irbid',
-    propertyType: 'Villa',
-    bedrooms: 4,
-    bathrooms: 3,
-    areaSqm: 250,
-    amenities: ['Garden', 'Parking', 'Security'],
-    latitude: 32.4725,
-    longitude: 35.9857,
-    ownerName: 'Sana Al-Habboubi',
-    description: 'Spacious villa near Jordan University of Science and Technology, ideal for families.',
-    price: 480,
-    propertyValue: 280000,
-    totalShares: 1,
-    availableShares: 1,
-    marketType: 'rent',
-    verificationStatus: 'verified',
-    verificationTimestamp: '2026-03-05T09:00:00.000Z',
-    ownerId: 'citizen',
-    seller: {id: 'citizen', username: 'citizen'},
-    ownershipType: 'Freehold',
-    ownershipProofType: 'title_deed',
-    ownershipProofNumber: 'TD-RENT-DEV-02',
-    pricePerShare: 480,
-    propertyVerificationStatus: 'verified',
-    identityVerificationStatus: 'verified',
-    rejectionReason: null,
-    blockchainHash: '0xdevirbidrenvilla',
-    blockchainTransactionId: '0xdevunivdisttx',
-    blockchainStatus: 'anchored',
-    imageUrls: [],
-    createdAt: '2026-02-25T10:00:00.000Z',
-    updatedAt: '2026-03-05T09:00:00.000Z',
-    verificationRecordId: 'aqarya-vrf-dev-rent-002',
-    verificationPayload: {provider: 'mock-chain', ownershipSignals: {ownerLinkedToAccount: true}},
-    auditTrail: [],
-  },
-];
-
-const purchasedDevPropertiesByUser: Record<string, string[]> = {};
-
-const normalizePropertiesResponse = (
-  data:
-    | PropertyListItem[]
-    | PaginatedPropertiesResponse
-    | Envelope<PropertyListItem[] | PaginatedPropertiesResponse>,
-  fallbackPage: number,
-  fallbackLimit: number,
-): PropertiesPage => {
-  const normalizedData: PropertyListItem[] | PaginatedPropertiesResponse =
-    data &&
-    typeof data === 'object' &&
-    'data' in (data as Envelope<PropertyListItem[] | PaginatedPropertiesResponse>) &&
-    (data as Envelope<PropertyListItem[] | PaginatedPropertiesResponse>).data !==
-      undefined
-      ? ((data as Envelope<PropertyListItem[] | PaginatedPropertiesResponse>).data as
-          | PropertyListItem[]
-          | PaginatedPropertiesResponse)
-      : (data as PropertyListItem[] | PaginatedPropertiesResponse);
-
-  if (Array.isArray(normalizedData)) {
-    return {
-      items: normalizedData,
-      page: fallbackPage,
-      limit: fallbackLimit,
-      total: normalizedData.length,
-      hasNextPage: false,
-    };
-  }
-
-  return {
-    items: normalizedData.items,
-    page: normalizedData.page,
-    limit: normalizedData.limit,
-    total: normalizedData.total,
-    hasNextPage: normalizedData.page * normalizedData.limit < normalizedData.total,
-  };
-};
+const toDetails = (record: PropertyRecord): PropertyDetails => ({
+  ...toListItem(record),
+  ownerId: record.ownerId,
+  ownershipType: record.ownershipType,
+  ownershipProofType: record.ownershipProofType,
+  ownershipProofNumber: record.ownershipProofNumber,
+  propertyVerificationStatus: record.propertyVerificationStatus,
+  identityVerificationStatus: record.identityVerificationStatus,
+  rejectionReason: record.rejectionReason,
+  recordHash: record.recordHash,
+  recordStatus: record.recordStatus,
+  verificationRecordId: record.verificationRecordId,
+  createdAt: record.createdAt,
+  updatedAt: record.updatedAt,
+  auditTrail: [],
+});
 
 export const getProperties = async (
   params: GetPropertiesParams = {},
 ): Promise<PropertiesPage> => {
+  await mockDelay();
   const page = params.page ?? 1;
   const limit = params.limit ?? 20;
+  const market = params.marketType ?? 'sale';
+  const query = params.search?.trim().toLowerCase();
 
-  const token = await getSecureToken();
-  if (!token) {
-    throw new ApiError('Authentication required. Please sign in again.', 401);
-  }
-
-  if (import.meta.env.DEV && isDevSessionToken(token)) {
-    const resolvedMarketType = params.marketType ?? 'sale';
-    const query = params.search?.trim().toLowerCase();
-    let records = devPropertyRecords.filter(
-      property => property.marketType === resolvedMarketType,
+  let records = properties.filter(record => record.marketType === market);
+  if (query) {
+    records = records.filter(
+      record =>
+        record.title.toLowerCase().includes(query) ||
+        record.location.toLowerCase().includes(query) ||
+        record.city.toLowerCase().includes(query),
     );
-    if (query) {
-      records = records.filter(
-        property =>
-          property.title.toLowerCase().includes(query) ||
-          property.location.toLowerCase().includes(query),
-      );
-    }
-    if (params.city) {
-      const cityQ = params.city.toLowerCase();
-      records = records.filter(
-        property => property.city?.toLowerCase().includes(cityQ),
-      );
-    }
-    if (params.minPrice !== undefined) {
-      records = records.filter(property => property.price >= params.minPrice!);
-    }
-    if (params.maxPrice !== undefined) {
-      records = records.filter(property => property.price <= params.maxPrice!);
-    }
-    if (params.propertyType) {
-      const pt = params.propertyType.toLowerCase();
-      records = records.filter(
-        property => property.propertyType?.toLowerCase() === pt,
-      );
-    }
-    if (params.bedrooms !== undefined) {
-      records = records.filter(
-        property => (property.bedrooms ?? 0) >= params.bedrooms!,
-      );
-    }
-    if (params.bathrooms !== undefined) {
-      records = records.filter(
-        property => (property.bathrooms ?? 0) >= params.bathrooms!,
-      );
-    }
-    if (params.minAreaSqm !== undefined) {
-      records = records.filter(
-        property => (property.areaSqm ?? 0) >= params.minAreaSqm!,
-      );
-    }
-    if (params.maxAreaSqm !== undefined) {
-      records = records.filter(
-        property => (property.areaSqm ?? Infinity) <= params.maxAreaSqm!,
-      );
-    }
-    if (params.amenities?.length) {
-      const required = params.amenities.map(a => a.toLowerCase());
-      records = records.filter(property =>
-        required.every(req =>
-          property.amenities?.some(a => a.toLowerCase().includes(req)),
-        ),
-      );
-    }
-    if (params.verifiedOnly) {
-      records = records.filter(
-        property => property.verificationStatus === 'verified',
-      );
-    }
-    const start = (page - 1) * limit;
-    const items = records.slice(start, start + limit).map(property => ({
-      id: property.id,
-      title: property.title,
-      location: property.location,
-      ownerName: property.ownerName,
-      description: property.description,
-      price: property.price,
-      propertyValue: property.propertyValue,
-      totalShares: property.totalShares,
-      availableShares: property.availableShares,
-      marketType: property.marketType,
-      verificationStatus: property.verificationStatus,
-      verificationTimestamp: property.verificationTimestamp,
-      city: property.city,
-      propertyType: property.propertyType,
-      bedrooms: property.bedrooms,
-      bathrooms: property.bathrooms,
-      areaSqm: property.areaSqm,
-      amenities: property.amenities,
-      latitude: property.latitude,
-      longitude: property.longitude,
-      imageUrls: property.imageUrls,
-    }));
-
-    return {
-      items,
-      page,
-      limit,
-      total: records.length,
-      hasNextPage: start + limit < records.length,
-    };
+  }
+  if (params.city) {
+    const city = params.city.toLowerCase();
+    records = records.filter(record => record.city.toLowerCase().includes(city));
+  }
+  if (params.propertyType) {
+    const type = params.propertyType.toLowerCase();
+    records = records.filter(record => record.propertyType.toLowerCase() === type);
+  }
+  if (params.minPrice !== undefined) {
+    records = records.filter(record => record.price >= params.minPrice!);
+  }
+  if (params.maxPrice !== undefined) {
+    records = records.filter(record => record.price <= params.maxPrice!);
+  }
+  if (params.bedrooms !== undefined) {
+    records = records.filter(record => (record.bedrooms ?? 0) >= params.bedrooms!);
+  }
+  if (params.verifiedOnly) {
+    records = records.filter(record => record.verificationStatus === 'verified');
   }
 
-  const response = await propertiesApi.get<
-    | PropertyListItem[]
-    | PaginatedPropertiesResponse
-    | Envelope<PropertyListItem[] | PaginatedPropertiesResponse>
-  >('/properties', {
-    params: {
-      page,
-      limit,
-      search: params.search,
-      marketType: params.marketType,
-      city: params.city,
-      propertyType: params.propertyType,
-      minPrice: params.minPrice,
-      maxPrice: params.maxPrice,
-      sort: params.sort,
-      bedrooms: params.bedrooms,
-      bathrooms: params.bathrooms,
-      minAreaSqm: params.minAreaSqm,
-      maxAreaSqm: params.maxAreaSqm,
-      amenities: params.amenities?.join(','),
-      verifiedOnly: params.verifiedOnly,
-    },
-  });
-
-  return normalizePropertiesResponse(response.data, page, limit);
+  const start = (page - 1) * limit;
+  const pageItems = records.slice(start, start + limit).map(toListItem);
+  return {
+    items: pageItems,
+    page,
+    limit,
+    total: records.length,
+    hasNextPage: start + limit < records.length,
+  };
 };
 
 export const getPropertyDetails = async (id: string): Promise<PropertyDetails> => {
-  const token = await getSecureToken();
-  if (!token) {
-    throw new ApiError('Authentication required. Please sign in again.', 401);
+  await mockDelay();
+  const record = properties.find(item => item.id === id);
+  if (!record) {
+    throw new MockError('The requested property was not found.', 404);
   }
-
-  if (import.meta.env.DEV && isDevSessionToken(token)) {
-    const found = devPropertyRecords.find(property => property.id === id);
-
-    if (!found) {
-      throw new ApiError('The requested property was not found.', 404);
-    }
-
-    return found;
-  }
-
-  const response = await propertiesApi.get<PropertyDetails | Envelope<PropertyDetails>>(
-    `/properties/${id}`,
-  );
-
-  if (
-    response.data &&
-    typeof response.data === 'object' &&
-    'data' in (response.data as Envelope<PropertyDetails>) &&
-    (response.data as Envelope<PropertyDetails>).data
-  ) {
-    return (response.data as Envelope<PropertyDetails>).data as PropertyDetails;
-  }
-
-  return response.data as PropertyDetails;
+  return toDetails(record);
 };
 
 export const createSaleListing = async (
   payload: CreateSaleListingRequest,
 ): Promise<PropertyListItem> => {
-  const token = await getSecureToken();
-  if (!token) {
-    throw new ApiError('Authentication required. Please sign in again.', 401);
-  }
-
-  if (import.meta.env.DEV && isDevSessionToken(token)) {
-    const newProperty: PropertyDetails = {
-      id: `prop-${Date.now()}`,
-      title: payload.title,
-      location: payload.location,
-      ownerName: payload.ownerName,
-      description: payload.description,
-      price: payload.price,
-      propertyValue: payload.propertyValue,
-      totalShares: 1,
-      availableShares: 1,
-      marketType: 'sale',
-      verificationStatus: 'pending_verification',
-      verificationTimestamp: new Date().toISOString(),
-      ownerId: 'citizen',
-      seller: {
-        id: 'citizen',
-        username: 'citizen',
-      },
-      ownershipType: payload.ownershipType,
-      ownershipProofType: payload.ownershipProofType,
-      ownershipProofNumber: payload.ownershipProofNumber,
-      pricePerShare: payload.price,
-      propertyVerificationStatus: 'pending',
-      identityVerificationStatus: 'pending',
-      rejectionReason: null,
-      blockchainHash: `0xdev${Date.now().toString(16)}`,
-      blockchainTransactionId: '',
-      blockchainStatus: 'pending',
-      imageUrls: payload.imageUrls ?? [],
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString(),
-      verificationRecordId: `aqarya-vrf-dev-${Date.now()}`,
-      verificationPayload: {
-        provider: 'mock-chain',
-        ownershipSignals: {ownerLinkedToAccount: true},
-      },
-      auditTrail: [],
-    };
-
-    devPropertyRecords.unshift(newProperty);
-    return {
-      id: newProperty.id,
-      title: newProperty.title,
-      location: newProperty.location,
-      ownerName: newProperty.ownerName,
-      description: newProperty.description,
-      price: newProperty.price,
-      propertyValue: newProperty.propertyValue,
-      totalShares: newProperty.totalShares,
-      availableShares: newProperty.availableShares,
-      marketType: newProperty.marketType,
-      verificationStatus: newProperty.verificationStatus,
-      verificationTimestamp: newProperty.verificationTimestamp,
-    };
-  }
-
-  const response = await propertiesApi.post<PropertyListItem | Envelope<PropertyListItem>>(
-    '/properties/sell-listings',
-    payload,
-  );
-
-  if (
-    response.data &&
-    typeof response.data === 'object' &&
-    'data' in (response.data as Envelope<PropertyListItem>) &&
-    (response.data as Envelope<PropertyListItem>).data
-  ) {
-    return (response.data as Envelope<PropertyListItem>).data as PropertyListItem;
-  }
-
-  return response.data as PropertyListItem;
+  await mockDelay();
+  const timestamp = nowIso();
+  const record: PropertyRecord = {
+    id: uid('prop'),
+    title: payload.title,
+    location: payload.location,
+    city: payload.city ?? payload.location.split(',')[0]?.trim() ?? 'Amman',
+    propertyType: payload.propertyType ?? 'Apartment',
+    bedrooms: payload.bedrooms ?? null,
+    bathrooms: payload.bathrooms ?? null,
+    areaSqm: payload.areaSqm ?? null,
+    amenities: payload.amenities ?? [],
+    latitude: payload.latitude ?? null,
+    longitude: payload.longitude ?? null,
+    ownerId: CURRENT_USER.id,
+    ownerName: payload.ownerName || CURRENT_USER.username,
+    description: payload.description,
+    price: payload.price,
+    propertyValue: payload.propertyValue,
+    marketType: 'sale',
+    verificationStatus: 'pending_verification',
+    verificationTimestamp: timestamp,
+    ownershipType: payload.ownershipType,
+    ownershipProofType: payload.ownershipProofType,
+    ownershipProofNumber: payload.ownershipProofNumber,
+    propertyVerificationStatus: 'pending',
+    identityVerificationStatus: 'pending',
+    rejectionReason: null,
+    reviewerNotes: null,
+    recordHash: `AQ-${uid('').slice(0, 10).toUpperCase()}`,
+    recordStatus: 'draft',
+    verificationRecordId: uid('aqarya-vrf'),
+    submissionDate: timestamp,
+    createdAt: timestamp,
+    updatedAt: timestamp,
+    imageUrls: payload.imageUrls ?? [],
+  };
+  properties.unshift(record);
+  recordAudit({
+    actorId: CURRENT_USER.id,
+    actorName: CURRENT_USER.username,
+    actorRole: 'citizen',
+    actionType: 'listing_submitted',
+    propertyId: record.id,
+    metadata: {title: record.title},
+  });
+  return toListItem(record);
 };
 
-export const buyProperty = async (id: string): Promise<PurchasePropertyResponse> => {
-  const token = await getSecureToken();
-  if (!token) {
-    throw new ApiError('Authentication required. Please sign in again.', 401);
+export const submitStructuredOffer = async (
+  id: string,
+): Promise<StructuredOfferResponse> => {
+  await mockDelay();
+  const record = properties.find(item => item.id === id);
+  if (!record) {
+    throw new MockError('This property is no longer available.', 404);
   }
-
-  if (import.meta.env.DEV && isDevSessionToken(token)) {
-    const property = devPropertyRecords.find(record => record.id === id);
-    if (!property || property.marketType !== 'sale') {
-      throw new ApiError('This property is not available for direct purchase.', 404);
-    }
-    if (property.verificationStatus !== 'verified' || property.availableShares < 1) {
-      throw new ApiError('This property is no longer available.', 400);
-    }
-
-    const userId = token.split('-')[2] || 'citizen';
-    if (property.ownerId === userId) {
-      throw new ApiError('You already own this property.', 400);
-    }
-
-    property.ownerId = userId;
-    property.ownerName = userId;
-    property.seller = {id: userId, username: userId};
-    property.verificationStatus = 'sold';
-    property.availableShares = 0;
-    property.updatedAt = new Date().toISOString();
-
-    const purchased = purchasedDevPropertiesByUser[userId] ?? [];
-    purchasedDevPropertiesByUser[userId] = [...purchased, property.id];
-
-    return {
-      id: property.id,
-      title: property.title,
-      location: property.location,
-      ownerName: property.ownerName,
-      description: property.description,
-      price: property.price,
-      propertyValue: property.propertyValue,
-      totalShares: property.totalShares,
-      availableShares: property.availableShares,
-      marketType: property.marketType,
-      verificationStatus: property.verificationStatus,
-      verificationTimestamp: property.verificationTimestamp,
-      message: 'Property purchased successfully.',
-    };
-  }
-
-  const response = await propertiesApi.post<
-    PurchasePropertyResponse | Envelope<PurchasePropertyResponse>
-  >(`/properties/${id}/buy`);
-
-  if (
-    response.data &&
-    typeof response.data === 'object' &&
-    'data' in (response.data as Envelope<PurchasePropertyResponse>) &&
-    (response.data as Envelope<PurchasePropertyResponse>).data
-  ) {
-    return (response.data as Envelope<PurchasePropertyResponse>)
-      .data as PurchasePropertyResponse;
-  }
-
-  return response.data as PurchasePropertyResponse;
-};
-
-export const buyPropertyWithWallet = async (id: string): Promise<PurchasePropertyResponse> => {
-  const response = await propertiesApi.post<
-    PurchasePropertyResponse | Envelope<PurchasePropertyResponse>
-  >(`/properties/${id}/buy-with-wallet`);
-
-  if (
-    response.data &&
-    typeof response.data === 'object' &&
-    'data' in (response.data as Envelope<PurchasePropertyResponse>) &&
-    (response.data as Envelope<PurchasePropertyResponse>).data
-  ) {
-    return (response.data as Envelope<PurchasePropertyResponse>)
-      .data as PurchasePropertyResponse;
-  }
-
-  return response.data as PurchasePropertyResponse;
+  recordAudit({
+    actorId: CURRENT_USER.id,
+    actorName: CURRENT_USER.username,
+    actorRole: 'citizen',
+    actionType: record.marketType === 'rent' ? 'lease_offer_submitted' : 'offer_submitted',
+    propertyId: record.id,
+    metadata: {price: record.price},
+  });
+  return {
+    id: uid('offer'),
+    propertyId: record.id,
+    status: 'submitted',
+    message:
+      record.marketType === 'rent'
+        ? 'Your structured rental request was submitted. The owner and Aqarya support will follow up.'
+        : 'Your structured offer was submitted. It is now on the record for this property.',
+  };
 };

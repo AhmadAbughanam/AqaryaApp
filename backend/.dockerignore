@@ -1,6 +1,0 @@
-node_modules
-dist
-.env
-coverage
-test
-npm-debug.log

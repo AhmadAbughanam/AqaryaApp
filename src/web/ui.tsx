@@ -22,7 +22,10 @@ export const formatDate = (value: string | null | undefined): string => {
 };
 
 export const propertyImage = (property: Pick<PropertyListItem, 'marketType' | 'imageUrls'>) =>
-  property.imageUrls?.[0] || AppImages.property[property.marketType].fullWidth;
+  property.imageUrls?.[0] ||
+  (property.marketType === 'rent'
+    ? AppImages.property.rent.fullWidth
+    : AppImages.property.sale.fullWidth);
 
 export function PageHeader({
   eyebrow,

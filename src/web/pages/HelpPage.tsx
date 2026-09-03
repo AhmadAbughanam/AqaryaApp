@@ -6,7 +6,7 @@ export function HelpPage() {
   const result = useAsyncData(getActiveContentBlocks);
   return (
     <>
-      <PageHeader eyebrow="Support center" title="How can we help?" description="Guidance for property verification, wallet transactions, and platform services." />
+      <PageHeader eyebrow="Support center" title="How can we help?" description="Guidance on SANAD identity, source verification, structured offers, and rental contracts." />
       {result.loading ? <LoadingState /> : null}
       {result.error ? <ErrorState message={result.error} retry={result.refresh} /> : null}
       {result.data && !result.data.length ? <EmptyState title="No help articles" description="Help content will appear here when published." /> : null}

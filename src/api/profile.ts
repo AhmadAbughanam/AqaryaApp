@@ -1,18 +1,12 @@
-import {createAuthenticatedApiClient} from './client';
-import {MarketType, VerificationStatus} from './properties';
-
-const usersApi = createAuthenticatedApiClient();
+import {CURRENT_USER, mockDelay, properties, savedPropertyIds} from '../mock/db';
+import type {MarketType, VerificationStatus} from './properties';
 
 export interface ProfileAggregateStats {
   ownedPropertyCount: number;
-  salePropertyCount: number;
-  investmentProjectCount: number;
   listedForSaleCount: number;
   soldPropertyCount: number;
-  investmentCount: number;
   savedCount: number;
   totalOwnedValue: number;
-  totalInvested: number;
 }
 
 export interface UserPreference {
@@ -28,28 +22,12 @@ export interface OwnedProfileProperty {
   marketType: MarketType;
   propertyValue: number;
   price: number;
-  availableShares: number;
-  totalShares: number;
   verificationStatus: 'pending' | 'verified' | 'rejected';
   identityVerificationStatus: 'pending' | 'verified' | 'rejected';
   canListForSale: boolean;
   imageUrls?: string[];
   createdAt: string;
   updatedAt: string;
-}
-
-export interface ProfileInvestment {
-  simulationId: string;
-  propertyId: string;
-  propertyTitle: string;
-  propertyLocation: string;
-  propertyStatus: VerificationStatus;
-  propertyMarketType: MarketType;
-  sharesOwned: number;
-  totalAmount: number;
-  expectedAnnualReturn: number;
-  expectedFiveYearReturn: number;
-  createdAt: string;
 }
 
 export interface CitizenProfile {
@@ -61,26 +39,50 @@ export interface CitizenProfile {
   aggregates: ProfileAggregateStats;
   preference: UserPreference;
   ownedProperties: OwnedProfileProperty[];
-  investments: ProfileInvestment[];
-}
-
-interface Envelope<T> {
-  data?: T;
 }
 
 export const getMyProfile = async (): Promise<CitizenProfile> => {
-  const response = await usersApi.get<CitizenProfile | Envelope<CitizenProfile>>(
-    '/users/me/profile',
-  );
+  await mockDelay();
+  const owned = properties.filter(record => record.ownerId === CURRENT_USER.id);
+  const ownedProperties: OwnedProfileProperty[] = owned.map(record => ({
+    id: record.id,
+    title: record.title,
+    location: record.location,
+    status: record.verificationStatus,
+    marketType: record.marketType,
+    propertyValue: record.propertyValue,
+    price: record.price,
+    verificationStatus: record.propertyVerificationStatus,
+    identityVerificationStatus: record.identityVerificationStatus,
+    canListForSale:
+      record.marketType === 'sale' && record.verificationStatus === 'verified',
+    imageUrls: record.imageUrls,
+    createdAt: record.createdAt,
+    updatedAt: record.updatedAt,
+  }));
 
-  if (
-    response.data &&
-    typeof response.data === 'object' &&
-    'data' in (response.data as Envelope<CitizenProfile>) &&
-    (response.data as Envelope<CitizenProfile>).data
-  ) {
-    return (response.data as Envelope<CitizenProfile>).data as CitizenProfile;
-  }
+  return {
+    user: {id: CURRENT_USER.id, username: CURRENT_USER.username, role: 'citizen'},
+    aggregates: {
+      ownedPropertyCount: ownedProperties.length,
+      listedForSaleCount: owned.filter(record => record.marketType === 'sale').length,
+      soldPropertyCount: owned.filter(record => record.verificationStatus === 'sold')
+        .length,
+      savedCount: savedPropertyIds.size,
+      totalOwnedValue: owned.reduce((sum, record) => sum + record.propertyValue, 0),
+    },
+    preference: {notificationsEnabled: true, language: 'en'},
+    ownedProperties,
+  };
+};
 
-  return response.data as CitizenProfile;
+export const updatePreferences = async (prefs: {
+  notificationsEnabled?: boolean;
+  language?: string;
+}): Promise<{notificationsEnabled: boolean; language: string}> => {
+  await mockDelay(80);
+  return {
+    notificationsEnabled: prefs.notificationsEnabled ?? true,
+    language: prefs.language ?? 'en',
+  };
 };

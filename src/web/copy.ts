@@ -9,9 +9,7 @@ export const copy = {
       home: 'Discover',
       map: 'Map',
       properties: 'My properties',
-      portfolio: 'Portfolio',
       messages: 'Messages',
-      wallet: 'Wallet',
       profile: 'Profile',
     },
     adminNav: {
@@ -33,9 +31,7 @@ export const copy = {
       home: 'اكتشف',
       map: 'الخريطة',
       properties: 'عقاراتي',
-      portfolio: 'المحفظة الاستثمارية',
       messages: 'الرسائل',
-      wallet: 'المحفظة',
       profile: 'حسابي',
     },
     adminNav: {

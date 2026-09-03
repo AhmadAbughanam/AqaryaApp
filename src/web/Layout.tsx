@@ -8,9 +8,7 @@ const citizenItems = [
   {to: '/app', key: 'home', icon: '⌂', end: true},
   {to: '/app/map', key: 'map', icon: '⌖'},
   {to: '/app/my-properties', key: 'properties', icon: '▦'},
-  {to: '/app/portfolio', key: 'portfolio', icon: '◫'},
   {to: '/app/messages', key: 'messages', icon: '◌'},
-  {to: '/app/wallet', key: 'wallet', icon: '◈'},
   {to: '/app/profile', key: 'profile', icon: '◎'},
 ] as const;
 
@@ -29,29 +27,62 @@ export function AppLayout({variant}: {variant: 'citizen' | 'admin'}) {
   const {signOut} = useAuth();
   const {language, setLanguage} = useLanguage();
   const text = copy[language];
-  const items = variant === 'admin' ? adminItems : citizenItems;
-  const nav: Record<string, string> =
-    variant === 'admin' ? text.adminNav : text.citizenNav;
+
+  if (variant === 'citizen') {
+    return (
+      <div className="mobile-shell">
+        <header className="mobile-topbar">
+          <span className="mobile-wordmark">Aqarya</span>
+          <div className="mobile-topbar__actions">
+            <button
+              className="text-button"
+              onClick={() => setLanguage(language === 'en' ? 'ar' : 'en')}
+              type="button">
+              {text.language}
+            </button>
+            <button className="text-button" onClick={signOut} type="button">
+              {text.signOut}
+            </button>
+          </div>
+        </header>
+        <main className="mobile-main">
+          <Outlet />
+        </main>
+        <nav className="mobile-tabbar" aria-label="Primary navigation">
+          {citizenItems.map(item => (
+            <NavLink
+              className={({isActive}) => (isActive ? 'mobile-tab active' : 'mobile-tab')}
+              end={'end' in item ? item.end : false}
+              key={item.to}
+              to={item.to}>
+              <span aria-hidden="true">{item.icon}</span>
+              {text.citizenNav[item.key]}
+            </NavLink>
+          ))}
+        </nav>
+      </div>
+    );
+  }
 
   return (
-    <div className={`app-shell app-shell--${variant}`}>
+    <div className="app-shell app-shell--admin">
       <aside className="sidebar">
         <div className="brand">
           <img src={AppImages.logos.aqarya} alt="Aqarya" />
           <div>
             <strong>Aqarya</strong>
-            <span>{variant === 'admin' ? 'Government operations' : text.tagline}</span>
+            <span>Government operations</span>
           </div>
         </div>
         <nav aria-label="Primary navigation">
-          {items.map(item => (
+          {adminItems.map(item => (
             <NavLink
               className={({isActive}) => (isActive ? 'nav-link active' : 'nav-link')}
               end={'end' in item ? item.end : false}
               key={item.to}
               to={item.to}>
               <span aria-hidden="true">{item.icon}</span>
-              {nav[item.key]}
+              {text.adminNav[item.key]}
             </NavLink>
           ))}
         </nav>
@@ -62,7 +93,7 @@ export function AppLayout({variant}: {variant: 'citizen' | 'admin'}) {
             type="button">
             {text.language}
           </button>
-          <button className="text-button" onClick={() => void signOut()} type="button">
+          <button className="text-button" onClick={signOut} type="button">
             {text.signOut}
           </button>
         </div>

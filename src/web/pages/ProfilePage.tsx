@@ -1,6 +1,5 @@
 import {Link} from 'react-router-dom';
-import {getMyProfile} from '../../api/profile';
-import {updatePreferences} from '../../api/savedListings';
+import {getMyProfile, updatePreferences} from '../../api/profile';
 import {AppImages} from '../../assets/images';
 import {useLanguage} from '../../i18n';
 import {ErrorState, LoadingState, PageHeader, StatCard, formatJod} from '../ui';
@@ -15,7 +14,7 @@ export function ProfilePage() {
     try {
       await updatePreferences({language: next});
     } catch {
-      // The local preference remains useful if the API is temporarily unavailable.
+      // The local preference remains useful regardless.
     }
   }
 
@@ -26,20 +25,38 @@ export function ProfilePage() {
 
   return (
     <>
-      <PageHeader eyebrow="Citizen account" title="Profile" description="Your verified identity, preferences, and platform activity." />
+      <PageHeader eyebrow="Citizen account" title="Profile" description="Your verified identity, preferences, and activity." />
       <section className="profile-hero panel">
         <div className="profile-hero__cover" style={{backgroundImage: `url(${AppImages.backgrounds.profileHero})`}} />
         <img src={AppImages.placeholders.profileAvatar} alt="Profile" />
-        <div><span className="eyebrow">Verified Aqarya member</span><h2>{profile.user.username}</h2><p>Citizen account · ID {profile.user.id.slice(0, 8)}</p></div>
+        <div><span className="eyebrow">SANAD-verified member</span><h2>{profile.user.username}</h2><p>Citizen account · ID {profile.user.id.slice(0, 8)}</p></div>
       </section>
       <div className="stats-grid stats-grid--three">
-        <StatCard label="Total owned value" value={formatJod(profile.aggregates.totalOwnedValue)} />
-        <StatCard label="Properties" value={profile.aggregates.ownedPropertyCount} />
+        <StatCard label="Recorded value" value={formatJod(profile.aggregates.totalOwnedValue)} />
+        <StatCard label="My properties" value={profile.aggregates.ownedPropertyCount} />
         <StatCard label="Saved records" value={profile.aggregates.savedCount} />
       </div>
       <div className="two-column">
-        <section className="panel settings-list"><div className="section-heading"><div><h2>Preferences</h2></div></div><div className="setting-row"><div><strong>Interface language</strong><span>Choose English or Arabic</span></div><select onChange={event => void changeLanguage(event.target.value as 'en' | 'ar')} value={language}><option value="en">English</option><option value="ar">العربية</option></select></div><div className="setting-row"><div><strong>Notifications</strong><span>Listing and investment updates</span></div><StatusSwitch enabled={profile.preference.notificationsEnabled} /></div></section>
-        <section className="panel settings-list"><div className="section-heading"><div><h2>Quick links</h2></div></div><Link className="setting-link" to="/app/wallet"><span>eJOD wallet</span><strong>→</strong></Link><Link className="setting-link" to="/app/notifications"><span>Notifications</span><strong>→</strong></Link><Link className="setting-link" to="/app/help"><span>Help center</span><strong>→</strong></Link></section>
+        <section className="panel settings-list">
+          <div className="section-heading"><div><h2>Preferences</h2></div></div>
+          <div className="setting-row">
+            <div><strong>Interface language</strong><span>Choose English or Arabic</span></div>
+            <select onChange={event => void changeLanguage(event.target.value as 'en' | 'ar')} value={language}>
+              <option value="en">English</option>
+              <option value="ar">العربية</option>
+            </select>
+          </div>
+          <div className="setting-row">
+            <div><strong>Notifications</strong><span>Listing status and messages</span></div>
+            <StatusSwitch enabled={profile.preference.notificationsEnabled} />
+          </div>
+        </section>
+        <section className="panel settings-list">
+          <div className="section-heading"><div><h2>Quick links</h2></div></div>
+          <Link className="setting-link" to="/app/my-properties"><span>My properties</span><strong>→</strong></Link>
+          <Link className="setting-link" to="/app/notifications"><span>Notifications</span><strong>→</strong></Link>
+          <Link className="setting-link" to="/app/help"><span>Help center</span><strong>→</strong></Link>
+        </section>
       </div>
     </>
   );

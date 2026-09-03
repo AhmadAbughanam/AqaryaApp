@@ -1,8 +1,20 @@
-import {createAuthenticatedApiClient} from './client';
-import {VerificationStatus} from './properties';
-import {getSecureToken} from '../services/secureStorage';
-
-const adminApi = createAuthenticatedApiClient();
+import {
+  announcements,
+  auditEvents,
+  contentBlocks,
+  mockDelay,
+  MockError,
+  nowIso,
+  notifications,
+  properties,
+  recordAudit,
+  reports,
+  threads,
+  users,
+  type MockUser,
+  type PropertyRecord,
+} from '../mock/db';
+import type {VerificationStatus} from './properties';
 
 export type AdminActionType =
   | 'login'
@@ -12,13 +24,12 @@ export type AdminActionType =
   | 'listing_changes_requested'
   | 'listing_frozen'
   | 'anchor'
-  | 'simulate'
-  | 'opportunity_submitted'
+  | 'offer_submitted'
+  | 'lease_offer_submitted'
   | 'opportunity_approved'
   | 'opportunity_rejected'
   | 'opportunity_published'
-  | 'opportunity_unpublished'
-  | 'opportunity_simulate';
+  | 'opportunity_unpublished';
 
 export type InvestmentOpportunityStatus =
   | 'draft'
@@ -97,14 +108,11 @@ export interface AdminProperty {
 export interface AdminPropertyDetail extends AdminProperty {
   price: number;
   propertyValue: number;
-  totalShares: number;
-  availableShares: number;
   ownershipType: string;
   ownershipProofType: string;
   ownershipProofNumber: string;
   description: string;
   imageUrls: string[];
-  verificationPayload?: Record<string, unknown> | null;
   seller: {
     id: string;
     username: string;
@@ -151,7 +159,6 @@ export interface AuditLogsResponse {
 }
 
 export interface AdminAnalytics {
-  // ─ Properties ──────────────────────────────────────────────────────────────
   totalProperties: number;
   verifiedProperties: number;
   pendingVerificationProperties: number;
@@ -163,8 +170,6 @@ export interface AdminAnalytics {
   totalAnchored: number;
   lastAnchoredAt: string | null;
   totalSimulationVolume: number;
-
-  // ─ Investment pipeline ──────────────────────────────────────────────────────
   investments: {
     draft: number;
     submitted: number;
@@ -175,8 +180,6 @@ export interface AdminAnalytics {
     totalSimulations: number;
     totalSimulationVolume: number;
   };
-
-  // ─ Provider verification ────────────────────────────────────────────────────
   providers: {
     total: number;
     unverified: number;
@@ -185,8 +188,6 @@ export interface AdminAnalytics {
     rejected: number;
     suspended: number;
   };
-
-  // ─ Moderation ──────────────────────────────────────────────────────────────
   moderation: {
     reportsOpen: number;
     reportsUnderReview: number;
@@ -194,22 +195,16 @@ export interface AdminAnalytics {
     reportsDismissed: number;
     unresolvedQualityFlags: number;
   };
-
-  // ─ Support / messaging ──────────────────────────────────────────────────────
   support: {
     totalThreads: number;
     totalMessages: number;
     recentMessages: number;
   };
-
-  // ─ CMS ─────────────────────────────────────────────────────────────────────
   cms: {
     activeAnnouncements: number;
     archivedAnnouncements: number;
     activeContentBlocks: number;
   };
-
-  // ─ Platform ─────────────────────────────────────────────────────────────────
   totalCitizenUsers: number;
 }
 
@@ -232,337 +227,12 @@ export interface AdminDashboardSummary {
   }[];
 }
 
-interface Envelope<T> {
-  data?: T;
-  items?: T;
-}
-
-const unwrap = <T>(payload: T | Envelope<T>): T => {
-  if (
-    payload &&
-    typeof payload === 'object' &&
-    'data' in (payload as Envelope<T>) &&
-    (payload as Envelope<T>).data !== undefined
-  ) {
-    return (payload as Envelope<T>).data as T;
-  }
-
-  if (
-    payload &&
-    typeof payload === 'object' &&
-    'items' in (payload as Envelope<T>) &&
-    (payload as Envelope<T>).items !== undefined
-  ) {
-    return (payload as Envelope<T>).items as T;
-  }
-
-  return payload as T;
-};
-
-const isDevSessionToken = (token: string | null): boolean =>
-  Boolean(token && token.startsWith('dev-jwt-'));
-
-const devAdminProperties: AdminPropertyDetail[] = [
-  {
-    id: 'pending-001',
-    title: 'Zarqa Mixed Use Tower',
-    ownerName: 'Omar Al-Hindi',
-    location: 'Zarqa, New Downtown',
-    submissionDate: '2026-03-01T08:30:00.000Z',
-    verificationStatus: 'pending_verification',
-    propertyVerificationStatus: 'pending',
-    identityVerificationStatus: 'pending',
-    verificationRecordId: 'aqarya-vrf-dev-001',
-    blockchainHash: '0xpendinghash',
-    blockchainTransactionId: null,
-    blockchainStatus: 'pending',
-    anchoredAt: null,
-    updatedAt: '2026-03-01T08:30:00.000Z',
-    price: 3050000,
-    propertyValue: 3000000,
-    totalShares: 15000,
-    availableShares: 15000,
-    ownershipType: 'Freehold',
-    ownershipProofType: 'title_deed',
-    ownershipProofNumber: 'CI-TD-001',
-    description: 'Pending citizen listing combining office, retail, and serviced apartments.',
-    imageUrls: [],
-    verificationPayload: {
-      provider: 'mock-chain',
-      network: 'local-simnet',
-    },
-    seller: {
-      id: 'citizen',
-      username: 'citizen',
-      role: 'citizen',
-    },
-    auditEvents: [],
-  },
-];
-
-let devAuditLogs: AuditLogItem[] = [];
-
-const toAdminProperty = (property: AdminPropertyDetail): AdminProperty => ({
-  id: property.id,
-  title: property.title,
-  ownerName: property.ownerName,
-  location: property.location,
-  submissionDate: property.submissionDate,
-  verificationStatus: property.verificationStatus,
-  propertyVerificationStatus: property.propertyVerificationStatus,
-  identityVerificationStatus: property.identityVerificationStatus,
-  rejectionReason: property.rejectionReason,
-  reviewerNotes: property.reviewerNotes,
-  verificationRecordId: property.verificationRecordId,
-  blockchainHash: property.blockchainHash,
-  blockchainTransactionId: property.blockchainTransactionId,
-  blockchainStatus: property.blockchainStatus,
-  anchoredAt: property.anchoredAt,
-  updatedAt: property.updatedAt,
-});
-
-const appendDevAudit = (
-  actionType: AdminActionType,
-  propertyId: string,
-  metadata: Record<string, unknown> = {},
-): void => {
-  const item: AuditLogItem = {
-    id: `log-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
-    actorName: 'Dev Admin',
-    actorRole: 'admin',
-    actionType,
-    propertyId,
-    timestamp: new Date().toISOString(),
-    metadata,
-  };
-
-  devAuditLogs = [item, ...devAuditLogs];
-
-  const property = devAdminProperties.find(candidate => candidate.id === propertyId);
-  if (property) {
-    property.auditEvents = [item, ...property.auditEvents];
-  }
-};
-
-export const getAdminProperties = async (
-  status: VerificationStatus | 'all' = 'all',
-): Promise<AdminProperty[]> => {
-  const token = await getSecureToken();
-  if (import.meta.env.DEV && isDevSessionToken(token)) {
-    return devAdminProperties
-      .filter(property => status === 'all' || property.verificationStatus === status)
-      .map(toAdminProperty);
-  }
-
-  const response = await adminApi.get<AdminProperty[] | Envelope<AdminProperty[]>>(
-    '/admin/properties',
-    {
-      params: {status},
-    },
-  );
-  return unwrap<AdminProperty[]>(response.data);
-};
-
-export const getAdminPropertyDetails = async (
-  propertyId: string,
-): Promise<AdminPropertyDetail> => {
-  const token = await getSecureToken();
-  if (import.meta.env.DEV && isDevSessionToken(token)) {
-    const property = devAdminProperties.find(item => item.id === propertyId);
-    if (!property) {
-      throw new Error('Property not found.');
-    }
-    return property;
-  }
-
-  const response = await adminApi.get<
-    AdminPropertyDetail | Envelope<AdminPropertyDetail>
-  >(`/admin/properties/${propertyId}`);
-  return unwrap<AdminPropertyDetail>(response.data);
-};
-
-export const verifyProperty = async (propertyId: string): Promise<AdminProperty> => {
-  const token = await getSecureToken();
-  if (import.meta.env.DEV && isDevSessionToken(token)) {
-    const target = devAdminProperties.find(property => property.id === propertyId);
-    if (!target) {
-      throw new Error('Property not found.');
-    }
-
-    target.verificationStatus = 'verified';
-    target.propertyVerificationStatus = 'verified';
-    target.identityVerificationStatus = 'verified';
-    target.updatedAt = new Date().toISOString();
-    appendDevAudit('listing_verified', propertyId, {status: target.verificationStatus});
-    return toAdminProperty(target);
-  }
-
-  const response = await adminApi.post<AdminProperty | Envelope<AdminProperty>>(
-    `/admin/properties/${propertyId}/verify`,
-  );
-  return unwrap<AdminProperty>(response.data);
-};
-
-export const freezeProperty = async (propertyId: string): Promise<AdminProperty> => {
-  const token = await getSecureToken();
-  if (import.meta.env.DEV && isDevSessionToken(token)) {
-    const target = devAdminProperties.find(property => property.id === propertyId);
-    if (!target) {
-      throw new Error('Property not found.');
-    }
-
-    target.verificationStatus = 'frozen';
-    target.updatedAt = new Date().toISOString();
-    appendDevAudit('listing_frozen', propertyId, {status: target.verificationStatus});
-    return toAdminProperty(target);
-  }
-
-  const response = await adminApi.post<AdminProperty | Envelope<AdminProperty>>(
-    `/admin/properties/${propertyId}/freeze`,
-  );
-  return unwrap<AdminProperty>(response.data);
-};
-
-export const anchorProperty = async (
-  propertyId: string,
-): Promise<AnchoredPropertyResponse> => {
-  const token = await getSecureToken();
-  if (import.meta.env.DEV && isDevSessionToken(token)) {
-    const target = devAdminProperties.find(property => property.id === propertyId);
-    if (!target) {
-      throw new Error('Property not found.');
-    }
-
-    const anchoredAt = new Date().toISOString();
-    const blockchainHash = target.blockchainHash ?? `0x${Date.now().toString(16)}`;
-    const blockchainTransactionId = `0x${Math.random()
-      .toString(16)
-      .slice(2)
-      .padEnd(64, 'b')
-      .slice(0, 64)}`;
-
-    target.blockchainHash = blockchainHash;
-    target.blockchainTransactionId = blockchainTransactionId;
-    target.blockchainStatus = 'anchored';
-    target.anchoredAt = anchoredAt;
-    target.updatedAt = anchoredAt;
-
-    appendDevAudit('anchor', propertyId, {blockchainHash, blockchainTransactionId});
-
-    return {
-      property: toAdminProperty(target),
-      anchor: {
-        blockchainHash,
-        blockchainTransactionId,
-        anchoredAt,
-      },
-    };
-  }
-
-  const response = await adminApi.post<
-    AnchoredPropertyResponse | Envelope<AnchoredPropertyResponse>
-  >(`/admin/properties/${propertyId}/anchor`);
-  return unwrap<AnchoredPropertyResponse>(response.data);
-};
-
-export const getAuditLogs = async (
-  filters: AuditLogFilters = {},
-): Promise<AuditLogsResponse> => {
-  const token = await getSecureToken();
-  if (import.meta.env.DEV && isDevSessionToken(token)) {
-    const page = filters.page ?? 1;
-    const limit = filters.limit ?? 20;
-    const start = (page - 1) * limit;
-
-    return {
-      items: devAuditLogs.slice(start, start + limit),
-      page,
-      limit,
-      total: devAuditLogs.length,
-    };
-  }
-
-  const response = await adminApi.get<
-    AuditLogsResponse | Envelope<AuditLogsResponse>
-  >('/admin/audit-logs', {
-    params: {
-      page: filters.page ?? 1,
-      limit: filters.limit ?? 20,
-      actionType: filters.actionType,
-      dateFrom: filters.dateFrom,
-      dateTo: filters.dateTo,
-    },
-  });
-  return unwrap<AuditLogsResponse>(response.data);
-};
-
-export const getDashboardSummary = async (): Promise<AdminDashboardSummary> => {
-  const response = await adminApi.get<AdminDashboardSummary | Envelope<AdminDashboardSummary>>(
-    '/admin/dashboard/summary',
-  );
-  return unwrap<AdminDashboardSummary>(response.data);
-};
-
-export const getAnalytics = async (): Promise<AdminAnalytics> => {
-  const token = await getSecureToken();
-  if (import.meta.env.DEV && isDevSessionToken(token)) {
-    const verified = devAdminProperties.filter(p => p.verificationStatus === 'verified').length;
-    const pending = devAdminProperties.filter(p => p.verificationStatus === 'pending_verification').length;
-    const frozen = devAdminProperties.filter(p => p.verificationStatus === 'frozen').length;
-    const sold = devAdminProperties.filter(p => p.verificationStatus === 'sold').length;
-    const anchored = devAdminProperties.filter(p => p.blockchainStatus === 'anchored').length;
-    return {
-      totalProperties: devAdminProperties.length,
-      verifiedProperties: verified,
-      pendingVerificationProperties: pending,
-      needsChangesProperties: 0,
-      rejectedProperties: 0,
-      frozenProperties: frozen,
-      soldProperties: sold,
-      totalSimulations: 0,
-      totalAnchored: anchored,
-      lastAnchoredAt: null,
-      totalSimulationVolume: 0,
-      investments: {draft: 0, submitted: 1, underReview: 0, approved: 0, published: 0, rejected: 0, totalSimulations: 0, totalSimulationVolume: 0},
-      providers: {total: 0, unverified: 0, underReview: 0, verified: 0, rejected: 0, suspended: 0},
-      moderation: {reportsOpen: 0, reportsUnderReview: 0, reportsResolved: 0, reportsDismissed: 0, unresolvedQualityFlags: 0},
-      support: {totalThreads: 0, totalMessages: 0, recentMessages: 0},
-      cms: {activeAnnouncements: 0, archivedAnnouncements: 0, activeContentBlocks: 0},
-      totalCitizenUsers: 0,
-    };
-  }
-
-  const response = await adminApi.get<AdminAnalytics | Envelope<AdminAnalytics>>(
-    '/admin/analytics',
-  );
-  return unwrap<AdminAnalytics>(response.data);
-};
-
-export const rejectProperty = async (
-  propertyId: string,
-  reason: string,
-): Promise<AdminProperty> => {
-  const response = await adminApi.post<AdminProperty | Envelope<AdminProperty>>(
-    `/admin/properties/${propertyId}/reject`,
-    {reason},
-  );
-  return unwrap<AdminProperty>(response.data);
-};
-
-export const requestPropertyChanges = async (
-  propertyId: string,
-  notes: string,
-): Promise<AdminProperty> => {
-  const response = await adminApi.post<AdminProperty | Envelope<AdminProperty>>(
-    `/admin/properties/${propertyId}/request-changes`,
-    {notes},
-  );
-  return unwrap<AdminProperty>(response.data);
-};
-
-// ─── User / Provider Management ──────────────────────────────────────────────
-
-export type AccountType = 'individual' | 'owner' | 'agency' | 'developer' | 'partner';
+export type AccountType =
+  | 'individual'
+  | 'owner'
+  | 'agency'
+  | 'developer'
+  | 'partner';
 export type ProviderVerificationStatus =
   | 'unverified'
   | 'under_review'
@@ -626,29 +296,381 @@ export interface AdminUserDetail {
   } | null;
 }
 
+// ─── helpers ────────────────────────────────────────────────────────────────
+
+const countFor = (userId: string) => ({
+  properties: properties.filter(record => record.ownerId === userId).length,
+  simulations: 0,
+  threads: userId === 'citizen' ? threads.length : 0,
+});
+
+const toAdminProperty = (record: PropertyRecord): AdminProperty => ({
+  id: record.id,
+  title: record.title,
+  ownerName: record.ownerName,
+  location: record.location,
+  submissionDate: record.submissionDate,
+  verificationStatus: record.verificationStatus,
+  propertyVerificationStatus: record.propertyVerificationStatus,
+  identityVerificationStatus: record.identityVerificationStatus,
+  rejectionReason: record.rejectionReason,
+  reviewerNotes: record.reviewerNotes,
+  verificationRecordId: record.verificationRecordId,
+  blockchainHash: record.recordHash,
+  blockchainTransactionId: record.recordStatus === 'sealed' ? record.recordHash : null,
+  blockchainStatus: record.recordStatus === 'sealed' ? 'anchored' : 'pending',
+  anchoredAt: record.recordStatus === 'sealed' ? record.updatedAt : null,
+  updatedAt: record.updatedAt,
+});
+
+const auditItemsForProperty = (propertyId: string): AuditLogItem[] =>
+  auditEvents
+    .filter(event => event.propertyId === propertyId)
+    .map(event => ({
+      id: event.id,
+      actorId: event.actorId,
+      actorName: event.actorName,
+      actorRole: event.actorRole,
+      actionType: event.actionType as AdminActionType,
+      propertyId: event.propertyId,
+      timestamp: event.timestamp,
+      metadata: event.metadata,
+    }));
+
+const findProperty = (id: string): PropertyRecord => {
+  const record = properties.find(item => item.id === id);
+  if (!record) throw new MockError('Property not found.', 404);
+  return record;
+};
+
+// ─── property review ────────────────────────────────────────────────────────
+
+export const getAdminProperties = async (
+  status: VerificationStatus | 'all' = 'all',
+): Promise<AdminProperty[]> => {
+  await mockDelay();
+  return properties
+    .filter(record => status === 'all' || record.verificationStatus === status)
+    .map(toAdminProperty);
+};
+
+export const getAdminPropertyDetails = async (
+  propertyId: string,
+): Promise<AdminPropertyDetail> => {
+  await mockDelay();
+  const record = findProperty(propertyId);
+  const owner = users.find(user => user.id === record.ownerId);
+  return {
+    ...toAdminProperty(record),
+    price: record.price,
+    propertyValue: record.propertyValue,
+    ownershipType: record.ownershipType,
+    ownershipProofType: record.ownershipProofType,
+    ownershipProofNumber: record.ownershipProofNumber,
+    description: record.description,
+    imageUrls: record.imageUrls,
+    seller: {
+      id: record.ownerId,
+      username: owner?.username ?? record.ownerName,
+      role: owner?.role ?? 'citizen',
+    },
+    auditEvents: auditItemsForProperty(record.id),
+  };
+};
+
+export const verifyProperty = async (propertyId: string): Promise<AdminProperty> => {
+  await mockDelay();
+  const record = findProperty(propertyId);
+  record.verificationStatus = 'verified';
+  record.propertyVerificationStatus = 'verified';
+  record.identityVerificationStatus = 'verified';
+  record.recordStatus = 'sealed';
+  record.updatedAt = nowIso();
+  record.verificationTimestamp = record.updatedAt;
+  recordAudit({
+    actorId: 'admin',
+    actorName: 'Registry Reviewer',
+    actorRole: 'admin',
+    actionType: 'listing_verified',
+    propertyId,
+    metadata: {status: 'verified'},
+  });
+  return toAdminProperty(record);
+};
+
+export const freezeProperty = async (propertyId: string): Promise<AdminProperty> => {
+  await mockDelay();
+  const record = findProperty(propertyId);
+  record.verificationStatus = 'frozen';
+  record.updatedAt = nowIso();
+  recordAudit({
+    actorId: 'admin',
+    actorName: 'Registry Reviewer',
+    actorRole: 'admin',
+    actionType: 'listing_frozen',
+    propertyId,
+    metadata: {},
+  });
+  return toAdminProperty(record);
+};
+
+export const anchorProperty = async (
+  propertyId: string,
+): Promise<AnchoredPropertyResponse> => {
+  await mockDelay();
+  const record = findProperty(propertyId);
+  record.recordStatus = 'sealed';
+  record.updatedAt = nowIso();
+  recordAudit({
+    actorId: 'admin',
+    actorName: 'Registry Reviewer',
+    actorRole: 'admin',
+    actionType: 'anchor',
+    propertyId,
+    metadata: {recordHash: record.recordHash},
+  });
+  return {
+    property: toAdminProperty(record),
+    anchor: {
+      blockchainHash: record.recordHash,
+      blockchainTransactionId: record.recordHash,
+      anchoredAt: record.updatedAt,
+    },
+  };
+};
+
+export const rejectProperty = async (
+  propertyId: string,
+  reason: string,
+): Promise<AdminProperty> => {
+  await mockDelay();
+  const record = findProperty(propertyId);
+  record.verificationStatus = 'rejected';
+  record.propertyVerificationStatus = 'rejected';
+  record.rejectionReason = reason;
+  record.updatedAt = nowIso();
+  recordAudit({
+    actorId: 'admin',
+    actorName: 'Registry Reviewer',
+    actorRole: 'admin',
+    actionType: 'listing_rejected',
+    propertyId,
+    metadata: {reason},
+  });
+  return toAdminProperty(record);
+};
+
+export const requestPropertyChanges = async (
+  propertyId: string,
+  notes: string,
+): Promise<AdminProperty> => {
+  await mockDelay();
+  const record = findProperty(propertyId);
+  record.verificationStatus = 'needs_changes';
+  record.reviewerNotes = notes;
+  record.updatedAt = nowIso();
+  recordAudit({
+    actorId: 'admin',
+    actorName: 'Registry Reviewer',
+    actorRole: 'admin',
+    actionType: 'listing_changes_requested',
+    propertyId,
+    metadata: {notes},
+  });
+  return toAdminProperty(record);
+};
+
+// ─── audit + analytics ──────────────────────────────────────────────────────
+
+export const getAuditLogs = async (
+  filters: AuditLogFilters = {},
+): Promise<AuditLogsResponse> => {
+  await mockDelay();
+  const page = filters.page ?? 1;
+  const limit = filters.limit ?? 20;
+  const all: AuditLogItem[] = auditEvents.map(event => ({
+    id: event.id,
+    actorId: event.actorId,
+    actorName: event.actorName,
+    actorRole: event.actorRole,
+    actionType: event.actionType as AdminActionType,
+    propertyId: event.propertyId,
+    timestamp: event.timestamp,
+    metadata: event.metadata,
+  }));
+  const filtered = filters.actionType
+    ? all.filter(item => item.actionType === filters.actionType)
+    : all;
+  const start = (page - 1) * limit;
+  return {
+    items: filtered.slice(start, start + limit),
+    page,
+    limit,
+    total: filtered.length,
+  };
+};
+
+export const getAnalytics = async (): Promise<AdminAnalytics> => {
+  await mockDelay();
+  const byStatus = (status: VerificationStatus) =>
+    properties.filter(record => record.verificationStatus === status).length;
+  const sealed = properties.filter(record => record.recordStatus === 'sealed').length;
+  const providerList = users.filter(user => user.providerVerificationStatus);
+  const providerCount = (status: string) =>
+    providerList.filter(user => user.providerVerificationStatus === status).length;
+  const messageCount = threads.reduce((sum, thread) => sum + thread.messages.length, 0);
+  return {
+    totalProperties: properties.length,
+    verifiedProperties: byStatus('verified'),
+    pendingVerificationProperties: byStatus('pending_verification'),
+    needsChangesProperties: byStatus('needs_changes'),
+    rejectedProperties: byStatus('rejected'),
+    frozenProperties: byStatus('frozen'),
+    soldProperties: byStatus('sold'),
+    totalSimulations: 0,
+    totalAnchored: sealed,
+    lastAnchoredAt: properties.find(record => record.recordStatus === 'sealed')?.updatedAt ?? null,
+    totalSimulationVolume: 0,
+    investments: {
+      draft: 0,
+      submitted: OPPORTUNITIES.filter(o => o.status === 'submitted').length,
+      underReview: OPPORTUNITIES.filter(o => o.status === 'under_review').length,
+      approved: OPPORTUNITIES.filter(o => o.status === 'approved').length,
+      published: OPPORTUNITIES.filter(o => o.status === 'published').length,
+      rejected: OPPORTUNITIES.filter(o => o.status === 'rejected').length,
+      totalSimulations: 0,
+      totalSimulationVolume: 0,
+    },
+    providers: {
+      total: providerList.length,
+      unverified: providerCount('unverified'),
+      underReview: providerCount('under_review'),
+      verified: providerCount('verified'),
+      rejected: providerCount('rejected'),
+      suspended: providerCount('suspended'),
+    },
+    moderation: {
+      reportsOpen: reports.filter(report => report.status === 'open').length,
+      reportsUnderReview: reports.filter(report => report.status === 'under_review').length,
+      reportsResolved: reports.filter(report => report.status === 'resolved').length,
+      reportsDismissed: reports.filter(report => report.status === 'dismissed').length,
+      unresolvedQualityFlags: reports.filter(
+        report => report.reason === 'duplicate' && report.status === 'open',
+      ).length,
+    },
+    support: {
+      totalThreads: threads.length,
+      totalMessages: messageCount,
+      recentMessages: messageCount,
+    },
+    cms: {
+      activeAnnouncements: announcements.filter(item => item.status === 'active').length,
+      archivedAnnouncements: announcements.filter(item => item.status === 'archived').length,
+      activeContentBlocks: contentBlocks.filter(block => block.active).length,
+    },
+    totalCitizenUsers: users.filter(user => user.role === 'citizen').length,
+  };
+};
+
+export const getDashboardSummary = async (): Promise<AdminDashboardSummary> => {
+  await mockDelay();
+  return {
+    pendingListings: properties.filter(
+      record => record.verificationStatus === 'pending_verification',
+    ).length,
+    pendingOpportunities: OPPORTUNITIES.filter(
+      o => o.status === 'submitted' || o.status === 'under_review',
+    ).length,
+    pendingProviders: users.filter(
+      user => user.providerVerificationStatus === 'under_review',
+    ).length,
+    openThreads: threads.length,
+    totalCitizenUsers: users.filter(user => user.role === 'citizen').length,
+    openReports: reports.filter(report => report.status === 'open').length,
+    flaggedItems: reports.filter(
+      report => report.reason === 'duplicate' && report.status === 'open',
+    ).length,
+    activeAnnouncements: announcements.filter(item => item.status === 'active').length,
+    recentAuditHighlights: auditEvents.slice(0, 6).map(event => ({
+      id: event.id,
+      actionType: event.actionType,
+      actorName: event.actorName,
+      actorRole: event.actorRole,
+      timestamp: event.timestamp,
+      metadata: event.metadata,
+    })),
+  };
+};
+
+// ─── users / providers ──────────────────────────────────────────────────────
+
+const toAdminUser = (user: MockUser): AdminUser => ({
+  id: user.id,
+  username: user.username,
+  role: user.role,
+  createdAt: user.createdAt,
+  providerProfile: user.providerVerificationStatus
+    ? {
+        accountType: user.accountType,
+        providerVerificationStatus: user.providerVerificationStatus,
+        businessName: user.businessName,
+        contactPerson: user.contactPerson,
+      }
+    : null,
+  counts: countFor(user.id),
+});
+
 export const getAdminUsers = async (
   accountType?: string,
   providerStatus?: string,
 ): Promise<AdminUser[]> => {
-  const params: Record<string, string> = {};
-  if (accountType) {
-    params.accountType = accountType;
-  }
-  if (providerStatus) {
-    params.providerStatus = providerStatus;
-  }
-  const response = await adminApi.get<AdminUser[] | Envelope<AdminUser[]>>(
-    '/admin/users',
-    {params},
-  );
-  return unwrap<AdminUser[]>(response.data);
+  await mockDelay();
+  return users
+    .filter(user => !accountType || user.accountType === accountType)
+    .filter(
+      user => !providerStatus || user.providerVerificationStatus === providerStatus,
+    )
+    .map(toAdminUser);
 };
 
-export const getAdminUserDetail = async (userId: string): Promise<AdminUserDetail> => {
-  const response = await adminApi.get<AdminUserDetail | Envelope<AdminUserDetail>>(
-    `/admin/users/${userId}`,
-  );
-  return unwrap<AdminUserDetail>(response.data);
+export const getAdminUserDetail = async (
+  userId: string,
+): Promise<AdminUserDetail> => {
+  await mockDelay();
+  const user = users.find(item => item.id === userId);
+  if (!user) throw new MockError('User not found.', 404);
+  const counts = countFor(user.id);
+  return {
+    id: user.id,
+    username: user.username,
+    role: user.role,
+    createdAt: user.createdAt,
+    counts: {
+      ...counts,
+      notifications: user.id === 'citizen' ? notifications.length : 0,
+    },
+    providerProfile: user.providerVerificationStatus
+      ? {
+          accountType: user.accountType,
+          providerVerificationStatus: user.providerVerificationStatus,
+          businessName: user.businessName,
+          contactPerson: user.contactPerson,
+          phone: user.phone,
+          email: user.email,
+          registrationNumber: user.registrationNumber,
+          licenseNumber: user.licenseNumber,
+          providerType: user.accountType,
+          documentUrls: [],
+          adminNotes: user.adminNotes,
+          rejectionReason: user.rejectionReason,
+          submittedAt: user.createdAt,
+          reviewedAt: null,
+          reviewedBy: null,
+          createdAt: user.createdAt,
+          updatedAt: user.createdAt,
+        }
+      : null,
+  };
 };
 
 export const reviewProviderAccount = async (
@@ -656,31 +678,84 @@ export const reviewProviderAccount = async (
   action: ProviderReviewAction,
   notes?: string,
 ): Promise<AdminUserDetail> => {
-  const response = await adminApi.post<AdminUserDetail | Envelope<AdminUserDetail>>(
-    `/admin/users/${userId}/provider-review`,
-    {action, notes},
-  );
-  return unwrap<AdminUserDetail>(response.data);
+  await mockDelay();
+  const user = users.find(item => item.id === userId);
+  if (!user) throw new MockError('User not found.', 404);
+  if (action === 'verify') user.providerVerificationStatus = 'verified';
+  else if (action === 'reject') user.providerVerificationStatus = 'rejected';
+  else if (action === 'suspend') user.providerVerificationStatus = 'suspended';
+  else if (action === 'under_review') user.providerVerificationStatus = 'under_review';
+  if (notes !== undefined) user.adminNotes = notes;
+  return getAdminUserDetail(userId);
 };
+
+// ─── investment opportunities (governance view) ─────────────────────────────
+
+const OPPORTUNITIES: AdminInvestmentOpportunityDetail[] = [
+  {
+    id: 'opp-001',
+    title: 'Umrah District 4 — Serviced Plots Block',
+    location: 'Umrah City, District 4',
+    sponsorName: 'Umrah City Development',
+    assetClass: 'Land',
+    stage: 'Master-plan phase',
+    riskBand: 'Moderate',
+    status: 'under_review',
+    trustScore: 72,
+    trustBadge: 'verified',
+    pricePerShare: 500,
+    totalShares: 4000,
+    availableShares: 4000,
+    targetIrr: 14,
+    targetCashYield: 0,
+    targetHoldYears: 5,
+    createdAt: nowIso(),
+    updatedAt: nowIso(),
+    description:
+      'A block of serviced residential plots inside the new Umrah city grid, each tied to a single master-plan reference.',
+    imageUrls: [],
+    ownershipStructure: 'State-owned land under phased development',
+    distributionModel: 'Capital appreciation on plot resale',
+    exitModel: 'Plot-by-plot sale after registration',
+    minimumShares: 4,
+    fundingGoal: 2_000_000,
+    fundedAmount: 0,
+    appreciationRate: 12,
+    occupancyRate: 0,
+    managementFeeRate: 1,
+    reviewNotes: null,
+    rejectionReason: null,
+    publishedAt: null,
+    reviewedAt: null,
+    reviewedBy: null,
+    verificationRecordId: 'aqarya-vrf-opp-001',
+    blockchainHash: 'AQ-OPP001',
+    blockchainTxId: null,
+    blockchainStatus: 'pending',
+    anchoredAt: null,
+  },
+];
 
 export const getAdminInvestmentOpportunities = async (
   status?: InvestmentOpportunityStatus | 'all',
 ): Promise<AdminInvestmentOpportunity[]> => {
-  const response = await adminApi.get<
-    AdminInvestmentOpportunity[] | Envelope<AdminInvestmentOpportunity[]>
-  >('/admin/investment-opportunities', {
-    params: status && status !== 'all' ? {status} : undefined,
+  await mockDelay();
+  return OPPORTUNITIES.filter(
+    opportunity => !status || status === 'all' || opportunity.status === status,
+  ).map(({description, imageUrls, ...summary}) => {
+    void description;
+    void imageUrls;
+    return summary;
   });
-  return unwrap<AdminInvestmentOpportunity[]>(response.data);
 };
 
 export const getAdminInvestmentOpportunityDetails = async (
   opportunityId: string,
 ): Promise<AdminInvestmentOpportunityDetail> => {
-  const response = await adminApi.get<
-    AdminInvestmentOpportunityDetail | Envelope<AdminInvestmentOpportunityDetail>
-  >(`/admin/investment-opportunities/${opportunityId}`);
-  return unwrap<AdminInvestmentOpportunityDetail>(response.data);
+  await mockDelay();
+  const opportunity = OPPORTUNITIES.find(item => item.id === opportunityId);
+  if (!opportunity) throw new MockError('Opportunity not found.', 404);
+  return {...opportunity};
 };
 
 export const reviewInvestmentOpportunity = async (
@@ -688,8 +763,19 @@ export const reviewInvestmentOpportunity = async (
   action: InvestmentReviewAction,
   notes?: string,
 ): Promise<AdminInvestmentOpportunity> => {
-  const response = await adminApi.post<
-    AdminInvestmentOpportunity | Envelope<AdminInvestmentOpportunity>
-  >(`/admin/investment-opportunities/${opportunityId}/review`, {action, notes});
-  return unwrap<AdminInvestmentOpportunity>(response.data);
+  await mockDelay();
+  const opportunity = OPPORTUNITIES.find(item => item.id === opportunityId);
+  if (!opportunity) throw new MockError('Opportunity not found.', 404);
+  if (action === 'approve') opportunity.status = 'approved';
+  else if (action === 'reject') {
+    opportunity.status = 'rejected';
+    opportunity.rejectionReason = notes ?? null;
+  } else if (action === 'publish') opportunity.status = 'published';
+  else if (action === 'unpublish') opportunity.status = 'approved';
+  opportunity.reviewNotes = notes ?? opportunity.reviewNotes;
+  opportunity.updatedAt = nowIso();
+  const {description, imageUrls, ...summary} = opportunity;
+  void description;
+  void imageUrls;
+  return summary;
 };

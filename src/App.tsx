@@ -8,12 +8,9 @@ import {MapPage} from './web/pages/MapPage';
 import {MessagesPage} from './web/pages/MessagesPage';
 import {MyPropertiesPage} from './web/pages/MyPropertiesPage';
 import {NotificationsPage} from './web/pages/NotificationsPage';
-import {OpportunityDetailPage} from './web/pages/OpportunityDetailPage';
-import {PortfolioPage} from './web/pages/PortfolioPage';
 import {ProfilePage} from './web/pages/ProfilePage';
 import {PropertyDetailPage} from './web/pages/PropertyDetailPage';
 import {SellPropertyPage} from './web/pages/SellPropertyPage';
-import {WalletPage} from './web/pages/WalletPage';
 import {HelpPage} from './web/pages/HelpPage';
 import {
   AdminAnalyticsPage,
@@ -32,21 +29,15 @@ import {
 
 function RequireRole({role}: {role: UserRole}) {
   const auth = useAuth();
-  if (auth.isLoading) return <FullPageLoader />;
-  if (!auth.token) return <Navigate replace to="/login" />;
+  if (!auth.role) return <Navigate replace to="/login" />;
   if (auth.role !== role) return <Navigate replace to={auth.role === 'admin' ? '/admin' : '/app'} />;
   return <Outlet />;
 }
 
 function HomeRedirect() {
   const auth = useAuth();
-  if (auth.isLoading) return <FullPageLoader />;
-  if (!auth.token) return <Navigate replace to="/login" />;
+  if (!auth.role) return <Navigate replace to="/login" />;
   return <Navigate replace to={auth.role === 'admin' ? '/admin' : '/app'} />;
-}
-
-function FullPageLoader() {
-  return <div className="full-loader"><span className="brand-mark">A</span><strong>Aqarya</strong><span className="spinner" /></div>;
 }
 
 export default function App() {
@@ -59,11 +50,8 @@ export default function App() {
           <Route index element={<DiscoverPage />} />
           <Route path="map" element={<MapPage />} />
           <Route path="property/:id" element={<PropertyDetailPage />} />
-          <Route path="opportunity/:id" element={<OpportunityDetailPage />} />
           <Route path="my-properties" element={<MyPropertiesPage />} />
           <Route path="sell" element={<SellPropertyPage />} />
-          <Route path="portfolio" element={<PortfolioPage />} />
-          <Route path="wallet" element={<WalletPage />} />
           <Route path="messages" element={<MessagesPage />} />
           <Route path="messages/:threadId" element={<MessagesPage />} />
           <Route path="notifications" element={<NotificationsPage />} />

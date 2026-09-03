@@ -59,7 +59,7 @@ export function MessagesPage() {
             {threadId && !thread && !threadError ? <LoadingState label="Loading conversation…" /> : null}
             {threadError ? <ErrorState message={threadError} /> : null}
             {thread ? (
-              <><header className="conversation__header"><div><h2>{thread.subject}</h2><p>{thread.listing?.title || thread.opportunity?.title || 'Aqarya support'}</p></div><span>{thread.messages.length} messages</span></header><div className="message-stream">{thread.messages.map(message => <article className={`message message--${message.senderRole}`} key={message.id}><strong>{message.senderName}</strong><p>{message.body}</p><small>{formatDate(message.createdAt)}</small></article>)}</div><form className="message-form" onSubmit={submit}><input aria-label="Message" autoComplete="off" name="message" placeholder="Write a message…" required /><button className="button button--primary" disabled={sending} type="submit">Send</button></form></>
+              <><header className="conversation__header"><div><h2>{thread.subject}</h2><p>{thread.listing?.title || 'Aqarya support'}</p></div><span>{thread.messages.length} messages</span></header><div className="message-stream">{thread.messages.map(message => <article className={`message message--${message.senderRole}`} key={message.id}><strong>{message.senderName}</strong><p>{message.body}</p><small>{formatDate(message.createdAt)}</small></article>)}</div><form className="message-form" onSubmit={submit}><input aria-label="Message" autoComplete="off" name="message" placeholder="Write a message…" required /><button className="button button--primary" disabled={sending} type="submit">Send</button></form></>
             ) : null}
           </section>
         </div>

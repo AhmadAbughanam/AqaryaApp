@@ -2,77 +2,43 @@ import {
   createContext,
   useCallback,
   useContext,
-  useEffect,
   useMemo,
   useState,
   type ReactNode,
 } from 'react';
 import type {UserRole} from '../api/auth';
-import {
-  clearSecureToken,
-  getSecureToken,
-  setSecureToken,
-} from '../services/secureStorage';
-import {setUnauthorizedHandler} from '../api/client';
-
-const ROLE_KEY = 'aqarya.auth.role';
+import {AUTH_ROLE_KEY} from '../mock/db';
 
 export interface AuthContextValue {
-  token: string | null;
   role: UserRole | null;
   isLoading: boolean;
-  signIn: (token: string, role: UserRole, remember?: boolean) => Promise<void>;
-  signOut: () => Promise<void>;
+  signIn: (role: UserRole) => void;
+  signOut: () => void;
 }
 
 const AuthContext = createContext<AuthContextValue | null>(null);
 
-export function AuthProvider({children}: {children: ReactNode}) {
-  const [token, setToken] = useState<string | null>(null);
-  const [role, setRole] = useState<UserRole | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
+const readStoredRole = (): UserRole | null => {
+  const stored = localStorage.getItem(AUTH_ROLE_KEY);
+  return stored === 'citizen' || stored === 'admin' ? stored : null;
+};
 
-  useEffect(() => {
-    let active = true;
-    void getSecureToken().then(savedToken => {
-      if (!active) return;
-      const savedRole = localStorage.getItem(ROLE_KEY) as UserRole | null;
-      if (savedToken && (savedRole === 'citizen' || savedRole === 'admin')) {
-        setToken(savedToken);
-        setRole(savedRole);
-      }
-      setIsLoading(false);
-    });
-    return () => {
-      active = false;
-    };
+export function AuthProvider({children}: {children: ReactNode}) {
+  const [role, setRole] = useState<UserRole | null>(readStoredRole);
+
+  const signIn = useCallback((nextRole: UserRole) => {
+    localStorage.setItem(AUTH_ROLE_KEY, nextRole);
+    setRole(nextRole);
   }, []);
 
-  const signIn = useCallback(
-    async (nextToken: string, nextRole: UserRole, remember = false) => {
-      await setSecureToken(nextToken, remember);
-      localStorage.setItem(ROLE_KEY, nextRole);
-      setToken(nextToken);
-      setRole(nextRole);
-    },
-    [],
-  );
-
-  const signOut = useCallback(async () => {
-    await clearSecureToken();
-    localStorage.removeItem(ROLE_KEY);
-    setToken(null);
+  const signOut = useCallback(() => {
+    localStorage.removeItem(AUTH_ROLE_KEY);
     setRole(null);
   }, []);
 
-  useEffect(() => {
-    setUnauthorizedHandler(signOut);
-    return () => setUnauthorizedHandler(null);
-  }, [signOut]);
-
-  const value = useMemo(
-    () => ({token, role, isLoading, signIn, signOut}),
-    [token, role, isLoading, signIn, signOut],
+  const value = useMemo<AuthContextValue>(
+    () => ({role, isLoading: false, signIn, signOut}),
+    [role, signIn, signOut],
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

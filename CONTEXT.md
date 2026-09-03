@@ -1,5 +1,17 @@
 # Aqarya product context
 
-Aqarya is a trust-sensitive web platform for property services in Jordan. Citizens browse, buy, rent, invest, list property, manage wallets, and message support. Administrators verify records, review providers and investments, moderate reports, publish content, and inspect audit/analytics data.
+Aqarya is a digital trust and operations layer for property in Jordan, piloted for the new city
+of Umrah. It reorganises the journey from search to contract around one principle: **verify
+first, then publish and contract.**
 
-The backend is authoritative for identity, ownership, lifecycle state, financial calculations, wallet balances, and audit events. The interface must clearly distinguish verified facts from simulated or mock integrations. SANAD, DLS, and blockchain flows are integration-ready demonstrations unless official services are explicitly connected.
+- A listing becomes visible only after it is tied to an authoritative source and checked for
+  ownership and identity.
+- SANAD digital identity is requested at the point an action carries legal or financial weight
+  (a structured offer, a structured rental contract, submitting a listing) — not just to browse.
+- Payments run through a licensed channel. **Aqarya never holds client funds.**
+- The Department of Lands and Survey stays the legal registry. Aqarya does not adjudicate
+  disputes or replace courts; it produces an auditable trail.
+- Aqarya is **not** an ads marketplace and **not** an investment platform.
+
+This build is a demonstration: SANAD, the land registry, and payment channels are represented,
+not connected. All data is local mock data.
