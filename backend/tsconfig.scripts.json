@@ -1,0 +1,12 @@
+{
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "declaration": false,
+    "incremental": false,
+    "rootDir": ".",
+    "outDir": "./dist",
+    "sourceMap": false
+  },
+  "include": ["prisma/bootstrap-admin.ts"],
+  "exclude": ["node_modules", "dist", "test"]
+}

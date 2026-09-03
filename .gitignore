@@ -45,6 +45,9 @@ node_modules/
 npm-debug.log
 yarn-error.log
 backend/dist/
+dist/
+graphify-out/
+*.tsbuildinfo
 
 # fastlane
 #
@@ -86,6 +89,7 @@ CLAUDE.local.md
 backend/.env
 backend/.env.*
 !backend/.env.example
+!.env.vps.example
 
 # Yarn
 .yarn/*

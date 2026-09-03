@@ -1,49 +1,45 @@
-// Language context — stores the active UI language, persists across restarts.
-// Rendered at the root of the app (App.tsx) so all screens including login can use it.
-// Call setLanguage to switch; the choice is saved to AsyncStorage immediately.
-// After login, CitizenProfileScreen syncs the server preference via setLanguage.
-
-import React, {createContext, useContext, useEffect, useState} from 'react';
-import AsyncStorage from '@react-native-async-storage/async-storage';
+import {
+  createContext,
+  useContext,
+  useEffect,
+  useMemo,
+  useState,
+  type ReactNode,
+} from 'react';
 
 export type SupportedLanguage = 'en' | 'ar';
-
-export const LANGUAGE_STORAGE_KEY = '@aqarya/ui_language';
+export const LANGUAGE_STORAGE_KEY = 'aqarya.ui.language';
 
 interface LanguageContextValue {
   language: SupportedLanguage;
-  setLanguage: (lang: SupportedLanguage) => void;
+  setLanguage: (language: SupportedLanguage) => void;
 }
 
-const LanguageContext = createContext<LanguageContextValue>({
-  language: 'en',
-  setLanguage: () => undefined,
-});
+const LanguageContext = createContext<LanguageContextValue | null>(null);
 
-export const LanguageProvider = ({children}: {children: React.ReactNode}) => {
-  const [language, setLanguageState] = useState<SupportedLanguage>('en');
+export function LanguageProvider({children}: {children: ReactNode}) {
+  const [language, setLanguageState] = useState<SupportedLanguage>(() =>
+    localStorage.getItem(LANGUAGE_STORAGE_KEY) === 'ar' ? 'ar' : 'en',
+  );
 
-  // Restore saved language on mount (fast AsyncStorage read).
-  useEffect(() => {
-    AsyncStorage.getItem(LANGUAGE_STORAGE_KEY)
-      .then(saved => {
-        if (saved === 'en' || saved === 'ar') {
-          setLanguageState(saved);
-        }
-      })
-      .catch(() => {});
-  }, []);
-
-  const setLanguage = (lang: SupportedLanguage) => {
-    setLanguageState(lang);
-    void AsyncStorage.setItem(LANGUAGE_STORAGE_KEY, lang);
+  const setLanguage = (nextLanguage: SupportedLanguage) => {
+    setLanguageState(nextLanguage);
+    localStorage.setItem(LANGUAGE_STORAGE_KEY, nextLanguage);
   };
 
-  return (
-    <LanguageContext.Provider value={{language, setLanguage}}>
-      {children}
-    </LanguageContext.Provider>
-  );
-};
+  useEffect(() => {
+    document.documentElement.lang = language;
+    document.documentElement.dir = language === 'ar' ? 'rtl' : 'ltr';
+  }, [language]);
 
-export const useLanguage = () => useContext(LanguageContext);
+  const value = useMemo(() => ({language, setLanguage}), [language]);
+  return (
+    <LanguageContext.Provider value={value}>{children}</LanguageContext.Provider>
+  );
+}
+
+export function useLanguage(): LanguageContextValue {
+  const context = useContext(LanguageContext);
+  if (!context) throw new Error('useLanguage must be used inside LanguageProvider.');
+  return context;
+}

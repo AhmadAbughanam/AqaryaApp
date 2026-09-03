@@ -1,0 +1,93 @@
+import {Navigate, Outlet, Route, Routes} from 'react-router-dom';
+import type {UserRole} from './api/auth';
+import {useAuth} from './store/AuthContext';
+import {AppLayout} from './web/Layout';
+import {LoginPage} from './web/pages/LoginPage';
+import {DiscoverPage} from './web/pages/DiscoverPage';
+import {MapPage} from './web/pages/MapPage';
+import {MessagesPage} from './web/pages/MessagesPage';
+import {MyPropertiesPage} from './web/pages/MyPropertiesPage';
+import {NotificationsPage} from './web/pages/NotificationsPage';
+import {OpportunityDetailPage} from './web/pages/OpportunityDetailPage';
+import {PortfolioPage} from './web/pages/PortfolioPage';
+import {ProfilePage} from './web/pages/ProfilePage';
+import {PropertyDetailPage} from './web/pages/PropertyDetailPage';
+import {SellPropertyPage} from './web/pages/SellPropertyPage';
+import {WalletPage} from './web/pages/WalletPage';
+import {HelpPage} from './web/pages/HelpPage';
+import {
+  AdminAnalyticsPage,
+  AdminAuditPage,
+  AdminContentPage,
+  AdminDashboardPage,
+  AdminInvestmentDetailPage,
+  AdminInvestmentsPage,
+  AdminModerationDetailPage,
+  AdminModerationPage,
+  AdminPropertiesPage,
+  AdminPropertyDetailPage,
+  AdminUserDetailPage,
+  AdminUsersPage,
+} from './web/pages/AdminPages';
+
+function RequireRole({role}: {role: UserRole}) {
+  const auth = useAuth();
+  if (auth.isLoading) return <FullPageLoader />;
+  if (!auth.token) return <Navigate replace to="/login" />;
+  if (auth.role !== role) return <Navigate replace to={auth.role === 'admin' ? '/admin' : '/app'} />;
+  return <Outlet />;
+}
+
+function HomeRedirect() {
+  const auth = useAuth();
+  if (auth.isLoading) return <FullPageLoader />;
+  if (!auth.token) return <Navigate replace to="/login" />;
+  return <Navigate replace to={auth.role === 'admin' ? '/admin' : '/app'} />;
+}
+
+function FullPageLoader() {
+  return <div className="full-loader"><span className="brand-mark">A</span><strong>Aqarya</strong><span className="spinner" /></div>;
+}
+
+export default function App() {
+  return (
+    <Routes>
+      <Route path="/" element={<HomeRedirect />} />
+      <Route path="/login" element={<LoginPage />} />
+      <Route element={<RequireRole role="citizen" />}>
+        <Route path="/app" element={<AppLayout variant="citizen" />}>
+          <Route index element={<DiscoverPage />} />
+          <Route path="map" element={<MapPage />} />
+          <Route path="property/:id" element={<PropertyDetailPage />} />
+          <Route path="opportunity/:id" element={<OpportunityDetailPage />} />
+          <Route path="my-properties" element={<MyPropertiesPage />} />
+          <Route path="sell" element={<SellPropertyPage />} />
+          <Route path="portfolio" element={<PortfolioPage />} />
+          <Route path="wallet" element={<WalletPage />} />
+          <Route path="messages" element={<MessagesPage />} />
+          <Route path="messages/:threadId" element={<MessagesPage />} />
+          <Route path="notifications" element={<NotificationsPage />} />
+          <Route path="profile" element={<ProfilePage />} />
+          <Route path="help" element={<HelpPage />} />
+        </Route>
+      </Route>
+      <Route element={<RequireRole role="admin" />}>
+        <Route path="/admin" element={<AppLayout variant="admin" />}>
+          <Route index element={<AdminDashboardPage />} />
+          <Route path="properties" element={<AdminPropertiesPage />} />
+          <Route path="properties/:id" element={<AdminPropertyDetailPage />} />
+          <Route path="investments" element={<AdminInvestmentsPage />} />
+          <Route path="investments/:id" element={<AdminInvestmentDetailPage />} />
+          <Route path="users" element={<AdminUsersPage />} />
+          <Route path="users/:id" element={<AdminUserDetailPage />} />
+          <Route path="moderation" element={<AdminModerationPage />} />
+          <Route path="moderation/:id" element={<AdminModerationDetailPage />} />
+          <Route path="content" element={<AdminContentPage />} />
+          <Route path="audit" element={<AdminAuditPage />} />
+          <Route path="analytics" element={<AdminAnalyticsPage />} />
+        </Route>
+      </Route>
+      <Route path="*" element={<div className="not-found"><span>404</span><h1>Page not found</h1><a href="/">Return to Aqarya</a></div>} />
+    </Routes>
+  );
+}

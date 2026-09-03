@@ -1,1 +1,0 @@
-// Placeholder: Properties hook scaffold.

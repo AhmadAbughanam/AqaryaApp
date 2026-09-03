@@ -157,7 +157,7 @@ export interface CreateThreadParams {
 
 export const getThreads = async (): Promise<ThreadListItem[]> => {
   const token = await getSecureToken();
-  if (__DEV__ && isDevToken(token)) {
+  if (import.meta.env.DEV && isDevToken(token)) {
     return DEV_THREADS;
   }
   const response = await api.get<ThreadListItem[]>('/messages/threads');

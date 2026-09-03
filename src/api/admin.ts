@@ -262,7 +262,7 @@ const unwrap = <T>(payload: T | Envelope<T>): T => {
 const isDevSessionToken = (token: string | null): boolean =>
   Boolean(token && token.startsWith('dev-jwt-'));
 
-let devAdminProperties: AdminPropertyDetail[] = [
+const devAdminProperties: AdminPropertyDetail[] = [
   {
     id: 'pending-001',
     title: 'Zarqa Mixed Use Tower',
@@ -348,7 +348,7 @@ export const getAdminProperties = async (
   status: VerificationStatus | 'all' = 'all',
 ): Promise<AdminProperty[]> => {
   const token = await getSecureToken();
-  if (__DEV__ && isDevSessionToken(token)) {
+  if (import.meta.env.DEV && isDevSessionToken(token)) {
     return devAdminProperties
       .filter(property => status === 'all' || property.verificationStatus === status)
       .map(toAdminProperty);
@@ -367,7 +367,7 @@ export const getAdminPropertyDetails = async (
   propertyId: string,
 ): Promise<AdminPropertyDetail> => {
   const token = await getSecureToken();
-  if (__DEV__ && isDevSessionToken(token)) {
+  if (import.meta.env.DEV && isDevSessionToken(token)) {
     const property = devAdminProperties.find(item => item.id === propertyId);
     if (!property) {
       throw new Error('Property not found.');
@@ -383,7 +383,7 @@ export const getAdminPropertyDetails = async (
 
 export const verifyProperty = async (propertyId: string): Promise<AdminProperty> => {
   const token = await getSecureToken();
-  if (__DEV__ && isDevSessionToken(token)) {
+  if (import.meta.env.DEV && isDevSessionToken(token)) {
     const target = devAdminProperties.find(property => property.id === propertyId);
     if (!target) {
       throw new Error('Property not found.');
@@ -405,7 +405,7 @@ export const verifyProperty = async (propertyId: string): Promise<AdminProperty>
 
 export const freezeProperty = async (propertyId: string): Promise<AdminProperty> => {
   const token = await getSecureToken();
-  if (__DEV__ && isDevSessionToken(token)) {
+  if (import.meta.env.DEV && isDevSessionToken(token)) {
     const target = devAdminProperties.find(property => property.id === propertyId);
     if (!target) {
       throw new Error('Property not found.');
@@ -427,7 +427,7 @@ export const anchorProperty = async (
   propertyId: string,
 ): Promise<AnchoredPropertyResponse> => {
   const token = await getSecureToken();
-  if (__DEV__ && isDevSessionToken(token)) {
+  if (import.meta.env.DEV && isDevSessionToken(token)) {
     const target = devAdminProperties.find(property => property.id === propertyId);
     if (!target) {
       throw new Error('Property not found.');
@@ -469,7 +469,7 @@ export const getAuditLogs = async (
   filters: AuditLogFilters = {},
 ): Promise<AuditLogsResponse> => {
   const token = await getSecureToken();
-  if (__DEV__ && isDevSessionToken(token)) {
+  if (import.meta.env.DEV && isDevSessionToken(token)) {
     const page = filters.page ?? 1;
     const limit = filters.limit ?? 20;
     const start = (page - 1) * limit;
@@ -505,7 +505,7 @@ export const getDashboardSummary = async (): Promise<AdminDashboardSummary> => {
 
 export const getAnalytics = async (): Promise<AdminAnalytics> => {
   const token = await getSecureToken();
-  if (__DEV__ && isDevSessionToken(token)) {
+  if (import.meta.env.DEV && isDevSessionToken(token)) {
     const verified = devAdminProperties.filter(p => p.verificationStatus === 'verified').length;
     const pending = devAdminProperties.filter(p => p.verificationStatus === 'pending_verification').length;
     const frozen = devAdminProperties.filter(p => p.verificationStatus === 'frozen').length;

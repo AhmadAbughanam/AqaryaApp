@@ -94,7 +94,7 @@ export const login = async (
     }
 
     if (axiosError.code === 'ERR_NETWORK') {
-      if (__DEV__) {
+      if (import.meta.env.DEV) {
         const username = credentials.username.trim().toLowerCase();
         const matchedRole = DEV_FALLBACK_USERS[username];
 
@@ -107,7 +107,7 @@ export const login = async (
       }
 
       throw new Error(
-        `Cannot reach authentication server at ${API_BASE_URL}. Verify backend is running and reachable from emulator.`,
+        `Cannot reach the authentication server at ${API_BASE_URL}. Verify the API is running.`,
       );
     }
 

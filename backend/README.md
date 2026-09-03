@@ -1,6 +1,6 @@
 # Aqarya Backend
 
-NestJS + Prisma + PostgreSQL backend for the Aqarya mobile app.
+NestJS + Prisma + PostgreSQL API for the Aqarya web platform.
 
 ## Prerequisites
 

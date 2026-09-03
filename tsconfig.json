@@ -1,4 +1,7 @@
 {
-  "extends": "@react-native/typescript-config/tsconfig.json",
-  "exclude": ["backend", "backend/**"]
+  "files": [],
+  "references": [
+    {"path": "./tsconfig.app.json"},
+    {"path": "./tsconfig.node.json"}
+  ]
 }

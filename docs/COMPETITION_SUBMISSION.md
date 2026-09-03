@@ -10,7 +10,7 @@ Property transactions are high-value, slow, and trust-sensitive. Citizens often 
 
 ## Solution
 
-Aqarya brings property trust workflows into one mobile-first government-service concept:
+Aqarya brings property trust workflows into one responsive government-service web platform:
 
 - Citizens can browse verified buy and rent listings.
 - Citizens can list owned properties for sale through a verification pipeline.
@@ -20,7 +20,7 @@ Aqarya brings property trust workflows into one mobile-first government-service 
 
 ## Why It Is A Government Service
 
-Aqarya is not positioned as a private marketplace first. It is a digital public-service concept for property trust in Jordan. It models how government-facing property services can connect citizen identity, land-record verification, and administrative oversight into a single trusted mobile flow.
+Aqarya is not positioned as a private marketplace first. It is a digital public-service concept for property trust in Jordan. It models how government-facing property services can connect citizen identity, land-record verification, and administrative oversight into a single trusted digital flow.
 
 The current implementation uses SANAD-style and DLS-style flows to demonstrate integration readiness. It does not claim live production integration with SANAD or the Department of Lands and Survey unless those services are later connected through official APIs.
 
@@ -63,7 +63,7 @@ The highest-impact story for judging is simple: citizens should not have to gues
 
 The system is built as a full-stack app:
 
-- React Native mobile frontend.
+- React 19 responsive web frontend.
 - NestJS API backend.
 - Prisma data model and migrations.
 - PostgreSQL database.

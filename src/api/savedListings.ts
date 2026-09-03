@@ -53,7 +53,7 @@ export interface SaveStatusResponse {
 
 export const getSavedItems = async (): Promise<SavedListing[]> => {
   const token = await getSecureToken();
-  if (__DEV__ && isDevToken(token)) {
+  if (import.meta.env.DEV && isDevToken(token)) {
     const now = new Date().toISOString();
     const items: SavedListing[] = [];
     devSavedIds.forEach(id => {
@@ -76,7 +76,7 @@ export const getSavedItems = async (): Promise<SavedListing[]> => {
 
 export const saveListing = async (propertyId: string): Promise<{id: string; type: string; propertyId: string; savedAt: string}> => {
   const token = await getSecureToken();
-  if (__DEV__ && isDevToken(token)) {
+  if (import.meta.env.DEV && isDevToken(token)) {
     devSavedIds.add(propertyId);
     return {id: `saved-${propertyId}`, type: 'listing', propertyId, savedAt: new Date().toISOString()};
   }
@@ -86,7 +86,7 @@ export const saveListing = async (propertyId: string): Promise<{id: string; type
 
 export const saveOpportunity = async (opportunityId: string): Promise<{id: string; type: string; opportunityId: string; savedAt: string}> => {
   const token = await getSecureToken();
-  if (__DEV__ && isDevToken(token)) {
+  if (import.meta.env.DEV && isDevToken(token)) {
     devSavedOppIds.add(opportunityId);
     return {id: `saved-${opportunityId}`, type: 'opportunity', opportunityId, savedAt: new Date().toISOString()};
   }
@@ -96,7 +96,7 @@ export const saveOpportunity = async (opportunityId: string): Promise<{id: strin
 
 export const unsaveListing = async (propertyId: string): Promise<void> => {
   const token = await getSecureToken();
-  if (__DEV__ && isDevToken(token)) {
+  if (import.meta.env.DEV && isDevToken(token)) {
     devSavedIds.delete(propertyId);
     return;
   }
@@ -105,7 +105,7 @@ export const unsaveListing = async (propertyId: string): Promise<void> => {
 
 export const unsaveOpportunity = async (opportunityId: string): Promise<void> => {
   const token = await getSecureToken();
-  if (__DEV__ && isDevToken(token)) {
+  if (import.meta.env.DEV && isDevToken(token)) {
     devSavedOppIds.delete(opportunityId);
     return;
   }
@@ -114,7 +114,7 @@ export const unsaveOpportunity = async (opportunityId: string): Promise<void> =>
 
 export const checkListingSaved = async (propertyId: string): Promise<boolean> => {
   const token = await getSecureToken();
-  if (__DEV__ && isDevToken(token)) {
+  if (import.meta.env.DEV && isDevToken(token)) {
     return devSavedIds.has(propertyId);
   }
   const response = await api.get<SaveStatusResponse>(`/users/me/saved/listing/${propertyId}/status`);
@@ -123,7 +123,7 @@ export const checkListingSaved = async (propertyId: string): Promise<boolean> =>
 
 export const checkOpportunitySaved = async (opportunityId: string): Promise<boolean> => {
   const token = await getSecureToken();
-  if (__DEV__ && isDevToken(token)) {
+  if (import.meta.env.DEV && isDevToken(token)) {
     return devSavedOppIds.has(opportunityId);
   }
   const response = await api.get<SaveStatusResponse>(`/users/me/saved/opportunity/${opportunityId}/status`);

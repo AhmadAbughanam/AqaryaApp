@@ -353,7 +353,7 @@ export const getProperties = async (
     throw new ApiError('Authentication required. Please sign in again.', 401);
   }
 
-  if (__DEV__ && isDevSessionToken(token)) {
+  if (import.meta.env.DEV && isDevSessionToken(token)) {
     const resolvedMarketType = params.marketType ?? 'sale';
     const query = params.search?.trim().toLowerCase();
     let records = devPropertyRecords.filter(
@@ -484,7 +484,7 @@ export const getPropertyDetails = async (id: string): Promise<PropertyDetails> =
     throw new ApiError('Authentication required. Please sign in again.', 401);
   }
 
-  if (__DEV__ && isDevSessionToken(token)) {
+  if (import.meta.env.DEV && isDevSessionToken(token)) {
     const found = devPropertyRecords.find(property => property.id === id);
 
     if (!found) {
@@ -518,7 +518,7 @@ export const createSaleListing = async (
     throw new ApiError('Authentication required. Please sign in again.', 401);
   }
 
-  if (__DEV__ && isDevSessionToken(token)) {
+  if (import.meta.env.DEV && isDevSessionToken(token)) {
     const newProperty: PropertyDetails = {
       id: `prop-${Date.now()}`,
       title: payload.title,
@@ -598,7 +598,7 @@ export const buyProperty = async (id: string): Promise<PurchasePropertyResponse>
     throw new ApiError('Authentication required. Please sign in again.', 401);
   }
 
-  if (__DEV__ && isDevSessionToken(token)) {
+  if (import.meta.env.DEV && isDevSessionToken(token)) {
     const property = devPropertyRecords.find(record => record.id === id);
     if (!property || property.marketType !== 'sale') {
       throw new ApiError('This property is not available for direct purchase.', 404);

@@ -4,6 +4,7 @@ import {ExtractJwt, Strategy} from 'passport-jwt';
 import {UserRole} from '@prisma/client';
 import {AuthUser} from '../common/auth-user';
 import {LegacyRole, normalizeRole} from '../common/roles';
+import {requireEnvironment} from '../common/env';
 
 interface JwtPayload {
   sub: string;
@@ -17,7 +18,7 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
     super({
       jwtFromRequest: ExtractJwt.fromAuthHeaderAsBearerToken(),
       ignoreExpiration: false,
-      secretOrKey: process.env.JWT_SECRET ?? 'replace-with-strong-secret',
+      secretOrKey: requireEnvironment('JWT_SECRET'),
     });
   }
 
