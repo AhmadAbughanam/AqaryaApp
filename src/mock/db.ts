@@ -1,8 +1,7 @@
-// Central mock backend for the Aqarya demo build.
+// In-memory data store for the Aqarya web client.
 //
-// This project ships with no server. Every `src/api/*` module resolves against
-// the in-memory data below so the interface can be shown end to end. Mutations
-// live for the lifetime of the browser tab and reset on reload.
+// Every `src/api/*` module resolves against the data below. Mutations live for
+// the lifetime of the browser tab and reset on reload.
 
 export const MOCK_LATENCY_MS = 200;
 

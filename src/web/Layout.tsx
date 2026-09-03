@@ -30,9 +30,26 @@ export function AppLayout({variant}: {variant: 'citizen' | 'admin'}) {
       <div className="mobile-shell">
         <header className="mobile-topbar">
           <span className="mobile-wordmark">Aqarya</span>
-          <button className="text-button" onClick={signOut} type="button">
-            {copy.signOut}
-          </button>
+          <div className="mobile-topbar__actions">
+            <NavLink
+              aria-label="Notifications"
+              className={({isActive}) => (isActive ? 'icon-button is-active' : 'icon-button')}
+              to="/app/notifications">
+              <svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true">
+                <path
+                  d="M18 8a6 6 0 1 0-12 0c0 7-3 9-3 9h18s-3-2-3-9M13.7 21a2 2 0 0 1-3.4 0"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="1.7"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                />
+              </svg>
+            </NavLink>
+            <button className="text-button" onClick={signOut} type="button">
+              {copy.signOut}
+            </button>
+          </div>
         </header>
         <main className="mobile-main">
           <Outlet />

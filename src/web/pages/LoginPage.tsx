@@ -7,7 +7,6 @@ const TEXT = {
   orientation:
     'A digital trust and operations layer for property in Jordan — verify first, then publish and contract.',
   heading: 'Choose how to enter',
-  subheading: 'This is a demonstration build. No password is required.',
   sanad: 'Login with SANAD',
   sanadNote: 'Enter as a citizen using your SANAD digital identity.',
   admin: 'Admin access',
@@ -47,7 +46,6 @@ export function LoginPage() {
 
         <div className="auth-card">
           <h1>{TEXT.heading}</h1>
-          <p className="auth-card__sub">{TEXT.subheading}</p>
 
           <button
             className="auth-btn auth-btn--primary"

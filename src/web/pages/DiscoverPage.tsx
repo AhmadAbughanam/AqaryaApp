@@ -1,5 +1,4 @@
 import {useEffect, useState, type FormEvent} from 'react';
-import {Link} from 'react-router-dom';
 import {getProperties, type MarketType, type PropertyListItem} from '../../api/properties';
 import {
   EmptyState,
@@ -48,7 +47,6 @@ export function DiscoverPage() {
       <PageHeader
         eyebrow="Source-authenticated"
         title="Find a verified property"
-        action={<Link className="button button--secondary" to="/app/notifications">Alerts</Link>}
       />
 
       <div className="discover-search">

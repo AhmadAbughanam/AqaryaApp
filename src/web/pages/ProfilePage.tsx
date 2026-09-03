@@ -18,7 +18,7 @@ export function ProfilePage() {
       <section className="profile-hero panel">
         <div className="profile-hero__cover" style={{backgroundImage: `url(${AppImages.backgrounds.profileHero})`}} />
         <img src={AppImages.placeholders.profileAvatar} alt="Profile" />
-        <div><span className="eyebrow">SANAD-verified member</span><h2>{profile.user.username}</h2><p>Citizen account · ID {profile.user.id.slice(0, 8)}</p></div>
+        <div><span className="eyebrow">SANAD-verified member</span><h2>{profile.user.username}</h2><p>Citizen account</p></div>
       </section>
       <div className="stats-grid stats-grid--three">
         <StatCard label="Recorded value" value={formatJod(profile.aggregates.totalOwnedValue)} />
