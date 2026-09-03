@@ -100,4 +100,3 @@ backend/.env.*
 !.yarn/versions
 
 # Local deploy config (VPS credentials)
-scripts/deploy.env

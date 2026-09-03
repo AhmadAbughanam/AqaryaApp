@@ -1,71 +1,81 @@
 # Deploying Aqarya
 
-Aqarya is a static single-page app (no backend). Deploying = build it, copy the
-`dist/` folder to the VPS, and let Caddy serve it over HTTPS.
+Aqarya is a static single-page app — no backend, no database. It is served on the
+VPS by an `nginx:alpine` container (`aqarya-web-1`) that bind-mounts the built
+`dist/` folder. TLS + routing for `aqarya.online` is handled by the shared
+`amanah-drive-caddy-1` container, which reverse-proxies to `aqarya-web-1:80` over
+the `aqarya_internal` docker network.
 
-## One-time server setup
-
-1. **Pick a web root**, e.g. `/var/www/aqarya`, and create it:
-   ```bash
-   sudo mkdir -p /var/www/aqarya
-   sudo chown "$USER" /var/www/aqarya
-   ```
-
-2. **Point Caddy at it.** Copy the `aqarya.online` site block from [`Caddyfile`](./Caddyfile)
-   into your server's `/etc/caddy/Caddyfile`, replacing any existing
-   `reverse_proxy` block for this domain. Then:
-   ```bash
-   sudo caddy reload --config /etc/caddy/Caddyfile   # or: sudo systemctl reload caddy
-   ```
-   The `try_files {path} /index.html` line is what makes `/app`, `/admin`, and
-   `/login` survive a page refresh.
-
-3. The old Docker Compose / container setup is no longer used — nothing listens
-   on an app port anymore.
-
-## Deploying a new version
-
-### Option A — from your machine (script)
-
-```bash
-cp scripts/deploy.env.example scripts/deploy.env   # fill in USER / HOST / PATH once
-./scripts/deploy.sh
+```
+Internet ──▶ amanah-drive-caddy-1 (:443)  ──aqarya_internal──▶ aqarya-web-1 (nginx, dist/)
 ```
 
-This runs `npm ci`, `npm run build`, `rsync`s `dist/` to the VPS, and reloads
-Caddy. Needs `ssh` + `rsync` with key auth to the server. `scripts/deploy.env`
-is git-ignored.
+## Publish the latest `main`
 
-### Option B — manual
+On the VPS:
 
 ```bash
-npm ci && npm run build
-rsync -avz --delete dist/ USER@HOST:/var/www/aqarya/
-ssh USER@HOST 'sudo systemctl reload caddy'
+cd /opt/aqarya
+sh scripts/redeploy.sh
 ```
 
-### Option C — automatic on every push to `main` (GitHub Actions)
+`redeploy.sh` does: `git pull` → build `dist/` in a throwaway `node:20` container →
+reload nginx. Because `dist/` is bind-mounted into `aqarya-web-1`, the site is
+live the moment the build finishes.
 
-[`.github/workflows/deploy.yml`](./.github/workflows/deploy.yml) builds and runs
-`npm run verify` on every push. It will also deploy to the VPS **once you enable
-it**:
-
-1. Create an SSH keypair used only for deploys; add the **public** key to
-   `~/.ssh/authorized_keys` on the VPS.
-2. In the GitHub repo → Settings → Secrets and variables → Actions, add:
-   - Secret `DEPLOY_SSH_KEY` — the **private** key
-   - Secret `DEPLOY_USER`, `DEPLOY_HOST`, `DEPLOY_PATH` (e.g. `/var/www/aqarya`)
-   - Secret `DEPLOY_PORT` — optional, defaults to `22`
-   - **Variable** `DEPLOY_ENABLED` = `true`
-3. If Caddy reload needs sudo, give the deploy user a passwordless sudoers entry
-   for `systemctl reload caddy`.
-
-Until `DEPLOY_ENABLED` is set, the workflow only builds and verifies — it never
-touches the server.
-
-## Verify after deploy
+## One-time container setup (already done, for reference)
 
 ```bash
-curl -I https://aqarya.online            # 200, text/html
-curl -I https://aqarya.online/app        # 200 (SPA fallback), not 404
+cat > /opt/aqarya/nginx-spa.conf <<'EOF'
+server {
+  listen 80;
+  server_name _;
+  root /usr/share/nginx/html;
+  index index.html;
+  location /assets/ { expires 1y; add_header Cache-Control "public, immutable"; }
+  location / { try_files $uri /index.html; }
+}
+EOF
+
+docker run --rm -v /opt/aqarya:/app -w /app node:20-alpine sh -c "npm ci && npm run build"
+
+docker run -d --name aqarya-web-1 --restart unless-stopped \
+  -p 127.0.0.1:8081:80 \
+  -v /opt/aqarya/dist:/usr/share/nginx/html:ro \
+  -v /opt/aqarya/nginx-spa.conf:/etc/nginx/conf.d/default.conf:ro \
+  nginx:alpine
+
+docker network connect aqarya_internal aqarya-web-1
+docker restart amanah-drive-caddy-1
+```
+
+The Caddyfile block (in the amanah-drive stack, not this repo) is:
+
+```caddy
+aqarya.online, www.aqarya.online {
+    reverse_proxy aqarya-web-1:80
+}
+```
+
+## Make `git push` deploy automatically (optional)
+
+[`.github/workflows/deploy.yml`](./.github/workflows/deploy.yml) runs
+`npm run verify` on every push. It will also SSH into the VPS and run
+`scripts/redeploy.sh` once you enable it:
+
+1. Create an SSH keypair for deploys; add the **public** key to
+   `~/.ssh/authorized_keys` on the VPS (root, or a user that can run docker).
+2. Repo → Settings → Secrets and variables → Actions:
+   - Secrets: `DEPLOY_SSH_KEY` (private key), `DEPLOY_USER` (e.g. `root`),
+     `DEPLOY_HOST` (e.g. `srv1931482` or its IP), `DEPLOY_PORT` (optional, `22`)
+   - Variable: `DEPLOY_ENABLED` = `true`
+
+Until `DEPLOY_ENABLED` is `true`, pushes only build and verify — nothing touches
+the server.
+
+## Verify
+
+```bash
+curl -sI https://aqarya.online     | head -1   # HTTP/2 200
+curl -sI https://aqarya.online/app | head -1   # HTTP/2 200 (SPA fallback)
 ```
