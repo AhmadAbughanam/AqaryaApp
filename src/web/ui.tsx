@@ -1,5 +1,4 @@
 import type {ReactNode} from 'react';
-import {Link} from 'react-router-dom';
 import type {PropertyListItem} from '../api/properties';
 import {AppImages} from '../assets/images';
 
@@ -26,6 +25,58 @@ export const propertyImage = (property: Pick<PropertyListItem, 'marketType' | 'i
   (property.marketType === 'rent'
     ? AppImages.property.rent.fullWidth
     : AppImages.property.sale.fullWidth);
+
+// Simple centred line glyphs on a 56×42 field, ground line at y≈34.
+const COVER_GLYPHS: Record<'house' | 'apartment' | 'commercial' | 'land', string> = {
+  house: 'M10 34h36M15 34V19l13-10 13 10v15M24 34v-9h8v9',
+  apartment: 'M9 35h38M15 35V10h12v25M27 35V17h14v18M19 15h4M19 21h4M19 27h4M32 22h4M32 28h4',
+  commercial: 'M9 35h38M13 35V13h30v22M20 13V8h16v5M20 20h6M30 20h6M20 27h6M30 27h6',
+  land: 'M6 34h44M9 29c6-7 12-10 19-10s13 3 19 10M16 23c3-4 8-6 12-6s9 2 12 6M23 17c2-2 4-3 5-3s3 1 5 3',
+};
+
+const glyphFor = (type: string): string => {
+  const t = type.toLowerCase();
+  if (t.includes('villa') || t.includes('house')) return COVER_GLYPHS.house;
+  if (t.includes('land') || t.includes('plot')) return COVER_GLYPHS.land;
+  if (t.includes('commerc') || t.includes('office') || t.includes('retail')) return COVER_GLYPHS.commercial;
+  return COVER_GLYPHS.apartment;
+};
+
+/** Deterministic, on-brand cover for a listing that has no photo. */
+export function PropertyCover({
+  property,
+}: {
+  property: Pick<PropertyListItem, 'id' | 'marketType' | 'propertyType' | 'imageUrls'>;
+}) {
+  const src = property.imageUrls?.[0];
+  if (src) return <img alt="" className="prop-cover" loading="lazy" src={src} />;
+
+  let hash = 0;
+  for (let i = 0; i < property.id.length; i += 1) {
+    hash = (hash * 31 + property.id.charCodeAt(i)) >>> 0;
+  }
+  const hue = 24 + (hash % 40);
+
+  return (
+    <div
+      className="prop-cover prop-cover--gen"
+      style={{
+        background: `linear-gradient(150deg, hsl(${hue} 24% 83%), hsl(${hue + 22} 22% 71%))`,
+      }}>
+      <svg viewBox="0 0 56 42" aria-hidden="true">
+        <path
+          d={glyphFor(property.propertyType || 'apartment')}
+          fill="none"
+          stroke={`hsl(${hue + 8} 32% 36%)`}
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          strokeWidth="2.1"
+          opacity="0.8"
+        />
+      </svg>
+    </div>
+  );
+}
 
 export function PageHeader({
   eyebrow,
@@ -110,39 +161,3 @@ export function StatCard({label, value, hint}: {label: string; value: ReactNode;
   );
 }
 
-export function PropertyCard({property}: {property: PropertyListItem}) {
-  return (
-    <article className="property-card">
-      <Link className="property-card__image" to={`/app/property/${property.id}`}>
-        <img src={propertyImage(property)} alt="" loading="lazy" />
-        <StatusBadge status={property.verificationStatus} />
-      </Link>
-      <div className="property-card__content">
-        <div className="property-card__meta">
-          <span>{property.propertyType || property.marketType}</span>
-          {property.areaSqm ? <span>{property.areaSqm} m²</span> : null}
-        </div>
-        <Link to={`/app/property/${property.id}`}>
-          <h3>{property.title}</h3>
-        </Link>
-        <p>⌖ {property.location}</p>
-        <div className="property-card__footer">
-          <strong>
-            {formatJod(property.price)}
-            {property.marketType === 'rent' ? <small>/month</small> : null}
-          </strong>
-          <span>{property.bedrooms ? `${property.bedrooms} beds` : 'Verified record'}</span>
-        </div>
-      </div>
-    </article>
-  );
-}
-
-export function ProgressBar({value}: {value: number}) {
-  const width = Math.max(0, Math.min(100, value));
-  return (
-    <div className="progress" aria-label={`${Math.round(width)}% funded`}>
-      <span style={{width: `${width}%`}} />
-    </div>
-  );
-}

@@ -317,6 +317,80 @@ export const properties: PropertyRecord[] = [
   },
 ];
 
+function seedProperty(p: {
+  id: string;
+  title: string;
+  city: string;
+  area: string;
+  type: string;
+  market: MarketType;
+  price: number;
+  sqm: number;
+  beds?: number;
+  baths?: number;
+  lat: number;
+  lng: number;
+  amenities?: string[];
+  days: number;
+  owner: string;
+}): PropertyRecord {
+  const ts = daysAgo(p.days);
+  return {
+    id: p.id,
+    title: p.title,
+    location: `${p.city}, ${p.area}`,
+    city: p.city,
+    propertyType: p.type,
+    bedrooms: p.beds ?? null,
+    bathrooms: p.baths ?? null,
+    areaSqm: p.sqm,
+    amenities: p.amenities ?? [],
+    latitude: p.lat,
+    longitude: p.lng,
+    ownerId: `owner-${p.id}`,
+    ownerName: p.owner,
+    description:
+      p.market === 'rent'
+        ? `${p.title} — offered for rent through a structured digital lease, checked for ownership and identity.`
+        : `${p.title} — offered for direct sale with a source-authenticated record and a single registry reference.`,
+    price: p.price,
+    propertyValue: p.market === 'rent' ? p.price * 260 : Math.round(p.price * 0.97),
+    marketType: p.market,
+    verificationStatus: 'verified',
+    verificationTimestamp: ts,
+    ownershipType: 'Freehold',
+    ownershipProofType: p.type === 'Land' ? 'master_plan_reference' : 'title_deed',
+    ownershipProofNumber: `TD-2026-${p.id.replace(/\D/g, '') || '0000'}`,
+    propertyVerificationStatus: 'verified',
+    identityVerificationStatus: 'verified',
+    rejectionReason: null,
+    reviewerNotes: null,
+    recordHash: `AQ-${p.id.toUpperCase().replace(/[^A-Z0-9]/g, '')}`,
+    recordStatus: 'sealed',
+    verificationRecordId: `aqarya-vrf-${p.id}`,
+    submissionDate: daysAgo(p.days + 12),
+    createdAt: ts,
+    updatedAt: ts,
+    imageUrls: [],
+  };
+}
+
+properties.push(
+  seedProperty({id: 'prop-011', title: 'Sweifieh Bright Two-Bedroom', city: 'Amman', area: 'Sweifieh', type: 'Apartment', market: 'sale', price: 92000, sqm: 118, beds: 2, baths: 2, lat: 31.949, lng: 35.868, amenities: ['Elevator', 'Parking'], days: 4, owner: 'Dana Odeh'}),
+  seedProperty({id: 'prop-012', title: 'Dabouq Hillside Villa', city: 'Amman', area: 'Dabouq', type: 'Villa', market: 'sale', price: 720000, sqm: 460, beds: 6, baths: 5, lat: 31.998, lng: 35.79, amenities: ['Swimming pool', 'Garden', 'Garage', 'Staff room'], days: 9, owner: 'Faris Tabbaa'}),
+  seedProperty({id: 'prop-013', title: 'Umrah District 2 Townhouse', city: 'Umrah', area: 'District 2', type: 'Villa', market: 'sale', price: 138000, sqm: 210, beds: 3, baths: 3, lat: 32.052, lng: 36.19, amenities: ['Master-plan reference', 'Garden'], days: 2, owner: 'Umrah City Development'}),
+  seedProperty({id: 'prop-014', title: 'Umrah Grid Commercial Plot', city: 'Umrah', area: 'District 5', type: 'Land', market: 'sale', price: 210000, sqm: 900, lat: 32.06, lng: 36.205, amenities: ['Registered plot', 'Corner frontage'], days: 15, owner: 'Umrah City Development'}),
+  seedProperty({id: 'prop-015', title: 'Irbid University District Flat', city: 'Irbid', area: 'University Street', type: 'Apartment', market: 'sale', price: 74000, sqm: 135, beds: 3, baths: 2, lat: 32.552, lng: 35.85, amenities: ['Parking'], days: 21, owner: 'Lina Shboul'}),
+  seedProperty({id: 'prop-016', title: 'Aqaba Sea-View Apartment', city: 'Aqaba', area: 'South Beach', type: 'Apartment', market: 'sale', price: 165000, sqm: 140, beds: 2, baths: 2, lat: 29.51, lng: 34.99, amenities: ['Sea view', 'Shared pool', 'Security'], days: 6, owner: 'Marwan Qadi'}),
+  seedProperty({id: 'prop-017', title: 'Zarqa Starter Apartment', city: 'Zarqa', area: 'Al-Zawahra', type: 'Apartment', market: 'sale', price: 58000, sqm: 110, beds: 2, baths: 1, lat: 32.072, lng: 36.088, amenities: ['Parking'], days: 30, owner: 'Huda Btoush'}),
+  seedProperty({id: 'prop-018', title: 'Jubeiha Compact Studio', city: 'Amman', area: 'Al-Jubeiha', type: 'Apartment', market: 'sale', price: 44000, sqm: 62, beds: 1, baths: 1, lat: 32.02, lng: 35.87, amenities: ['Furnished'], days: 12, owner: 'Yousef Amr'}),
+  seedProperty({id: 'prop-021', title: 'Abdali Serviced One-Bedroom', city: 'Amman', area: 'Al-Abdali', type: 'Apartment', market: 'rent', price: 520, sqm: 78, beds: 1, baths: 1, lat: 31.964, lng: 35.909, amenities: ['Furnished', 'Gym', 'Concierge'], days: 3, owner: 'Boulevard Residences'}),
+  seedProperty({id: 'prop-022', title: 'Khalda Villa Floor', city: 'Amman', area: 'Khalda', type: 'Villa', market: 'rent', price: 1100, sqm: 280, beds: 4, baths: 3, lat: 31.99, lng: 35.83, amenities: ['Private entrance', 'Garden', 'Garage'], days: 8, owner: 'Nada Kilani'}),
+  seedProperty({id: 'prop-023', title: 'Umrah District 4 Two-Bedroom', city: 'Umrah', area: 'District 4', type: 'Apartment', market: 'rent', price: 430, sqm: 105, beds: 2, baths: 2, lat: 32.05, lng: 36.2, amenities: ['New build', 'Parking'], days: 5, owner: 'Umrah City Development'}),
+  seedProperty({id: 'prop-024', title: 'Irbid Student Studio', city: 'Irbid', area: 'Yarmouk', type: 'Apartment', market: 'rent', price: 190, sqm: 40, beds: 1, baths: 1, lat: 32.535, lng: 35.86, amenities: ['Furnished'], days: 18, owner: 'Sami Zoubi'}),
+  seedProperty({id: 'prop-025', title: 'Shmeisani Office Suite', city: 'Amman', area: 'Shmeisani', type: 'Commercial', market: 'rent', price: 900, sqm: 160, lat: 31.968, lng: 35.9, amenities: ['Fitted', 'Parking', 'Reception'], days: 11, owner: 'Capital Offices'}),
+);
+
 // ─── Audit trail ────────────────────────────────────────────────────────────
 
 export interface AuditEvent {

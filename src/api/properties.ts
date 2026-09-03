@@ -93,6 +93,7 @@ export interface GetPropertiesParams {
   maxPrice?: number;
   bedrooms?: number;
   verifiedOnly?: boolean;
+  sort?: 'newest' | 'price_asc' | 'price_desc';
 }
 
 export interface PropertiesPage {
@@ -187,6 +188,13 @@ export const getProperties = async (
   if (params.verifiedOnly) {
     records = records.filter(record => record.verificationStatus === 'verified');
   }
+
+  const sort = params.sort ?? 'newest';
+  records = [...records].sort((a, b) => {
+    if (sort === 'price_asc') return a.price - b.price;
+    if (sort === 'price_desc') return b.price - a.price;
+    return b.createdAt.localeCompare(a.createdAt);
+  });
 
   const start = (page - 1) * limit;
   const pageItems = records.slice(start, start + limit).map(toListItem);
