@@ -480,3 +480,25 @@ td small { color: var(--muted); display: block; margin-top: 4px; }
 .map-canvas__wash { background: linear-gradient(30deg, rgba(20,20,20,.82), rgba(20,20,20,.03)); }
 .chip-list span { background: var(--sage-pale); color: #333; }
 .message--citizen { background: var(--ink); }
+
+/* ---- Map page (self-contained SVG, no tiles) ---- */
+.map-layout { display: block; }
+.geo-map { background: var(--paper); border: 1px solid var(--line); border-radius: 16px; overflow: hidden; padding: 10px; }
+.geo-map svg { display: block; height: auto; width: 100%; }
+.geo-pin { cursor: pointer; }
+.geo-pin circle { transition: r .12s ease; }
+.geo-pin:focus-visible circle { stroke: var(--gold); stroke-width: 3; }
+.geo-map__legend { align-items: center; color: var(--muted); display: flex; font-size: 11px; gap: 14px; padding: 8px 6px 4px; }
+.geo-map__legend i { border-radius: 50%; display: inline-block; height: 9px; margin-inline-end: 5px; vertical-align: middle; width: 9px; }
+.geo-map__legend strong { color: var(--ink); margin-inline-start: auto; }
+.geo-map__active { align-items: center; background: var(--paper); border: 1px solid var(--ink); border-radius: 13px; color: inherit; display: flex; gap: 16px; justify-content: space-between; margin-top: 12px; padding: 14px 16px; }
+.geo-map__active h3 { font-size: 14px; margin: 6px 0 3px; }
+.geo-map__active p { color: var(--muted); font-size: 11px; margin: 0; }
+.geo-map__active > strong { font-size: 14px; white-space: nowrap; }
+.map-list { border: 1px solid var(--line); border-radius: 14px; margin-top: 14px; max-height: none; overflow: hidden; }
+.map-result { align-items: center; background: var(--paper); border: 0; border-top: 1px solid #ebe9e3; color: inherit; cursor: pointer; display: flex; font: inherit; gap: 16px; justify-content: space-between; padding: 14px 16px; text-align: start; width: 100%; }
+.map-result:first-child { border-top: 0; }
+.map-result:hover, .map-result.is-active { background: #f2f0ea; }
+.map-result h3 { font-size: 13px; margin: 7px 0 3px; }
+.map-result p { color: var(--muted); font-size: 10px; margin: 0; }
+.map-result > strong { font-size: 12px; white-space: nowrap; }
