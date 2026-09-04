@@ -347,15 +347,31 @@ tbody tr:hover { background: var(--paper-2); }
    ============================================================ */
 .mobile-shell { background: var(--canvas); box-shadow: 0 0 80px rgba(25,21,18,.09); margin-inline: auto; max-width: 430px; min-height: 100vh; position: relative; }
 .mobile-topbar {
-  align-items: center; background: rgba(236,233,225,.86); backdrop-filter: saturate(1.4) blur(10px);
-  border-bottom: 1px solid var(--line); display: flex; justify-content: space-between;
-  padding: 13px 18px; position: sticky; top: 0; z-index: 10;
+  align-items: center; background: rgba(252,251,247,.88); backdrop-filter: saturate(1.25) blur(14px);
+  border-bottom: 1px solid rgba(210,204,188,.72); display: flex; justify-content: space-between;
+  min-height: 48px; padding: 6px 10px 6px 14px; position: sticky; top: 0; z-index: 10;
 }
-.mobile-wordmark { font-family: 'Manrope', sans-serif; font-size: 18px; font-weight: 800; letter-spacing: -.03em; }
-.mobile-topbar__actions { align-items: center; display: flex; gap: 2px; }
-.icon-button { align-items: center; border-radius: 10px; color: var(--ink-50); display: inline-flex; height: 36px; justify-content: center; transition: background .14s, color .14s; width: 36px; }
-.icon-button:hover { background: rgba(25,21,18,.06); color: var(--ink); }
-.icon-button.is-active { color: var(--ink); }
+.mobile-brand-link { align-items: center; border-radius: 9px; display: inline-flex; gap: 8px; min-width: 0; }
+.mobile-brand-mark {
+  align-items: center; background: var(--pine); border-radius: 7px; box-shadow: inset 0 0 0 1px rgba(255,255,255,.14);
+  color: var(--paper); display: inline-flex; flex: 0 0 auto; font-family: 'Manrope', sans-serif; font-size: 11px;
+  font-weight: 800; height: 24px; justify-content: center; letter-spacing: -.05em; width: 24px;
+}
+.mobile-wordmark { font-family: 'Manrope', sans-serif; font-size: 15px; font-weight: 800; letter-spacing: -.035em; }
+.mobile-topbar__actions {
+  align-items: center; background: rgba(236,233,225,.72); border: 1px solid rgba(210,204,188,.78);
+  border-radius: 12px; display: flex; gap: 1px; padding: 2px;
+}
+.icon-button {
+  align-items: center; background: transparent; border: 0; border-radius: 9px; color: var(--ink-50); cursor: pointer;
+  display: inline-flex; flex: 0 0 auto; height: 30px; justify-content: center; padding: 0;
+  transition: background .14s, color .14s, box-shadow .14s, transform .14s; width: 30px;
+}
+.icon-button:hover { background: var(--paper); box-shadow: var(--sh-1); color: var(--ink); }
+.icon-button:active { transform: scale(.94); }
+.icon-button.is-active { background: var(--pine-pale); box-shadow: inset 0 0 0 1px rgba(47,90,78,.1); color: var(--pine-dk); }
+.icon-button--signout { color: var(--ink-30); }
+.icon-button--signout:hover { background: var(--danger-pale); color: var(--danger); }
 .mobile-main { padding: 20px 18px 92px; }
 .mobile-main > * { max-width: none; }
 .mobile-tabbar {

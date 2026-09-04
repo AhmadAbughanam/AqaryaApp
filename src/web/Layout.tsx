@@ -29,11 +29,15 @@ export function AppLayout({variant}: {variant: 'citizen' | 'admin'}) {
     return (
       <div className="mobile-shell">
         <header className="mobile-topbar">
-          <span className="mobile-wordmark">Aqarya</span>
-          <div className="mobile-topbar__actions">
+          <NavLink aria-label="Aqarya home" className="mobile-brand-link" end to="/app">
+            <span aria-hidden="true" className="mobile-brand-mark">A</span>
+            <span className="mobile-wordmark">Aqarya</span>
+          </NavLink>
+          <nav aria-label="Account actions" className="mobile-topbar__actions">
             <NavLink
               aria-label="Notifications"
               className={({isActive}) => (isActive ? 'icon-button is-active' : 'icon-button')}
+              title="Notifications"
               to="/app/notifications">
               <svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true">
                 <path
@@ -46,10 +50,24 @@ export function AppLayout({variant}: {variant: 'citizen' | 'admin'}) {
                 />
               </svg>
             </NavLink>
-            <button className="text-button" onClick={signOut} type="button">
-              {copy.signOut}
+            <button
+              aria-label={copy.signOut}
+              className="icon-button icon-button--signout"
+              onClick={signOut}
+              title={copy.signOut}
+              type="button">
+              <svg viewBox="0 0 24 24" width="19" height="19" aria-hidden="true">
+                <path
+                  d="M10 5H6.8A1.8 1.8 0 0 0 5 6.8v10.4A1.8 1.8 0 0 0 6.8 19H10m4-3 4-4-4-4m4 4H9"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="1.7"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                />
+              </svg>
             </button>
-          </div>
+          </nav>
         </header>
         <main className="mobile-main">
           <Outlet />
