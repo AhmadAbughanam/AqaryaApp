@@ -1,14 +1,14 @@
-import {NavLink, Outlet} from 'react-router-dom';
+import {NavLink, Outlet, useLocation} from 'react-router-dom';
 import {AppImages} from '../assets/images';
 import {useAuth} from '../store/AuthContext';
 import {copy} from './copy';
 
 const citizenItems = [
-  {to: '/app', key: 'home', icon: '⌂', end: true},
-  {to: '/app/map', key: 'map', icon: '⌖'},
-  {to: '/app/my-properties', key: 'properties', icon: '▦'},
-  {to: '/app/messages', key: 'messages', icon: '◌'},
-  {to: '/app/profile', key: 'profile', icon: '◎'},
+  {to: '/app', key: 'home', icon: 'home', end: true},
+  {to: '/app/map', key: 'map', icon: 'map'},
+  {to: '/app/my-properties', key: 'properties', icon: 'properties'},
+  {to: '/app/messages', key: 'messages', icon: 'messages'},
+  {to: '/app/profile', key: 'profile', icon: 'profile'},
 ] as const;
 
 const adminItems = [
@@ -22,13 +22,34 @@ const adminItems = [
   {to: '/admin/analytics', key: 'analytics', icon: '↗'},
 ] as const;
 
+function CitizenIcon({name}: {name: (typeof citizenItems)[number]['icon']}) {
+  const line = {
+    fill: 'none',
+    stroke: 'currentColor',
+    strokeLinecap: 'round' as const,
+    strokeLinejoin: 'round' as const,
+    strokeWidth: 1.7,
+  };
+  return (
+    <svg aria-hidden="true" viewBox="0 0 24 24">
+      {name === 'home' ? <><path {...line} d="m3 11 9-7 9 7" /><path {...line} d="M5.5 9.5V20h13V9.5M9.5 20v-6h5v6" /></> : null}
+      {name === 'map' ? <><path {...line} d="m3 6 5-2 8 3 5-2v13l-5 2-8-3-5 2V6Z" /><path {...line} d="M8 4v13M16 7v13" /><circle cx="12" cy="11" fill="currentColor" r="1.6" /></> : null}
+      {name === 'properties' ? <><rect {...line} x="3.5" y="3.5" width="7" height="7" rx="1" /><rect {...line} x="13.5" y="3.5" width="7" height="7" rx="1" /><rect {...line} x="3.5" y="13.5" width="7" height="7" rx="1" /><rect {...line} x="13.5" y="13.5" width="7" height="7" rx="1" /></> : null}
+      {name === 'messages' ? <path {...line} d="M20 15.5a3 3 0 0 1-3 3H9l-5 2v-14a3 3 0 0 1 3-3h10a3 3 0 0 1 3 3v9Z" /> : null}
+      {name === 'profile' ? <><circle {...line} cx="12" cy="8" r="3.5" /><path {...line} d="M5 20c.5-4 2.8-6 7-6s6.5 2 7 6" /></> : null}
+    </svg>
+  );
+}
+
 export function AppLayout({variant}: {variant: 'citizen' | 'admin'}) {
   const {signOut} = useAuth();
+  const location = useLocation();
 
   if (variant === 'citizen') {
+    const mapIsImmersive = location.pathname === '/app/map';
     return (
-      <div className="mobile-shell">
-        <header className="mobile-topbar">
+      <div className={mapIsImmersive ? 'mobile-shell mobile-shell--map' : 'mobile-shell'}>
+        {!mapIsImmersive ? <header className="mobile-topbar">
           <NavLink aria-label="Aqarya home" className="mobile-brand-link" end to="/app">
             <span aria-hidden="true" className="mobile-brand-mark">A</span>
             <span className="mobile-wordmark">Aqarya</span>
@@ -68,7 +89,7 @@ export function AppLayout({variant}: {variant: 'citizen' | 'admin'}) {
               </svg>
             </button>
           </nav>
-        </header>
+        </header> : null}
         <main className="mobile-main">
           <Outlet />
         </main>
@@ -79,7 +100,7 @@ export function AppLayout({variant}: {variant: 'citizen' | 'admin'}) {
               end={'end' in item ? item.end : false}
               key={item.to}
               to={item.to}>
-              <span aria-hidden="true">{item.icon}</span>
+              <span><CitizenIcon name={item.icon} /></span>
               {copy.citizenNav[item.key]}
             </NavLink>
           ))}

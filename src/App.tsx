@@ -1,3 +1,4 @@
+import {lazy, Suspense} from 'react';
 import {Navigate, Outlet, Route, Routes} from 'react-router-dom';
 import type {UserRole} from './api/auth';
 import {useAuth} from './store/AuthContext';
@@ -5,7 +6,6 @@ import {AppLayout} from './web/Layout';
 import {LandingPage} from './web/pages/LandingPage';
 import {LoginPage} from './web/pages/LoginPage';
 import {DiscoverPage} from './web/pages/DiscoverPage';
-import {MapPage} from './web/pages/MapPage';
 import {MessagesPage} from './web/pages/MessagesPage';
 import {MyPropertiesPage} from './web/pages/MyPropertiesPage';
 import {NotificationsPage} from './web/pages/NotificationsPage';
@@ -28,6 +28,10 @@ import {
   AdminUsersPage,
 } from './web/pages/AdminPages';
 
+const MapPage = lazy(() =>
+  import('./web/pages/MapPage').then(module => ({default: module.MapPage})),
+);
+
 function RequireRole({role}: {role: UserRole}) {
   const auth = useAuth();
   if (!auth.role) return <Navigate replace to="/login" />;
@@ -43,7 +47,14 @@ export default function App() {
       <Route element={<RequireRole role="citizen" />}>
         <Route path="/app" element={<AppLayout variant="citizen" />}>
           <Route index element={<DiscoverPage />} />
-          <Route path="map" element={<MapPage />} />
+          <Route
+            path="map"
+            element={
+              <Suspense fallback={<div aria-label="Loading map" className="map-route-loading"><span /></div>}>
+                <MapPage />
+              </Suspense>
+            }
+          />
           <Route path="property/:id" element={<PropertyDetailPage />} />
           <Route path="my-properties" element={<MyPropertiesPage />} />
           <Route path="sell" element={<SellPropertyPage />} />
