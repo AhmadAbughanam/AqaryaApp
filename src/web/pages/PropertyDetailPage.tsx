@@ -1,46 +1,33 @@
 import {useState} from 'react';
 import {Link, useParams} from 'react-router-dom';
-import {getPropertyDetails, submitStructuredOffer} from '../../api/properties';
+import {getPropertyDetails} from '../../api/properties';
 import {reportListing} from '../../api/moderation';
-import {
-  ErrorState,
-  LoadingState,
-  PageHeader,
-  StatusBadge,
-  formatDate,
-  formatJod,
-  propertyImage,
-} from '../ui';
+import {TransactionIcon} from '../TransactionIcon';
+import {ErrorState, LoadingState, formatDate, formatJod, propertyImage} from '../ui';
 import {useAsyncData} from '../useAsyncData';
+
+const auditLabel = (action: string) => {
+  const labels: Record<string, string> = {
+    listing_submitted: 'Listing submitted for review',
+    listing_verified: 'Listing verified for publication',
+    listing_changes_requested: 'Listing changes requested',
+    listing_rejected: 'Listing review completed',
+  };
+  return labels[action] ?? action.replaceAll('_', ' ');
+};
 
 export function PropertyDetailPage() {
   const {id = ''} = useParams();
   const result = useAsyncData(() => getPropertyDetails(id), [id]);
-  const [notice, setNotice] = useState('');
-  const [working, setWorking] = useState(false);
-
-  async function makeOffer() {
-    setWorking(true);
-    setNotice('');
-    try {
-      const response = await submitStructuredOffer(id);
-      setNotice(response.message);
-    } catch (reason) {
-      setNotice(reason instanceof Error ? reason.message : 'Could not submit the offer.');
-    } finally {
-      setWorking(false);
-    }
-  }
+  const [reportState, setReportState] = useState<'idle' | 'working' | 'sent' | 'error'>('idle');
 
   async function report() {
-    setWorking(true);
+    setReportState('working');
     try {
       await reportListing(id, {reason: 'misleading_info'});
-      setNotice('Thank you. The listing has been sent to the moderation team.');
-    } catch (error) {
-      setNotice(error instanceof Error ? error.message : 'Could not submit report.');
-    } finally {
-      setWorking(false);
+      setReportState('sent');
+    } catch {
+      setReportState('error');
     }
   }
 
@@ -50,75 +37,132 @@ export function PropertyDetailPage() {
   if (!property) return null;
 
   const isVerified = property.verificationStatus === 'verified';
+  const isRental = property.marketType === 'rent';
+  const proofSuffix = property.ownershipProofNumber.slice(-4);
 
   return (
-    <>
-      <PageHeader
-        eyebrow={property.marketType === 'rent' ? 'For rent' : 'For sale'}
-        title={property.title}
-        description={property.location}
-        action={<Link className="button button--secondary" to="/app">Back</Link>}
-      />
-      <div className="detail-layout">
-        <section>
-          <div className="detail-hero">
-            <img src={propertyImage(property)} alt={property.title} />
-            <StatusBadge status={property.verificationStatus} />
+    <div className="property-page">
+      <header className="property-page__bar">
+        <Link className="transaction-back" to="/app"><TransactionIcon name="back" />Back to properties</Link>
+        <span className="transaction-secure"><TransactionIcon name="lock" />Source-authenticated record</span>
+      </header>
+
+      <section className="property-showcase">
+        <img alt={property.title} src={propertyImage(property)} />
+        <div className="property-showcase__shade" />
+        <div className="property-showcase__badges">
+          <span className={isVerified ? 'is-verified' : 'is-review'}>
+            <TransactionIcon name={isVerified ? 'shield' : 'document'} />
+            {isVerified ? 'Verified listing' : 'Verification in progress'}
+          </span>
+          <span>{isRental ? 'For rent' : 'For sale'}</span>
+        </div>
+        <div className="property-showcase__title">
+          <p><TransactionIcon name="pin" />{property.location}</p>
+          <h1>{property.title}</h1>
+          <div>
+            <span>{property.propertyType || 'Property'}</span>
+            {property.areaSqm ? <span>{property.areaSqm.toLocaleString()} m²</span> : null}
+            {property.bedrooms ? <span>{property.bedrooms} bedrooms</span> : null}
           </div>
-          <article className="panel prose-panel">
-            <span className="eyebrow">Property overview</span>
-            <h2>About this property</h2>
-            <p>{property.description}</p>
-            <div className="feature-grid">
-              <div><span>Type</span><strong>{property.propertyType || 'Property'}</strong></div>
-              <div><span>Area</span><strong>{property.areaSqm ? `${property.areaSqm} m²` : '—'}</strong></div>
-              <div><span>Bedrooms</span><strong>{property.bedrooms ?? '—'}</strong></div>
-              <div><span>Bathrooms</span><strong>{property.bathrooms ?? '—'}</strong></div>
-              <div><span>Ownership</span><strong>{property.ownershipType}</strong></div>
-              <div><span>Owner</span><strong>{property.ownerName}</strong></div>
-            </div>
+        </div>
+      </section>
+
+      <div className="property-detail-grid">
+        <main className="property-detail-main">
+          <section className="property-trust-strip" aria-label="Property verification summary">
+            <TrustItem label="Property source" status={property.propertyVerificationStatus} />
+            <TrustItem label="Advertiser identity" status={property.identityVerificationStatus} />
+            <TrustItem label="Digital record" status={property.recordStatus} />
+          </section>
+
+          <section className="property-sheet" id="overview">
+            <div className="property-section-title"><span className="eyebrow">Overview</span><h2>Property details</h2></div>
+            <p className="property-description">{property.description}</p>
+            <dl className="property-facts">
+              <Fact label="Property type" value={property.propertyType || 'Property'} />
+              <Fact label="Area" value={property.areaSqm ? `${property.areaSqm.toLocaleString()} m²` : 'Not provided'} />
+              <Fact label="Bedrooms" value={property.bedrooms?.toString() ?? 'Not applicable'} />
+              <Fact label="Bathrooms" value={property.bathrooms?.toString() ?? 'Not applicable'} />
+              <Fact label="Ownership" value={property.ownershipType} />
+              <Fact label="Advertiser" value={property.ownerName} />
+            </dl>
             {property.amenities?.length ? (
-              <div className="chip-list">{property.amenities.map(item => <span key={item}>{item}</span>)}</div>
+              <div className="property-amenities">
+                <span>Included features</span>
+                <div>{property.amenities.map(item => <span key={item}><TransactionIcon name="check" />{item}</span>)}</div>
+              </div>
             ) : null}
-          </article>
-          <article className="panel record-card">
-            <div>
-              <span className="eyebrow">Source-authenticated</span>
-              <h2>Verified property record</h2>
+          </section>
+
+          <section className="property-sheet" id="record">
+            <div className="property-record-head">
+              <div><span className="eyebrow">Trust record</span><h2>What Aqarya verified</h2></div>
+              <span className="property-record-seal">A</span>
             </div>
-            <ul className="record-checks">
-              <li><i />Property check <StatusBadge status={property.propertyVerificationStatus} /></li>
-              <li><i />Identity check <StatusBadge status={property.identityVerificationStatus} /></li>
-              <li><i />Record <StatusBadge status={property.recordStatus === 'sealed' ? 'sealed' : 'draft'} /></li>
-            </ul>
-            <div className="record-meta">
-              <div><span>Record ID</span><span className="mono">{property.verificationRecordId || 'Pending'}</span></div>
-              <div><span>Hash</span><span className="mono">{property.recordHash}</span></div>
-              <div><span>Last verified</span><span>{formatDate(property.verificationTimestamp)}</span></div>
+            <p className="property-record-intro">Aqarya displays a limited, traceable view of the source record. The competent government registry remains the legal source of ownership.</p>
+            <div className="property-record-grid">
+              <div><span>Record reference</span><strong className="mono">{property.verificationRecordId || 'Pending'}</strong></div>
+              <div><span>Source fingerprint</span><strong className="mono">{property.recordHash}</strong></div>
+              <div><span>Ownership proof</span><strong>{property.ownershipProofType.replaceAll('_', ' ')} ·••{proofSuffix}</strong></div>
+              <div><span>Last verified</span><strong>{formatDate(property.verificationTimestamp)}</strong></div>
             </div>
-          </article>
-        </section>
-        <aside className="purchase-card panel">
-          <span>{property.marketType === 'rent' ? 'Monthly rent' : 'Asking price'}</span>
-          <strong>{formatJod(property.price)}</strong>
-          <p>
-            {property.marketType === 'rent'
-              ? 'Request a structured digital rental contract. Payment happens through a licensed channel — Aqarya never holds funds.'
-              : 'Submit a structured offer with price and validity. Registration and payment stay with the competent authorities.'}
-          </p>
-          {notice ? <div className="inline-alert inline-alert--success">{notice}</div> : null}
-          {isVerified ? (
-            <button className="button button--primary button--wide" disabled={working} onClick={() => void makeOffer()} type="button">
-              {working ? 'Submitting…' : property.marketType === 'rent' ? 'Request rental contract' : 'Make a structured offer'}
-            </button>
+            {property.auditTrail.length ? (
+              <div className="property-audit">
+                <h3>Recent record activity</h3>
+                <ol>
+                  {property.auditTrail.slice(0, 4).map(event => (
+                    <li key={event.id}><i /><div><strong>{auditLabel(event.actionType)}</strong><span>{event.actorName} · {formatDate(event.timestamp)}</span></div></li>
+                  ))}
+                </ol>
+              </div>
+            ) : null}
+          </section>
+
+          <section className="property-report">
+            <div><TransactionIcon name="report" /><span><strong>Something does not look right?</strong><small>Reports are logged and reviewed without alerting the advertiser.</small></span></div>
+            {reportState === 'sent' ? <span className="property-report__sent"><TransactionIcon name="check" />Report sent</span> : (
+              <button disabled={reportState === 'working'} onClick={() => void report()} type="button">
+                {reportState === 'working' ? 'Sending…' : reportState === 'error' ? 'Try again' : 'Report listing'}
+              </button>
+            )}
+          </section>
+        </main>
+
+        <aside className="property-action-card">
+          <span>{isRental ? 'Monthly rent' : 'Asking price'}</span>
+          <strong>{formatJod(property.price)}{isRental ? <small>/month</small> : null}</strong>
+          <div className="property-action-card__seller"><span><TransactionIcon name="shield" /></span><div><strong>{property.ownerName}</strong><small>Identity linked to this listing</small></div></div>
+
+          {property.viewerIsOwner ? (
+            <Link className="transaction-primary" to="/app/my-properties">Manage in my portfolio<TransactionIcon name="arrow" /></Link>
+          ) : isVerified ? (
+            <Link className="transaction-primary" to={`/app/property/${property.id}/offer`}>
+              {isRental ? 'Start rental request' : 'Prepare an offer'}<TransactionIcon name="arrow" />
+            </Link>
           ) : (
-            <Link className="button button--primary button--wide" to={`/app/messages`}>Contact support</Link>
+            <button className="transaction-primary" disabled type="button">Available after verification</button>
           )}
-          <button className="button button--ghost button--wide" disabled={working} onClick={() => void report()} type="button">
-            Report listing
-          </button>
+
+          <Link className="transaction-secondary" to="/app/messages"><TransactionIcon name="message" />Ask a question</Link>
+          <p className="property-action-card__note"><TransactionIcon name="shield" />No money is collected here. Payment and legal registration continue through licensed and competent authorities.</p>
+          <div className="property-action-card__steps">
+            <strong>How the journey works</strong>
+            <span><i>1</i>Submit structured terms</span>
+            <span><i>2</i>Owner reviews and responds</span>
+            <span><i>3</i>Continue through official channels</span>
+          </div>
         </aside>
       </div>
-    </>
+    </div>
   );
+}
+
+function TrustItem({label, status}: {label: string; status: string}) {
+  const complete = status === 'verified' || status === 'sealed';
+  return <div className={complete ? 'is-complete' : ''}><span><TransactionIcon name={complete ? 'check' : 'document'} /></span><div><strong>{label}</strong><small>{complete ? 'Verified' : 'Reviewing'}</small></div></div>;
+}
+
+function Fact({label, value}: {label: string; value: string}) {
+  return <div><dt>{label}</dt><dd>{value}</dd></div>;
 }

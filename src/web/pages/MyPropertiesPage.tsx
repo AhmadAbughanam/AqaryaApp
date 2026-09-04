@@ -72,7 +72,7 @@ export function MyPropertiesPage() {
           <h1>My properties</h1>
           <p>Your ownership records, verification status, and market actions in one place.</p>
         </div>
-        <Link className="myprops-add" to="/app/sell"><Icon name="plus" />Add property</Link>
+        <Link className="myprops-add" to="/app/sell"><Icon name="plus" />Create listing</Link>
       </header>
 
       {result.loading ? (
@@ -139,9 +139,9 @@ export function MyPropertiesPage() {
             {!properties.length ? (
               <div className="portfolio-empty">
                 <span><Icon name="building" /></span>
-                <h2>Build your property portfolio</h2>
-                <p>Properties you register, purchase, or verify through Aqarya will appear here.</p>
-                <Link className="button button--primary" to="/app/sell">Add your first property</Link>
+                <h2>No linked property records</h2>
+                <p>Properties connected from an authoritative source will appear here before they can be listed.</p>
+                <Link className="button button--primary" to="/app/help">Get help connecting a record</Link>
               </div>
             ) : !visibleProperties.length ? (
               <div className="portfolio-empty portfolio-empty--compact">
@@ -188,7 +188,7 @@ export function MyPropertiesPage() {
                           <Link className="portfolio-record-link" to={`/app/property/${property.id}`}>
                             {verified ? 'View record' : 'Track review'}<Icon name="arrow" />
                           </Link>
-                          {property.canListForSale ? <Link className="portfolio-list-link" to={`/app/sell?source=${property.id}`}>List for sale</Link> : null}
+                          {property.canListForSale ? <Link className="portfolio-list-link" to={`/app/sell?source=${property.id}`}>Create listing</Link> : null}
                         </footer>
                       </div>
                     </article>

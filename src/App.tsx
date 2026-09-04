@@ -11,6 +11,7 @@ import {MyPropertiesPage} from './web/pages/MyPropertiesPage';
 import {NotificationsPage} from './web/pages/NotificationsPage';
 import {ProfilePage} from './web/pages/ProfilePage';
 import {PropertyDetailPage} from './web/pages/PropertyDetailPage';
+import {OfferPage} from './web/pages/OfferPage';
 import {SellPropertyPage} from './web/pages/SellPropertyPage';
 import {HelpPage} from './web/pages/HelpPage';
 import {
@@ -56,6 +57,7 @@ export default function App() {
             }
           />
           <Route path="property/:id" element={<PropertyDetailPage />} />
+          <Route path="property/:id/offer" element={<OfferPage />} />
           <Route path="my-properties" element={<MyPropertiesPage />} />
           <Route path="sell" element={<SellPropertyPage />} />
           <Route path="messages" element={<MessagesPage />} />

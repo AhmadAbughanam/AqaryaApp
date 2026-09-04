@@ -20,7 +20,7 @@ const AuthContext = createContext<AuthContextValue | null>(null);
 
 const readStoredRole = (): UserRole | null => {
   const stored = localStorage.getItem(AUTH_ROLE_KEY);
-  return stored === 'citizen' || stored === 'admin' ? stored : null;
+  return stored === 'citizen' || stored === 'admin' ? stored : 'citizen';
 };
 
 export function AuthProvider({children}: {children: ReactNode}) {
