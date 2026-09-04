@@ -8,13 +8,19 @@ import {
   uid,
   type MockThread,
 } from '../mock/db';
+import type {MarketType, VerificationStatus} from './properties';
 
 export interface ThreadListItem {
   id: string;
   subject: string;
   listingId: string | null;
   listingTitle: string | null;
-  listingMarketType: string | null;
+  listingLocation: string | null;
+  listingMarketType: MarketType | null;
+  listingPropertyType: string | null;
+  listingPrice: number | null;
+  listingImageUrls: string[];
+  listingVerificationStatus: VerificationStatus | null;
   lastMessage: {
     body: string;
     senderRole: 'citizen' | 'admin';
@@ -41,8 +47,11 @@ export interface ThreadDetail {
     id: string;
     title: string;
     location: string;
-    marketType: string;
+    marketType: MarketType;
+    propertyType: string;
     price: number;
+    imageUrls: string[];
+    verificationStatus: VerificationStatus;
   } | null;
   opportunity: null;
   messages: MessageItem[];
@@ -66,7 +75,12 @@ const toListItem = (thread: MockThread): ThreadListItem => {
     subject: thread.subject,
     listingId: thread.listingId,
     listingTitle: listing?.title ?? null,
+    listingLocation: listing?.location ?? null,
     listingMarketType: listing?.marketType ?? null,
+    listingPropertyType: listing?.propertyType ?? null,
+    listingPrice: listing?.price ?? null,
+    listingImageUrls: listing?.imageUrls ?? [],
+    listingVerificationStatus: listing?.verificationStatus ?? null,
     lastMessage: last
       ? {body: last.body, senderRole: last.senderRole, createdAt: last.createdAt}
       : null,
@@ -89,7 +103,10 @@ const toDetail = (thread: MockThread): ThreadDetail => {
           title: listing.title,
           location: listing.location,
           marketType: listing.marketType,
+          propertyType: listing.propertyType,
           price: listing.price,
+          imageUrls: listing.imageUrls,
+          verificationStatus: listing.verificationStatus,
         }
       : null,
     opportunity: null,

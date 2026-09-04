@@ -48,11 +48,14 @@ export function AppLayout({variant}: {variant: 'citizen' | 'admin'}) {
   if (variant === 'citizen') {
     const mapIsImmersive = location.pathname === '/app/map';
     const portfolioIsWide = location.pathname === '/app/my-properties';
+    const messagesIsWide = location.pathname.startsWith('/app/messages');
     const shellClass = mapIsImmersive
       ? 'mobile-shell mobile-shell--map'
       : portfolioIsWide
         ? 'mobile-shell mobile-shell--portfolio'
-        : 'mobile-shell';
+        : messagesIsWide
+          ? 'mobile-shell mobile-shell--messages'
+          : 'mobile-shell';
     return (
       <div className={shellClass}>
         {!mapIsImmersive ? <header className="mobile-topbar">
