@@ -30,9 +30,7 @@ jobs:
   deploy:
     needs: build
     runs-on: ubuntu-latest
-    # Runs only after the repo variable DEPLOY_ENABLED is set to "true" and the
-    # DEPLOY_* secrets exist (Settings -> Secrets and variables -> Actions).
-    if: github.ref == 'refs/heads/main' && vars.DEPLOY_ENABLED == 'true'
+    if: github.ref == 'refs/heads/main'
     steps:
       - uses: actions/download-artifact@v4
         with:
@@ -47,6 +45,12 @@ jobs:
           PORT: ${{ secrets.DEPLOY_PORT }}
         run: |
           set -euo pipefail
+
+          if [ -z "${HOST:-}" ] || [ -z "${SSH_USER:-}" ] || [ -z "${SSH_KEY:-}" ]; then
+            echo "::error::Deploy secrets are missing. In the repo: Settings → Secrets and variables → Actions → Secrets, add DEPLOY_HOST (aqarya.online), DEPLOY_USER (root), DEPLOY_SSH_KEY (the private key). DEPLOY_PORT is optional."
+            exit 1
+          fi
+
           test -f dist/index.html
 
           mkdir -p ~/.ssh
@@ -58,11 +62,11 @@ jobs:
           SSH="ssh -p $PORT -i ~/.ssh/id_ed25519 -o IdentitiesOnly=yes -o StrictHostKeyChecking=accept-new -o BatchMode=yes"
           REMOTE="$SSH_USER@$HOST"
 
-          # Prereqs on the server, then sync the build and reload nginx.
           $SSH "$REMOTE" 'command -v rsync >/dev/null || (apt-get update -qq && apt-get install -y -qq rsync); mkdir -p /opt/aqarya/dist'
           rsync -az --delete -e "$SSH" dist/ "$REMOTE:/opt/aqarya/dist/"
           $SSH "$REMOTE" 'cd /opt/aqarya && GIT_TERMINAL_PROMPT=0 git fetch origin -q && git reset --hard -q origin/main || true'
           $SSH "$REMOTE" 'docker exec aqarya-web-1 nginx -s reload 2>/dev/null || docker restart aqarya-web-1'
 
-          echo "Deployed. Live asset:"
+          echo "Deployed ${GITHUB_SHA:0:7}. Live JS bundle:"
+          sleep 2
           curl -s https://aqarya.online/ | grep -o 'assets/index-[^"]*\.js' || true
