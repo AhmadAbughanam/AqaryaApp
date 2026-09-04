@@ -44,6 +44,38 @@ export interface CitizenProfile {
   ownedProperties: OwnedProfileProperty[];
 }
 
+const PROFILE_PREFERENCE_KEY = 'aqarya:citizen-preference';
+
+const readPreference = (): UserPreference => {
+  if (typeof localStorage === 'undefined') return {notificationsEnabled: true};
+  try {
+    const saved = JSON.parse(localStorage.getItem(PROFILE_PREFERENCE_KEY) || '{}') as Partial<UserPreference>;
+    return {
+      notificationsEnabled:
+        typeof saved.notificationsEnabled === 'boolean' ? saved.notificationsEnabled : true,
+    };
+  } catch {
+    return {notificationsEnabled: true};
+  }
+};
+
+let currentPreference = readPreference();
+
+export const updateMyPreference = async (
+  preference: Partial<UserPreference>,
+): Promise<UserPreference> => {
+  await mockDelay(180);
+  currentPreference = {...currentPreference, ...preference};
+  if (typeof localStorage !== 'undefined') {
+    try {
+      localStorage.setItem(PROFILE_PREFERENCE_KEY, JSON.stringify(currentPreference));
+    } catch {
+      // The preference still applies for this session when device storage is unavailable.
+    }
+  }
+  return {...currentPreference};
+};
+
 export const getMyProfile = async (): Promise<CitizenProfile> => {
   await mockDelay();
   const owned = properties.filter(record => record.ownerId === CURRENT_USER.id);
@@ -78,7 +110,7 @@ export const getMyProfile = async (): Promise<CitizenProfile> => {
       savedCount: savedPropertyIds.size,
       totalOwnedValue: owned.reduce((sum, record) => sum + record.propertyValue, 0),
     },
-    preference: {notificationsEnabled: true},
+    preference: {...currentPreference},
     ownedProperties,
   };
 };
