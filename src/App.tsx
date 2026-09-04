@@ -2,6 +2,7 @@ import {Navigate, Outlet, Route, Routes} from 'react-router-dom';
 import type {UserRole} from './api/auth';
 import {useAuth} from './store/AuthContext';
 import {AppLayout} from './web/Layout';
+import {LandingPage} from './web/pages/LandingPage';
 import {LoginPage} from './web/pages/LoginPage';
 import {DiscoverPage} from './web/pages/DiscoverPage';
 import {MapPage} from './web/pages/MapPage';
@@ -34,16 +35,10 @@ function RequireRole({role}: {role: UserRole}) {
   return <Outlet />;
 }
 
-function HomeRedirect() {
-  const auth = useAuth();
-  if (!auth.role) return <Navigate replace to="/login" />;
-  return <Navigate replace to={auth.role === 'admin' ? '/admin' : '/app'} />;
-}
-
 export default function App() {
   return (
     <Routes>
-      <Route path="/" element={<HomeRedirect />} />
+      <Route path="/" element={<LandingPage />} />
       <Route path="/login" element={<LoginPage />} />
       <Route element={<RequireRole role="citizen" />}>
         <Route path="/app" element={<AppLayout variant="citizen" />}>
