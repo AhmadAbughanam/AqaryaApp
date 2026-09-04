@@ -47,8 +47,14 @@ export function AppLayout({variant}: {variant: 'citizen' | 'admin'}) {
 
   if (variant === 'citizen') {
     const mapIsImmersive = location.pathname === '/app/map';
+    const portfolioIsWide = location.pathname === '/app/my-properties';
+    const shellClass = mapIsImmersive
+      ? 'mobile-shell mobile-shell--map'
+      : portfolioIsWide
+        ? 'mobile-shell mobile-shell--portfolio'
+        : 'mobile-shell';
     return (
-      <div className={mapIsImmersive ? 'mobile-shell mobile-shell--map' : 'mobile-shell'}>
+      <div className={shellClass}>
         {!mapIsImmersive ? <header className="mobile-topbar">
           <NavLink aria-label="Aqarya home" className="mobile-brand-link" end to="/app">
             <span aria-hidden="true" className="mobile-brand-mark">A</span>

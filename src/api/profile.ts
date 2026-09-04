@@ -17,12 +17,16 @@ export interface OwnedProfileProperty {
   id: string;
   title: string;
   location: string;
+  propertyType: string;
+  areaSqm: number | null;
   status: VerificationStatus;
   marketType: MarketType;
   propertyValue: number;
   price: number;
   verificationStatus: 'pending' | 'verified' | 'rejected';
   identityVerificationStatus: 'pending' | 'verified' | 'rejected';
+  recordStatus: 'draft' | 'sealed';
+  recordReference: string;
   canListForSale: boolean;
   imageUrls?: string[];
   createdAt: string;
@@ -47,12 +51,16 @@ export const getMyProfile = async (): Promise<CitizenProfile> => {
     id: record.id,
     title: record.title,
     location: record.location,
+    propertyType: record.propertyType,
+    areaSqm: record.areaSqm,
     status: record.verificationStatus,
     marketType: record.marketType,
     propertyValue: record.propertyValue,
     price: record.price,
     verificationStatus: record.propertyVerificationStatus,
     identityVerificationStatus: record.identityVerificationStatus,
+    recordStatus: record.recordStatus,
+    recordReference: record.recordHash,
     canListForSale:
       record.marketType === 'sale' && record.verificationStatus === 'verified',
     imageUrls: record.imageUrls,
